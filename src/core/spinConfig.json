@@ -18,5 +18,8 @@
 
   "settle": {
     "duration": 8
-  }
+  },
+
+  "winAllDelay": 2000,
+  "winLineInterval": 1500
 }

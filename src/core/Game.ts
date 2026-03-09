@@ -1,5 +1,6 @@
 import { Application, Text, TextStyle, Graphics, Container } from 'pixi.js';
 import { GAME_WIDTH, GAME_HEIGHT, BET_OPTIONS, REEL_OFFSET_Y, REEL_AREA_HEIGHT } from './Config';
+import spinConfig from './spinConfig.json';
 import { ReelController } from '../reels/ReelController';
 import { SlotMath, type SpinResult } from '../math/SlotMath';
 import { SpinButton } from '../ui/SpinButton';
@@ -21,6 +22,8 @@ export class Game {
 
   private betDecrBtn: BetButton;
   private betIncrBtn: BetButton;
+  private lineInfoText: Text;
+  private winCycleTimer: ReturnType<typeof setTimeout> | null = null;
 
   private balance = 10000;
   private betIndex = 0;       // index into BET_OPTIONS
@@ -66,6 +69,16 @@ export class Game {
     this.winValueText.anchor.set(0, 0.5);
     this.winValueText.y = statusY;
 
+    this.lineInfoText = new Text('', new TextStyle({
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      fontSize: 20,
+      fill: 0xFFFFFF,
+    }));
+    this.lineInfoText.anchor.set(0.5, 0);
+    this.lineInfoText.x = GAME_WIDTH / 2;
+    this.lineInfoText.y = statusY + 22;
+    this.lineInfoText.visible = false;
+
     // Stats row: Balance label + value | Bet label + value — one centered line
     const labelStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 20, fill: 0xFFD700 });
     const valueStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 20, fill: 0xFFFFFF });
@@ -109,6 +122,7 @@ export class Game {
     this.app.stage.addChild(this.statusText);
     this.app.stage.addChild(this.winLabelText);
     this.app.stage.addChild(this.winValueText);
+    this.app.stage.addChild(this.lineInfoText);
     this.app.stage.addChild(this.statsRow);
   }
 
@@ -172,6 +186,8 @@ export class Game {
     if (this.reelController.isSpinning) return;
     if (this.balance < this.totalBet) return;
 
+    this.stopWinCycle();
+
     // Deduct bet
     this.balance -= this.totalBet;
     this.updateBalanceDisplay();
@@ -200,7 +216,8 @@ export class Game {
       const winAmount = result.totalWin * this.lineBet;
       this.balance += winAmount;
       this.setWinStatus(winAmount);
-      this.reelController.showWins(result);
+      this.reelController.showWins(result, spinConfig.winAllDelay);
+      this.startWinCycle(result);
     } else {
       this.setStatus('Place your bets');
     }
@@ -214,6 +231,7 @@ export class Game {
     this.statusText.text = msg;
     this.winLabelText.visible = false;
     this.winValueText.visible = false;
+    this.lineInfoText.visible = false;
     this.statusText.visible = true;
   }
 
@@ -227,6 +245,29 @@ export class Game {
     this.winValueText.x = this.winLabelText.x + this.winLabelText.width;
     this.winLabelText.visible = true;
     this.winValueText.visible = true;
+  }
+
+  private startWinCycle(result: SpinResult): void {
+    const { winAllDelay, winLineInterval } = spinConfig;
+    let lineIndex = 0;
+    const showNextLine = () => {
+      const win = result.wins[lineIndex];
+      this.reelController.showWinLine(win, winLineInterval);
+      const amount = win.multiplier * this.lineBet;
+      this.lineInfoText.text = `Line ${win.paylineIndex + 1} pays ${amount}`;
+      this.lineInfoText.visible = true;
+      lineIndex = (lineIndex + 1) % result.wins.length;
+      this.winCycleTimer = setTimeout(showNextLine, winLineInterval);
+    };
+    this.winCycleTimer = setTimeout(showNextLine, winAllDelay);
+  }
+
+  private stopWinCycle(): void {
+    if (this.winCycleTimer !== null) {
+      clearTimeout(this.winCycleTimer);
+      this.winCycleTimer = null;
+    }
+    this.lineInfoText.visible = false;
   }
 
   private updateBalanceDisplay(): void {

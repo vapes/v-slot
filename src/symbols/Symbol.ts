@@ -18,7 +18,8 @@ export class SlotSymbol extends Container {
   private label: Text;
   private _symbolId: SymbolId;
   private _winAnimating = false;
-  private _winPhase = 0;
+  private _winElapsedMs = 0;
+  private _winCycleMs = 1500;
 
   constructor(symbolId: SymbolId) {
     super();
@@ -63,11 +64,11 @@ export class SlotSymbol extends Container {
     this.bg.drawRoundedRect(0, 0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 12);
   }
 
-  /** Start pulsating win animation. */
-  startWinAnimation(): void {
+  /** Start pulsating win animation. One full pulse cycle = cycleMs. */
+  startWinAnimation(cycleMs = 1500): void {
     this._winAnimating = true;
-    this._winPhase = 0;
-    // Pivot content around its center; offset position to compensate
+    this._winElapsedMs = 0;
+    this._winCycleMs = cycleMs;
     this.content.pivot.set(SYMBOL_WIDTH / 2, SYMBOL_HEIGHT / 2);
     this.content.position.set(SYMBOL_WIDTH / 2, SYMBOL_HEIGHT / 2);
   }
@@ -75,18 +76,19 @@ export class SlotSymbol extends Container {
   /** Stop win animation and reset. */
   stopWinAnimation(): void {
     this._winAnimating = false;
-    this._winPhase = 0;
+    this._winElapsedMs = 0;
     this.content.scale.set(1);
     this.content.pivot.set(0, 0);
     this.content.position.set(0, 0);
     this.alpha = 1;
   }
 
-  /** Called each frame to update win animation. */
+  /** Called each frame to update win animation. dt is Pixi ticker delta (1 = 60fps frame). */
   updateWinAnimation(dt: number): void {
     if (!this._winAnimating) return;
-    this._winPhase += dt * 0.08;
-    const s = 1 + Math.sin(this._winPhase) * 0.08;
+    this._winElapsedMs += dt * (1000 / 60);
+    const phase = (this._winElapsedMs / this._winCycleMs) * Math.PI * 2;
+    const s = 1 + Math.sin(phase) * 0.08;
     this.content.scale.set(s);
   }
 

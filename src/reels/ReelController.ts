@@ -10,7 +10,7 @@ import {
 } from '../core/Config';
 import { Reel } from './Reel';
 import { SymbolFactory } from '../symbols/SymbolFactory';
-import type { SpinResult } from '../math/SlotMath';
+import type { SpinResult, WinResult } from '../math/SlotMath';
 import type { SlotSymbol } from '../symbols/Symbol';
 import spinConfig from '../core/spinConfig.json';
 
@@ -125,7 +125,7 @@ export class ReelController {
     }
   }
 
-  showWins(result: SpinResult): void {
+  showWins(result: SpinResult, cycleMs = 1500): void {
     const winPositions = new Set<string>();
     for (const win of result.wins) {
       for (const [reel, row] of win.positions) {
@@ -146,9 +146,40 @@ export class ReelController {
           sym.y = localY;
           this.winLayer.addChild(sym);
           this.promotedSymbols.push({ symbol: sym, reelIndex: r, localY });
-          sym.startWinAnimation();
+          sym.startWinAnimation(cycleMs);
         } else if (result.wins.length > 0) {
           sym.alpha = 0.4;
+        }
+      }
+    }
+  }
+
+  /** Show only the symbols belonging to a single winning line. */
+  showWinLine(win: WinResult, cycleMs = 1500): void {
+    this.demoteWinSymbols();
+
+    for (let r = 0; r < REEL_COUNT; r++) {
+      for (const sym of this.reels[r].getVisibleSymbols()) {
+        sym.stopWinAnimation();
+        sym.alpha = 0.4;
+      }
+    }
+
+    const posSet = new Set(win.positions.map(([r, row]) => `${r},${row}`));
+    for (let r = 0; r < REEL_COUNT; r++) {
+      const visible = this.reels[r].getVisibleSymbols();
+      for (let row = 0; row < ROW_COUNT; row++) {
+        const sym = visible[row];
+        if (!sym) continue;
+        if (posSet.has(`${r},${row}`)) {
+          const localY = sym.y;
+          sym.parent?.removeChild(sym);
+          sym.x = r * REEL_WIDTH;
+          sym.y = localY;
+          this.winLayer.addChild(sym);
+          this.promotedSymbols.push({ symbol: sym, reelIndex: r, localY });
+          sym.alpha = 1;
+          sym.startWinAnimation(cycleMs);
         }
       }
     }
