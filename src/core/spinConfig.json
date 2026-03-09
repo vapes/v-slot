@@ -1,0 +1,22 @@
+{
+  "reelStartInterval": 20,
+
+  "bounceUp": {
+    "amount": 0.4,
+    "duration": 14
+  },
+
+  "spinSpeed": 50,
+  "acceleration": 3.0,
+  "blurAlpha": 0.7,
+  "scrollScreens": [1, 2, 3, 4, 5],
+
+  "bounceDown": {
+    "amount": 0.3,
+    "duration": 18
+  },
+
+  "settle": {
+    "duration": 8
+  }
+}
