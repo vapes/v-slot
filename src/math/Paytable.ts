@@ -1,3 +1,4 @@
+import gameConfig from '../gameConfig.json';
 import type { SymbolId } from '../core/Config';
 
 export interface PayEntry {
@@ -16,20 +17,14 @@ export interface PayEntry {
  * Designed for ~98% RTP with 20 paylines and weighted reels:
  *   V=10%, A=13.3%, P=20%, E=26.7%, S=30%
  */
-const PAY_MAP: Record<SymbolId, Record<number, number>> = {
-  V: { 3: 50,  4: 185, 5: 900 },
-  A: { 3: 25,  4: 90,  5: 450 },
-  P: { 3: 14,  4: 45,  5: 225 },
-  E: { 3: 9,   4: 22,  5: 95 },
-  S: { 3: 5,   4: 10,  5: 45 },
-};
+const PAY_MAP = gameConfig.paytable as Record<SymbolId, Record<string, number>>;
 
 export class Paytable {
   /** Get payout multiplier for a given symbol and match count. Returns 0 if no win. */
   static getPayout(symbol: SymbolId, matchCount: number): number {
     if (matchCount < 3) return 0;
     const effective = Math.min(matchCount, 5);
-    return PAY_MAP[symbol]?.[effective] ?? 0;
+    return PAY_MAP[symbol]?.[String(effective)] ?? 0;
   }
 
   /** Get all pay entries for display. */
@@ -40,7 +35,7 @@ export class Paytable {
         entries.push({
           symbol,
           count,
-          multiplier: PAY_MAP[symbol][count],
+          multiplier: PAY_MAP[symbol][String(count)],
         });
       }
     }

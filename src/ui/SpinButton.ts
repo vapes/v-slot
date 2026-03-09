@@ -60,9 +60,10 @@ export class SpinButton {
   }
 
   private positionButton(): void {
-    const buttonY = REEL_OFFSET_Y + REEL_AREA_HEIGHT + 60;
+    const reelBottom = REEL_OFFSET_Y + REEL_AREA_HEIGHT;
+    const centerY = (reelBottom + GAME_HEIGHT) / 2;
     this.container.x = (GAME_WIDTH - BUTTON_SIZE) / 2;
-    this.container.y = buttonY;
+    this.container.y = centerY - BUTTON_SIZE / 2;
   }
 
   private onPress(): void {

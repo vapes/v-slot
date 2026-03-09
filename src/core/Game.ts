@@ -1,20 +1,30 @@
-import { Application, Text, TextStyle, Graphics } from 'pixi.js';
-import { GAME_WIDTH, GAME_HEIGHT } from './Config';
+import { Application, Text, TextStyle, Graphics, Container } from 'pixi.js';
+import { GAME_WIDTH, GAME_HEIGHT, BET_OPTIONS, REEL_OFFSET_Y, REEL_AREA_HEIGHT } from './Config';
 import { ReelController } from '../reels/ReelController';
 import { SlotMath, type SpinResult } from '../math/SlotMath';
 import { SpinButton } from '../ui/SpinButton';
+import { BetButton } from '../ui/BetButton';
 
 export class Game {
   private app: Application;
   private reelController: ReelController;
   private slotMath: SlotMath;
   private spinButton: SpinButton;
-  private winText: Text;
-  private balanceText: Text;
-  private betText: Text;
+  private statusText: Text;
+  private winLabelText: Text;
+  private winValueText: Text;
+  private statsRow: Container;
+  private balanceLabel: Text;
+  private balanceValue: Text;
+  private betLabel: Text;
+  private betValue: Text;
+
+  private betDecrBtn: BetButton;
+  private betIncrBtn: BetButton;
 
   private balance = 10000;
-  private lineBet = 1;        // bet per payline
+  private betIndex = 0;       // index into BET_OPTIONS
+  private get lineBet(): number { return BET_OPTIONS[this.betIndex]; }
   private readonly numLines = 20;
   private get totalBet(): number { return this.lineBet * this.numLines; }
   private currentResult: SpinResult | null = null;
@@ -32,42 +42,45 @@ export class Game {
     this.slotMath = new SlotMath();
     this.reelController = new ReelController();
     this.spinButton = new SpinButton();
+    this.betDecrBtn = new BetButton('−');
+    this.betIncrBtn = new BetButton('+');
 
-    // Win text
-    this.winText = new Text('', new TextStyle({
+    // Status text — sits between reels and spin button
+    this.statusText = new Text('', new TextStyle({
       fontFamily: 'Arial, Helvetica, sans-serif',
-      fontSize: 32,
+      fontSize: 28,
       fontWeight: 'bold',
-      fill: 0xFFD700,
-      dropShadow: true,
-      dropShadowColor: 0x000000,
-      dropShadowDistance: 2,
+      fill: 0xFFFFFF,
     }));
-    this.winText.anchor.set(0.5, 0);
-    this.winText.x = GAME_WIDTH / 2;
-    this.winText.y = 50;
+    this.statusText.anchor.set(0.5, 0.5);
+    this.statusText.x = GAME_WIDTH / 2;
+    this.statusText.y = REEL_OFFSET_Y + REEL_AREA_HEIGHT + 50;
 
-    // Balance text
-    this.balanceText = new Text('', new TextStyle({
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      fontSize: 20,
-      fill: 0xCCCCCC,
-    }));
-    this.balanceText.anchor.set(0.5, 0);
-    this.balanceText.x = GAME_WIDTH / 2;
-    this.balanceText.y = GAME_HEIGHT - 100;
+    const statusY = REEL_OFFSET_Y + REEL_AREA_HEIGHT + 50;
+    const winStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 28, fontWeight: 'bold', fill: 0xFFD700 });
+    const winValStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 28, fontWeight: 'bold', fill: 0xFFFFFF });
+    this.winLabelText = new Text('WIN:', winStyle);
+    this.winLabelText.anchor.set(0, 0.5);
+    this.winLabelText.y = statusY;
+    this.winValueText = new Text('', winValStyle);
+    this.winValueText.anchor.set(0, 0.5);
+    this.winValueText.y = statusY;
 
-    // Bet text
-    this.betText = new Text('', new TextStyle({
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      fontSize: 20,
-      fill: 0xCCCCCC,
-    }));
-    this.betText.anchor.set(0.5, 0);
-    this.betText.x = GAME_WIDTH / 2;
-    this.betText.y = GAME_HEIGHT - 70;
+    // Stats row: Balance label + value | Bet label + value — one centered line
+    const labelStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 20, fill: 0xFFD700 });
+    const valueStyle = new TextStyle({ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: 20, fill: 0xFFFFFF });
+
+    this.balanceLabel = new Text('Balance:', labelStyle);
+    this.balanceValue = new Text('', valueStyle);
+    this.betLabel = new Text('Bet:', labelStyle);
+    this.betValue = new Text('', valueStyle);
+
+    this.statsRow = new Container();
+    this.statsRow.addChild(this.balanceLabel, this.balanceValue, this.betLabel, this.betValue);
+    this.statsRow.y = GAME_HEIGHT - 60;
 
     this.updateBalanceDisplay();
+    this.setStatus('Place your bets');
   }
 
   /** Initialize and start the game. */
@@ -88,15 +101,52 @@ export class Game {
   }
 
   private setupStage(): void {
+    this.positionBetButtons();
     this.app.stage.addChild(this.reelController.container);
     this.app.stage.addChild(this.spinButton.container);
-    this.app.stage.addChild(this.winText);
-    this.app.stage.addChild(this.balanceText);
-    this.app.stage.addChild(this.betText);
+    this.app.stage.addChild(this.betDecrBtn.container);
+    this.app.stage.addChild(this.betIncrBtn.container);
+    this.app.stage.addChild(this.statusText);
+    this.app.stage.addChild(this.winLabelText);
+    this.app.stage.addChild(this.winValueText);
+    this.app.stage.addChild(this.statsRow);
+  }
+
+  private positionBetButtons(): void {
+    // Spin button: x=[220..320], center y = spinButton.container.y + 50
+    // Bet buttons size = 70, radius = 35; gap = 25 from spin button edges
+    const spinCenterX = GAME_WIDTH / 2;
+    const spinCenterY = this.spinButton.container.y + 50;
+    const betBtnRadius = 35;
+    const gap = 25;
+
+    this.betDecrBtn.container.x = spinCenterX - 50 - gap - betBtnRadius * 2;
+    this.betDecrBtn.container.y = spinCenterY - betBtnRadius;
+
+    this.betIncrBtn.container.x = spinCenterX + 50 + gap;
+    this.betIncrBtn.container.y = spinCenterY - betBtnRadius;
+
+    this.updateBetButtonStates();
   }
 
   private setupInput(): void {
     this.spinButton.onSpin(() => this.doSpin());
+
+    this.betDecrBtn.onClick(() => {
+      if (this.betIndex > 0) {
+        this.betIndex--;
+        this.updateBalanceDisplay();
+        this.updateBetButtonStates();
+      }
+    });
+
+    this.betIncrBtn.onClick(() => {
+      if (this.betIndex < BET_OPTIONS.length - 1) {
+        this.betIndex++;
+        this.updateBalanceDisplay();
+        this.updateBetButtonStates();
+      }
+    });
 
     // Spacebar to spin
     window.addEventListener('keydown', (e) => {
@@ -105,6 +155,11 @@ export class Game {
         this.doSpin();
       }
     });
+  }
+
+  private updateBetButtonStates(): void {
+    this.betDecrBtn.enabled = this.betIndex > 0;
+    this.betIncrBtn.enabled = this.betIndex < BET_OPTIONS.length - 1;
   }
 
   private setupTicker(): void {
@@ -120,13 +175,15 @@ export class Game {
     // Deduct bet
     this.balance -= this.totalBet;
     this.updateBalanceDisplay();
-    this.winText.text = '';
+    this.setStatus('Good luck!');
 
     // Generate result
     this.currentResult = this.slotMath.spin();
 
-    // Disable button
+    // Disable buttons during spin
     this.spinButton.enabled = false;
+    this.betDecrBtn.enabled = false;
+    this.betIncrBtn.enabled = false;
 
     // Start reels
     this.reelController.startSpin(this.currentResult, () => {
@@ -140,20 +197,55 @@ export class Game {
     const result = this.currentResult;
 
     if (result.totalWin > 0) {
-      // totalWin is sum of paytable multipliers; each is × lineBet
       const winAmount = result.totalWin * this.lineBet;
       this.balance += winAmount;
-      this.winText.text = `WIN: ${winAmount}`;
+      this.setWinStatus(winAmount);
       this.reelController.showWins(result);
+    } else {
+      this.setStatus('Place your bets');
     }
 
     this.updateBalanceDisplay();
     this.spinButton.enabled = true;
+    this.updateBetButtonStates();
+  }
+
+  private setStatus(msg: string): void {
+    this.statusText.text = msg;
+    this.winLabelText.visible = false;
+    this.winValueText.visible = false;
+    this.statusText.visible = true;
+  }
+
+  private setWinStatus(amount: number): void {
+    this.statusText.visible = false;
+    this.winLabelText.text = 'WIN:';
+    this.winValueText.text = ` ${amount}`;
+    // position inline, centered
+    const totalW = this.winLabelText.width + this.winValueText.width;
+    this.winLabelText.x = (GAME_WIDTH - totalW) / 2;
+    this.winValueText.x = this.winLabelText.x + this.winLabelText.width;
+    this.winLabelText.visible = true;
+    this.winValueText.visible = true;
   }
 
   private updateBalanceDisplay(): void {
-    this.balanceText.text = `Balance: ${this.balance}`;
-    this.betText.text = `Bet: ${this.totalBet} (${this.lineBet}×${this.numLines})`;
+    this.balanceValue.text = ` ${this.balance}`;
+    this.betValue.text = ` ${this.totalBet}`;
+
+    const gap = 24;
+    const balW = this.balanceLabel.width + this.balanceValue.width;
+    const betW = this.betLabel.width + this.betValue.width;
+    const totalW = balW + gap + betW;
+    let x = (GAME_WIDTH - totalW) / 2;
+
+    this.balanceLabel.x = x;
+    x += this.balanceLabel.width;
+    this.balanceValue.x = x;
+    x += this.balanceValue.width + gap;
+    this.betLabel.x = x;
+    x += this.betLabel.width;
+    this.betValue.x = x;
   }
 
   /** Responsive scaling to fit the viewport. */

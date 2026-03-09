@@ -4,9 +4,9 @@ import {
   PAYLINES,
   SYMBOLS,
   SYMBOL_WEIGHTS,
-  REEL_STRIP_LENGTH,
   type SymbolId,
 } from '../core/Config';
+import gameConfig from '../gameConfig.json';
 import { Paytable } from './Paytable';
 import { Random } from '../utils/Random';
 
@@ -31,10 +31,7 @@ export class SlotMath {
   private reelStrips: SymbolId[][];
 
   constructor() {
-    this.reelStrips = [];
-    for (let i = 0; i < REEL_COUNT; i++) {
-      this.reelStrips.push(Random.buildReelStrip(REEL_STRIP_LENGTH));
-    }
+    this.reelStrips = gameConfig.reels as SymbolId[][];
   }
 
   /** Generate a spin result with random stop positions. */
