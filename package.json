@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-screens": "node scripts/generate-screens.mjs"
   },
   "dependencies": {
     "pixi.js": "^7.3.3"

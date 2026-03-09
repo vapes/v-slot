@@ -9,6 +9,7 @@ import {
 import gameConfig from '../gameConfig.json';
 import { Paytable } from './Paytable';
 import { Random } from '../utils/Random';
+import type { PrecomputedTable } from './PrecomputedTable';
 
 export interface WinResult {
   paylineIndex: number;
@@ -29,14 +30,20 @@ export interface SpinResult {
 
 export class SlotMath {
   private reelStrips: SymbolId[][];
+  private table: PrecomputedTable | null = null;
 
   constructor() {
     this.reelStrips = gameConfig.reels as SymbolId[][];
   }
 
-  /** Generate a spin result with random stop positions. */
+  /** Attach a loaded PrecomputedTable; subsequent spin() calls will use it. */
+  setTable(table: PrecomputedTable): void {
+    this.table = table;
+  }
+
+  /** Generate a spin result, using the precomputed table when available. */
   spin(): SpinResult {
-    const grid = this.generateGrid();
+    const grid = (this.table?.isReady ? this.table.pickGrid() : null) ?? this.generateGrid();
     const wins = this.evaluateWins(grid);
     const totalWin = wins.reduce((sum, w) => sum + w.multiplier, 0);
     return { grid, wins, totalWin };

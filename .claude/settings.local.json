@@ -5,7 +5,9 @@
       "Bash(npx tsc:*)",
       "Bash(npx tsx:*)",
       "Bash(npx vite:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(pkill:*)"
     ]
   }
 }

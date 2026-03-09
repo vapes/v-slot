@@ -1,5 +1,5 @@
 {
-  "reelStartInterval": 20,
+  "reelStartInterval": 50,
 
   "bounceUp": {
     "amount": 0.4,

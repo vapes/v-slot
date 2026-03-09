@@ -3,8 +3,10 @@ import { GAME_WIDTH, GAME_HEIGHT, BET_OPTIONS, REEL_OFFSET_Y, REEL_AREA_HEIGHT }
 import spinConfig from './spinConfig.json';
 import { ReelController } from '../reels/ReelController';
 import { SlotMath, type SpinResult } from '../math/SlotMath';
+import { PrecomputedTable } from '../math/PrecomputedTable';
 import { SpinButton } from '../ui/SpinButton';
 import { BetButton } from '../ui/BetButton';
+import { WinCelebration, getWinCategory } from '../ui/WinCelebration';
 
 export class Game {
   private app: Application;
@@ -24,6 +26,7 @@ export class Game {
   private betIncrBtn: BetButton;
   private lineInfoText: Text;
   private winCycleTimer: ReturnType<typeof setTimeout> | null = null;
+  private winCelebration: WinCelebration;
 
   private balance = 10000;
   private betIndex = 0;       // index into BET_OPTIONS
@@ -47,6 +50,7 @@ export class Game {
     this.spinButton = new SpinButton();
     this.betDecrBtn = new BetButton('−');
     this.betIncrBtn = new BetButton('+');
+    this.winCelebration = new WinCelebration();
 
     // Status text — sits between reels and spin button
     this.statusText = new Text('', new TextStyle({
@@ -105,12 +109,20 @@ export class Game {
     this.handleResize();
     window.addEventListener('resize', () => this.handleResize());
 
-    // Log RTP on init
+    // Log theoretical RTP from reel strips
     const { rtp, breakdown } = SlotMath.calculateRTP();
-    console.log(`Theoretical RTP: ${(rtp * 100).toFixed(2)}%`);
+    console.log(`Theoretical RTP (reel strips): ${(rtp * 100).toFixed(2)}%`);
     for (const [sym, contrib] of Object.entries(breakdown)) {
       console.log(`  ${sym}: ${(contrib * 100).toFixed(4)}%`);
     }
+
+    // Load precomputed screen table (non-blocking; falls back to live math if unavailable)
+    const table = new PrecomputedTable();
+    table.load(import.meta.env.BASE_URL + 'screens.bin')
+      .then(() => { this.slotMath.setTable(table); })
+      .catch((err: Error) => {
+        console.warn('[Game] Precomputed table unavailable, using live math:', err.message);
+      });
   }
 
   private setupStage(): void {
@@ -124,6 +136,7 @@ export class Game {
     this.app.stage.addChild(this.winValueText);
     this.app.stage.addChild(this.lineInfoText);
     this.app.stage.addChild(this.statsRow);
+    this.app.stage.addChild(this.winCelebration.container);
   }
 
   private positionBetButtons(): void {
@@ -179,6 +192,7 @@ export class Game {
   private setupTicker(): void {
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);
+      this.winCelebration.update(dt);
     });
   }
 
@@ -187,6 +201,7 @@ export class Game {
     if (this.balance < this.totalBet) return;
 
     this.stopWinCycle();
+    this.winCelebration.stop();
 
     // Deduct bet
     this.balance -= this.totalBet;
@@ -218,6 +233,8 @@ export class Game {
       this.setWinStatus(winAmount);
       this.reelController.showWins(result, spinConfig.winAllDelay);
       this.startWinCycle(result);
+      const category = getWinCategory(winAmount, this.totalBet);
+      if (category) this.winCelebration.play(category);
     } else {
       this.setStatus('Place your bets');
     }
