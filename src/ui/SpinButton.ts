@@ -1,14 +1,13 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { GAME_WIDTH, GAME_HEIGHT, REEL_AREA_HEIGHT, REEL_OFFSET_Y } from '../core/Config';
 
-const BUTTON_SIZE = 100;
+export const BUTTON_SIZE = 100;
 
 export class SpinButton {
   readonly container: Container;
   private bg: Graphics;
   private label: Text;
   private _enabled = true;
-  private onSpinCallback: (() => void) | null = null;
 
   constructor() {
     this.container = new Container();
@@ -32,8 +31,6 @@ export class SpinButton {
     this.draw();
     this.positionButton();
 
-    // Events
-    this.container.on('pointerdown', this.onPress, this);
     this.container.on('pointerover', this.onOver, this);
     this.container.on('pointerout', this.onOut, this);
   }
@@ -48,9 +45,8 @@ export class SpinButton {
     return this._enabled;
   }
 
-  onSpin(callback: () => void): void {
-    this.onSpinCallback = callback;
-  }
+  /** @deprecated kept for compatibility */
+  onSpin(_cb: () => void): void { /* no-op */ }
 
   private draw(): void {
     this.bg.clear();
@@ -59,16 +55,11 @@ export class SpinButton {
     this.bg.endFill();
   }
 
-  private positionButton(): void {
+  positionButton(): void {
     const reelBottom = REEL_OFFSET_Y + REEL_AREA_HEIGHT;
     const centerY = (reelBottom + GAME_HEIGHT) / 2;
     this.container.x = (GAME_WIDTH - BUTTON_SIZE) / 2;
     this.container.y = centerY - BUTTON_SIZE / 2;
-  }
-
-  private onPress(): void {
-    if (!this._enabled) return;
-    this.onSpinCallback?.();
   }
 
   private onOver(): void {

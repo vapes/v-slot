@@ -68,11 +68,11 @@ export class Reel {
    * @param targetSymbols final visible symbols (top to bottom)
    * @param scrollScreens how many screens of blur symbols to scroll before targets appear
    */
-  startSpin(targetSymbols: SymbolId[], scrollScreens: number, onStop: () => void): void {
+  startSpin(targetSymbols: SymbolId[], scrollScreens: number, onStop: () => void, skipBounceUp = false): void {
     this.targetSymbols = targetSymbols;
     this.onStopCallback = onStop;
-    this.state = ReelState.BounceUp;
-    this.speed = 0;
+    this.state = skipBounceUp ? ReelState.Spinning : ReelState.BounceUp;
+    this.speed = skipBounceUp ? spinConfig.spinSpeed * spinConfig.turboSpeedMultiplier : 0;
     this.totalScrolled = 0;
     this.targetPlaced = 0;
     this.phaseFrame = 0;
@@ -85,6 +85,17 @@ export class Reel {
     for (const sym of this.symbols) {
       sym.stopWinAnimation();
     }
+  }
+
+  /** Turbo: instantly snap to target symbols, skip all animation. */
+  startTurboSpin(targetSymbols: SymbolId[], onStop: () => void): void {
+    this.targetSymbols = targetSymbols;
+    for (const sym of this.symbols) {
+      sym.stopWinAnimation();
+    }
+    this.snapToTarget();
+    this.state = ReelState.Idle;
+    setTimeout(onStop, 0);
   }
 
   update(dt: number): void {
@@ -155,8 +166,9 @@ export class Reel {
         if (progress >= 1) {
           this.symbolContainer.y = 0;
           this.state = ReelState.Idle;
-          this.onStopCallback?.();
+          const cb = this.onStopCallback;
           this.onStopCallback = null;
+          cb?.();
         } else {
           // Gentle settle from any residual offset
           this.symbolContainer.y *= (1 - ease * 0.3);

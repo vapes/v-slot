@@ -75,10 +75,35 @@ function makeText(label: string): Text {
 export class WinCelebration {
   readonly container: Container;
   private banners: ActiveBanner[] = [];
+  private staticTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.container = new Container();
     this.container.visible = false;
+  }
+
+  /** Show celebration text statically at centre for durationMs, then hide. */
+  playStatic(category: WinCategory, durationMs: number): void {
+    this.stop();
+
+    const word1 = makeText(FIRST_WORD[category]);
+    const word2 = makeText('WIN');
+
+    word1.anchor.set(0.5, 0.5);
+    word2.anchor.set(0.5, 0.5);
+
+    word1.x = RCX;
+    word1.y = RCY - LINE_HALF;
+    word2.x = RCX;
+    word2.y = RCY + LINE_HALF;
+
+    this.container.addChild(word1, word2);
+    this.container.visible = true;
+
+    this.staticTimer = setTimeout(() => {
+      this.staticTimer = null;
+      this.stop();
+    }, durationMs);
   }
 
   play(category: WinCategory): void {
@@ -152,8 +177,16 @@ export class WinCelebration {
   }
 
   stop(): void {
+    if (this.staticTimer !== null) {
+      clearTimeout(this.staticTimer);
+      this.staticTimer = null;
+    }
     this.banners.forEach(b => b.text.destroy());
     this.banners = [];
+    // destroy any remaining children (e.g. from playStatic)
+    while (this.container.children.length > 0) {
+      this.container.children[0].destroy();
+    }
     this.container.visible = false;
   }
 }

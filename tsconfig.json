@@ -4,6 +4,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    "jsx": "react",
+    "jsxFactory": "h",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

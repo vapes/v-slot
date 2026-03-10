@@ -4,9 +4,10 @@ import spinConfig from './spinConfig.json';
 import { ReelController } from '../reels/ReelController';
 import { SlotMath, type SpinResult } from '../math/SlotMath';
 import { PrecomputedTable } from '../math/PrecomputedTable';
-import { SpinButton } from '../ui/SpinButton';
+import { SpinButton, BUTTON_SIZE } from '../ui/SpinButton';
 import { BetButton } from '../ui/BetButton';
 import { WinCelebration, getWinCategory } from '../ui/WinCelebration';
+import { PaytableScreen } from '../ui/PaytableScreen';
 
 export class Game {
   private app: Application;
@@ -27,6 +28,8 @@ export class Game {
   private lineInfoText: Text;
   private winCycleTimer: ReturnType<typeof setTimeout> | null = null;
   private winCelebration: WinCelebration;
+  private paytableScreen: PaytableScreen;
+  private infoBtn: HTMLButtonElement;
 
   private balance = 10000;
   private betIndex = 0;       // index into BET_OPTIONS
@@ -34,6 +37,11 @@ export class Game {
   private readonly numLines = 20;
   private get totalBet(): number { return this.lineBet * this.numLines; }
   private currentResult: SpinResult | null = null;
+
+  // True while the spin button (or spacebar) is physically held down
+  private buttonHeld = false;
+  // True while turbo auto-repeat chain is active
+  private inTurboMode = false;
 
   constructor() {
     this.app = new Application({
@@ -51,6 +59,8 @@ export class Game {
     this.betDecrBtn = new BetButton('−');
     this.betIncrBtn = new BetButton('+');
     this.winCelebration = new WinCelebration();
+    this.paytableScreen = new PaytableScreen();
+    this.infoBtn = this.createInfoButton();
 
     // Status text — sits between reels and spin button
     this.statusText = new Text('', new TextStyle({
@@ -98,6 +108,15 @@ export class Game {
 
     this.updateBalanceDisplay();
     this.setStatus('Place your bets');
+  }
+
+  private createInfoButton(): HTMLButtonElement {
+    const btn = document.createElement('button');
+    btn.textContent = 'i';
+    btn.className = 'pt-info-btn';
+    btn.addEventListener('click', () => this.paytableScreen.toggle());
+    document.body.appendChild(btn);
+    return btn;
   }
 
   /** Initialize and start the game. */
@@ -157,7 +176,22 @@ export class Game {
   }
 
   private setupInput(): void {
-    this.spinButton.onSpin(() => this.doSpin());
+    // Use raw window pointer events so PixiJS internals can't interfere with hold tracking.
+    window.addEventListener('pointerdown', (e) => {
+      if (this.isOnSpinButton(e) && this.spinButton.enabled) {
+        console.log('spin button down');
+        this.buttonHeld = true;
+        this.doSpin(false);
+      }
+    });
+    window.addEventListener('pointerup', () => {
+      if (this.buttonHeld) console.log('spin button up');
+      this.buttonHeld = false;
+    });
+    window.addEventListener('pointercancel', () => {
+      if (this.buttonHeld) console.log('spin button up');
+      this.buttonHeld = false;
+    });
 
     this.betDecrBtn.onClick(() => {
       if (this.betIndex > 0) {
@@ -175,13 +209,34 @@ export class Game {
       }
     });
 
-    // Spacebar to spin
+    // Spacebar: same hold behaviour
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && this.spinButton.enabled) {
+      if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
-        this.doSpin();
+        console.log('spin button down');
+        this.buttonHeld = true;
+        if (this.spinButton.enabled) this.doSpin(false);
       }
     });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        console.log('spin button up');
+        this.buttonHeld = false;
+      }
+    });
+  }
+
+  /** Returns true if the pointer event lands inside the spin button circle. */
+  private isOnSpinButton(e: PointerEvent): boolean {
+    const canvas = this.app.view as HTMLCanvasElement;
+    const rect = canvas.getBoundingClientRect();
+    const cssScale = rect.width / GAME_WIDTH;
+    const gameX = (e.clientX - rect.left) / cssScale;
+    const gameY = (e.clientY - rect.top) / cssScale;
+    const cx = this.spinButton.container.x + BUTTON_SIZE / 2;
+    const cy = this.spinButton.container.y + BUTTON_SIZE / 2;
+    const r = BUTTON_SIZE / 2;
+    return (gameX - cx) ** 2 + (gameY - cy) ** 2 <= r * r;
   }
 
   private updateBetButtonStates(): void {
@@ -196,52 +251,88 @@ export class Game {
     });
   }
 
-  private doSpin(): void {
+  private doSpin(turbo: boolean): void {
     if (this.reelController.isSpinning) return;
     if (this.balance < this.totalBet) return;
 
     this.stopWinCycle();
     this.winCelebration.stop();
 
-    // Deduct bet
     this.balance -= this.totalBet;
     this.updateBalanceDisplay();
     this.setStatus('Good luck!');
 
-    // Generate result
     this.currentResult = this.slotMath.spin();
 
-    // Disable buttons during spin
     this.spinButton.enabled = false;
     this.betDecrBtn.enabled = false;
     this.betIncrBtn.enabled = false;
 
-    // Start reels
-    this.reelController.startSpin(this.currentResult, () => {
-      this.onSpinComplete();
-    });
+    if (turbo) {
+      if (!this.inTurboMode) {
+        console.log('turbo mode started');
+        this.inTurboMode = true;
+      }
+      console.log('spin turbo');
+      this.reelController.startTurboSpin(this.currentResult, () => this.onSpinComplete());
+    } else {
+      console.log('spin normal');
+      this.reelController.startSpin(this.currentResult, () => this.onSpinComplete());
+    }
   }
 
   private onSpinComplete(): void {
     if (!this.currentResult) return;
-
     const result = this.currentResult;
+    // If button is still held when spin lands → turbo win display + auto-repeat
+    const turbo = this.buttonHeld;
 
     if (result.totalWin > 0) {
       const winAmount = result.totalWin * this.lineBet;
       this.balance += winAmount;
       this.setWinStatus(winAmount);
-      this.reelController.showWins(result, spinConfig.winAllDelay);
-      this.startWinCycle(result);
-      const category = getWinCategory(winAmount, this.totalBet);
-      if (category) this.winCelebration.play(category);
-    } else {
-      this.setStatus('Place your bets');
-    }
 
-    this.updateBalanceDisplay();
-    this.spinButton.enabled = true;
-    this.updateBetButtonStates();
+      if (turbo) {
+        this.reelController.showWinsTurbo(result);
+        const category = getWinCategory(winAmount, this.totalBet);
+        if (category) this.winCelebration.playStatic(category, 500);
+        setTimeout(() => {
+          this.reelController.clearWins();
+          this.updateBalanceDisplay();
+          this.afterTurboRound();
+        }, 300);
+      } else {
+        this.reelController.showWins(result, spinConfig.winAllDelay);
+        this.startWinCycle(result);
+        const category = getWinCategory(winAmount, this.totalBet);
+        if (category) this.winCelebration.play(category);
+        this.updateBalanceDisplay();
+        this.spinButton.enabled = true;
+        this.updateBetButtonStates();
+      }
+    } else {
+      this.updateBalanceDisplay();
+      if (turbo) {
+        this.afterTurboRound();
+      } else {
+        this.setStatus('Place your bets');
+        this.spinButton.enabled = true;
+        this.updateBetButtonStates();
+      }
+    }
+  }
+
+  /** Called after turbo win display ends. Restarts if button still held. */
+  private afterTurboRound(): void {
+    if (this.buttonHeld && this.balance >= this.totalBet) {
+      this.doSpin(true);
+    } else {
+      console.log('turbo mode finished');
+      this.inTurboMode = false;
+      this.setStatus('Place your bets');
+      this.spinButton.enabled = true;
+      this.updateBetButtonStates();
+    }
   }
 
   private setStatus(msg: string): void {

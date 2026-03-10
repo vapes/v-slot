@@ -115,6 +115,33 @@ export class ReelController {
     }
   }
 
+  startTurboSpin(result: SpinResult, onComplete: () => void): void {
+    if (this.spinning) return;
+    this.spinning = true;
+    this.reelsStopped = 0;
+    this.onAllStoppedCallback = onComplete;
+
+    this.demoteWinSymbols();
+
+    for (const reel of this.reels) {
+      for (const sym of reel.getVisibleSymbols()) {
+        sym.stopWinAnimation();
+        sym.alpha = 1;
+      }
+    }
+
+    for (let i = 0; i < REEL_COUNT; i++) {
+      const targetColumn = result.grid[i];
+      this.reels[i].startSpin(targetColumn, 1, () => {
+        this.reelsStopped++;
+        if (this.reelsStopped === REEL_COUNT) {
+          this.spinning = false;
+          this.onAllStoppedCallback?.();
+        }
+      }, true);
+    }
+  }
+
   update(dt: number): void {
     for (const reel of this.reels) {
       reel.update(dt);
@@ -150,6 +177,46 @@ export class ReelController {
         } else if (result.wins.length > 0) {
           sym.alpha = 0.4;
         }
+      }
+    }
+  }
+
+  /** Turbo win display: promote winning symbols with yellow border, dim losers. */
+  showWinsTurbo(result: SpinResult): void {
+    const winPositions = new Set<string>();
+    for (const win of result.wins) {
+      for (const [reel, row] of win.positions) {
+        winPositions.add(`${reel},${row}`);
+      }
+    }
+
+    for (let r = 0; r < REEL_COUNT; r++) {
+      const visible = this.reels[r].getVisibleSymbols();
+      for (let row = 0; row < ROW_COUNT; row++) {
+        const sym = visible[row];
+        if (!sym) continue;
+        const key = `${r},${row}`;
+        if (winPositions.has(key)) {
+          const localY = sym.y;
+          sym.parent?.removeChild(sym);
+          sym.x = r * REEL_WIDTH;
+          sym.y = localY;
+          this.winLayer.addChild(sym);
+          this.promotedSymbols.push({ symbol: sym, reelIndex: r, localY });
+          sym.showTurboHighlight();
+        } else if (result.wins.length > 0) {
+          sym.alpha = 0.4;
+        }
+      }
+    }
+  }
+
+  /** Clear turbo win highlights and restore all symbols. */
+  clearWins(): void {
+    this.demoteWinSymbols();
+    for (const reel of this.reels) {
+      for (const sym of reel.getVisibleSymbols()) {
+        sym.alpha = 1;
       }
     }
   }

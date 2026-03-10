@@ -15,6 +15,7 @@ const TEXT_STYLE = new TextStyle({
 export class SlotSymbol extends Container {
   private content: Container;
   private bg: Graphics;
+  private winBorder: Graphics;
   private label: Text;
   private _symbolId: SymbolId;
   private _winAnimating = false;
@@ -30,6 +31,9 @@ export class SlotSymbol extends Container {
 
     this.bg = new Graphics();
     this.content.addChild(this.bg);
+
+    this.winBorder = new Graphics();
+    this.content.addChild(this.winBorder);
 
     this.label = new Text(symbolId, TEXT_STYLE);
     this.label.anchor.set(0.5);
@@ -73,10 +77,18 @@ export class SlotSymbol extends Container {
     this.content.position.set(SYMBOL_WIDTH / 2, SYMBOL_HEIGHT / 2);
   }
 
+  /** Show a static yellow border for turbo win highlight. */
+  showTurboHighlight(): void {
+    this.winBorder.clear();
+    this.winBorder.lineStyle(4, 0xFFD700, 1);
+    this.winBorder.drawRoundedRect(2, 2, SYMBOL_WIDTH - 4, SYMBOL_HEIGHT - 4, 12);
+  }
+
   /** Stop win animation and reset. */
   stopWinAnimation(): void {
     this._winAnimating = false;
     this._winElapsedMs = 0;
+    this.winBorder.clear();
     this.content.scale.set(1);
     this.content.pivot.set(0, 0);
     this.content.position.set(0, 0);
