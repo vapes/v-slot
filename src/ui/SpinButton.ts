@@ -8,6 +8,7 @@ export class SpinButton {
   private bg: Graphics;
   private label: Text;
   private _enabled = true;
+  private _isStopMode = false;
 
   constructor() {
     this.container = new Container();
@@ -45,14 +46,41 @@ export class SpinButton {
     return this._enabled;
   }
 
+  get isStopMode(): boolean {
+    return this._isStopMode;
+  }
+
+  setStopMode(stop: boolean): void {
+    this._isStopMode = stop;
+    this._enabled = true;
+    this.container.cursor = 'pointer';
+    this.container.alpha = 1;
+    this.draw();
+  }
+
   /** @deprecated kept for compatibility */
   onSpin(_cb: () => void): void { /* no-op */ }
 
   private draw(): void {
     this.bg.clear();
-    this.bg.beginFill(0x4CAF50, 1);
-    this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-    this.bg.endFill();
+    if (this._isStopMode) {
+      this.bg.beginFill(0xE53935, 1);
+      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
+      this.bg.endFill();
+      // Stop icon: white rounded rectangle
+      const iconSize = 30;
+      const iconX = (BUTTON_SIZE - iconSize) / 2;
+      const iconY = (BUTTON_SIZE - iconSize) / 2;
+      this.bg.beginFill(0xFFFFFF, 1);
+      this.bg.drawRoundedRect(iconX, iconY, iconSize, iconSize, 6);
+      this.bg.endFill();
+      this.label.visible = false;
+    } else {
+      this.bg.beginFill(0x4CAF50, 1);
+      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
+      this.bg.endFill();
+      this.label.visible = true;
+    }
   }
 
   positionButton(): void {
@@ -65,9 +93,21 @@ export class SpinButton {
   private onOver(): void {
     if (!this._enabled) return;
     this.bg.clear();
-    this.bg.beginFill(0x66BB6A, 1);
-    this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-    this.bg.endFill();
+    if (this._isStopMode) {
+      this.bg.beginFill(0xEF5350, 1);
+      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
+      this.bg.endFill();
+      const iconSize = 30;
+      const iconX = (BUTTON_SIZE - iconSize) / 2;
+      const iconY = (BUTTON_SIZE - iconSize) / 2;
+      this.bg.beginFill(0xFFFFFF, 1);
+      this.bg.drawRoundedRect(iconX, iconY, iconSize, iconSize, 6);
+      this.bg.endFill();
+    } else {
+      this.bg.beginFill(0x66BB6A, 1);
+      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
+      this.bg.endFill();
+    }
   }
 
   private onOut(): void {

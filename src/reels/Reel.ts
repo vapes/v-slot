@@ -8,7 +8,7 @@ import {
 import { SlotSymbol } from '../symbols/Symbol';
 import { SymbolFactory } from '../symbols/SymbolFactory';
 import { Random } from '../utils/Random';
-import spinConfig from '../core/spinConfig.json';
+import { spin as spinConfig } from '../gameConfig.json';
 
 export enum ReelState {
   Idle,
@@ -180,6 +180,15 @@ export class Reel {
 
   get isIdle(): boolean {
     return this.state === ReelState.Idle;
+  }
+
+  /** Snap to target symbols and play the BounceDown→Settling easing (same as turbo stop). */
+  forceStop(): void {
+    if (this.state === ReelState.Idle) return;
+    this.speed = 0;
+    this.snapToTarget();
+    this.state = ReelState.BounceDown;
+    this.phaseFrame = 0;
   }
 
   private checkScrollComplete(): void {

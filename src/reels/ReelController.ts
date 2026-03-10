@@ -12,7 +12,7 @@ import { Reel } from './Reel';
 import { SymbolFactory } from '../symbols/SymbolFactory';
 import type { SpinResult, WinResult } from '../math/SlotMath';
 import type { SlotSymbol } from '../symbols/Symbol';
-import spinConfig from '../core/spinConfig.json';
+import { spin as spinConfig } from '../gameConfig.json';
 
 interface PromotedSymbol {
   symbol: SlotSymbol;
@@ -55,14 +55,7 @@ export class ReelController {
     this.reelLayer.mask = mask;
     this.container.addChild(this.reelLayer);
 
-    // Reel separators (above mask layer)
-    for (let i = 1; i < REEL_COUNT; i++) {
-      const sep = new Graphics();
-      sep.beginFill(0x333355, 0.5);
-      sep.drawRect(i * REEL_WIDTH - 2, 0, 4, REEL_AREA_HEIGHT);
-      sep.endFill();
-      this.container.addChild(sep);
-    }
+    
 
     // Create reels inside masked layer
     for (let i = 0; i < REEL_COUNT; i++) {
@@ -112,6 +105,14 @@ export class ReelController {
           }
         });
       }, i * startInterval);
+    }
+  }
+
+  /** Instantly stop all spinning reels and snap to their targets. */
+  forceStop(): void {
+    if (!this.spinning) return;
+    for (const reel of this.reels) {
+      reel.forceStop();
     }
   }
 

@@ -1,14 +1,9 @@
 import {
   REEL_COUNT,
-  ROW_COUNT,
   PAYLINES,
-  SYMBOLS,
-  SYMBOL_WEIGHTS,
   type SymbolId,
 } from '../core/Config';
-import gameConfig from '../gameConfig.json';
 import { Paytable } from './Paytable';
-import { Random } from '../utils/Random';
 import type { PrecomputedTable } from './PrecomputedTable';
 
 export interface WinResult {
@@ -29,43 +24,27 @@ export interface SpinResult {
 }
 
 export class SlotMath {
-  private reelStrips: SymbolId[][];
   private table: PrecomputedTable | null = null;
-
-  constructor() {
-    this.reelStrips = gameConfig.reels as SymbolId[][];
-  }
 
   /** Attach a loaded PrecomputedTable; subsequent spin() calls will use it. */
   setTable(table: PrecomputedTable): void {
     this.table = table;
   }
 
-  /** Generate a spin result, using the precomputed table when available. */
+  /** Generate a spin result from the precomputed table. */
   spin(): SpinResult {
-    const grid = (this.table?.isReady ? this.table.pickGrid() : null) ?? this.generateGrid();
+    if (!this.table?.isReady) {
+      throw new Error('PrecomputedTable is not ready');
+    }
+
+    const grid = this.table.pickGrid();
+    if (!grid) {
+      throw new Error('Failed to pick a precomputed grid');
+    }
+
     const wins = this.evaluateWins(grid);
     const totalWin = wins.reduce((sum, w) => sum + w.multiplier, 0);
     return { grid, wins, totalWin };
-  }
-
-  /** Generate random visible grid by picking random stop on each reel strip. */
-  private generateGrid(): SymbolId[][] {
-    const grid: SymbolId[][] = [];
-
-    for (let r = 0; r < REEL_COUNT; r++) {
-      const strip = this.reelStrips[r];
-      const stopIndex = Random.int(0, strip.length);
-      const column: SymbolId[] = [];
-
-      for (let row = 0; row < ROW_COUNT; row++) {
-        const idx = (stopIndex + row) % strip.length;
-        column.push(strip[idx]);
-      }
-      grid.push(column);
-    }
-
-    return grid;
   }
 
   /** Evaluate all paylines against the grid. */
@@ -101,50 +80,5 @@ export class SlotMath {
     }
 
     return wins;
-  }
-
-  /**
-   * Calculate theoretical RTP using combinatorial probability.
-   *
-   * RTP = (sum of expected payouts across all paylines × lineBet) / totalBet
-   *     = (numPaylines × expectedPayoutPerPayline × lineBet) / (numPaylines × lineBet)
-   *     = expectedPayoutPerPayline
-   *
-   * Since all paylines see independent symbol probabilities and the paytable
-   * multipliers are in terms of lineBet, per-payline expected return equals
-   * the expected multiplier for one payline. RTP is this value expressed as
-   * a fraction of 1 lineBet.
-   */
-  static calculateRTP(): { rtp: number; breakdown: Record<SymbolId, number> } {
-    const probs: Record<SymbolId, number> = {} as Record<SymbolId, number>;
-    const totalWeight = SYMBOLS.reduce((sum, s) => sum + SYMBOL_WEIGHTS[s], 0);
-    for (const s of SYMBOLS) {
-      probs[s] = SYMBOL_WEIGHTS[s] / totalWeight;
-    }
-
-    const breakdown: Record<SymbolId, number> = {} as Record<SymbolId, number>;
-    let perPaylineReturn = 0;
-
-    for (const symbol of SYMBOLS) {
-      const p = probs[symbol];
-      let symbolContribution = 0;
-
-      for (let k = 3; k <= 5; k++) {
-        const payout = Paytable.getPayout(symbol, k);
-        if (payout === 0) continue;
-
-        // Probability of exactly k consecutive matches from left
-        const prob = k === 5
-          ? Math.pow(p, 5)
-          : Math.pow(p, k) * (1 - p);
-
-        symbolContribution += prob * payout;
-      }
-
-      breakdown[symbol] = symbolContribution;
-      perPaylineReturn += symbolContribution;
-    }
-
-    return { rtp: perPaylineReturn, breakdown };
   }
 }
