@@ -44,6 +44,7 @@ src/
 │   ├── core/SlotGame.ts     Orchestrator: balance/bet, spin loop (single / hold-turbo / autoplay / quick), win cycle
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
 │   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
+│   ├── core/wakeLock.ts     Screen Wake Lock while a game is open (re-acquired on tab return / first tap)
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
 │   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
