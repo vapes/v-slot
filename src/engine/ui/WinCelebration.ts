@@ -104,7 +104,9 @@ export class WinCelebration {
     }, durationMs);
   }
 
-  play(category: WinCategory): void {
+  /** Fly the banner in; it holds at least `holdMs` (e.g. while the win counts up). */
+  play(category: WinCategory, holdMs = 0): void {
+    const hold = Math.max(HOLD, holdMs / (1000 / 60) - ENTER);
     this.stop();
 
     const word1 = makeText(FIRST_WORD[category]);
@@ -124,8 +126,8 @@ export class WinCelebration {
     this.container.addChild(word1, word2);
 
     this.banners.push(
-      { text: word1, fromX: -this.off, toX:  this.off, elapsed: 0, enterDur: ENTER, holdDur: HOLD, exitDur: EXIT, done: false },
-      { text: word2, fromX:  this.off, toX: -this.off, elapsed: 0, enterDur: ENTER, holdDur: HOLD, exitDur: EXIT, done: false },
+      { text: word1, fromX: -this.off, toX:  this.off, elapsed: 0, enterDur: ENTER, holdDur: hold, exitDur: EXIT, done: false },
+      { text: word2, fromX:  this.off, toX: -this.off, elapsed: 0, enterDur: ENTER, holdDur: hold, exitDur: EXIT, done: false },
     );
 
     this.container.visible = true;

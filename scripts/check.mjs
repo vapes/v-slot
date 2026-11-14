@@ -87,7 +87,14 @@ for (const id of games) {
   }
   c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
   if (c.defaultBetIndex < 0 || c.defaultBetIndex >= c.betOptions.length) bad('defaultBetIndex out of range');
-  if (c.spin.scrollScreens.length < c.grid.cols) bad(`spin.scrollScreens needs ${c.grid.cols} entries`);
+  const { stopTimesMs, scrollScreens, reelStartInterval } = c.spin;
+  if (stopTimesMs) {
+    if (stopTimesMs.length !== c.grid.cols) bad(`spin.stopTimesMs needs ${c.grid.cols} entries`);
+    stopTimesMs.forEach((t, i) => {
+      if (i && t < stopTimesMs[i - 1]) bad('spin.stopTimesMs must not decrease (reels land left to right)');
+      if (t <= i * reelStartInterval) bad(`spin.stopTimesMs[${i}] lands before reel ${i + 1} starts`);
+    });
+  } else if (!scrollScreens || scrollScreens.length < c.grid.cols) bad(`set spin.stopTimesMs or spin.scrollScreens (${c.grid.cols} entries)`);
   if (Array.isArray(c.reels) && c.reels.length) {
     if (c.reels.length !== c.grid.cols) bad(`reels has ${c.reels.length} strips for ${c.grid.cols} reels`);
     c.reels.forEach((strip, i) => strip.forEach(s => { if (!ids.includes(s)) bad(`reel ${i + 1} has unknown symbol "${s}"`); }));
