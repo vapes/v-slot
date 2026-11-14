@@ -53,7 +53,9 @@
     "bounceDown": { "amount": 0.3, "duration": 18 },
     "settle": { "duration": 8 },
     "winAllDelay": 2000,
-    "winLineInterval": 1500
+    "winLineInterval": 1500,
+    "turboWinFrameMs": 400,
+    "turboBannerMs": 600
   },
 
   "rtp": 0.98,
