@@ -99,9 +99,9 @@ const game: GameDefinition = {
 
 `SpinPipeline.execute(ctx)`; `SpinContext = { balance, lineBet, totalBet, turbo, quick, result, winAmount, cancelled, meta }` (money in minor units).
 
-1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → clear status
+1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → status "Good luck!"
 2. **server** — `math.spin()` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
+3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -125,5 +125,6 @@ Stage
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
+- **Status line (all games):** engine-driven via `Hud.setStatus` — "Place your bets" while idle (after load, after a losing spin, after a turbo loop), "Good luck!" from the SPIN press until the result. Texts live in `cfg.status` (defaults in `DEFAULT_MESSAGES`, override with `config.json → messages`). Views only render them.
 - **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.

@@ -62,7 +62,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'showPreSpinUI',
     execute: (ctx) => {
-      hud.setStatus('');
+      hud.setStatus(cfg.status.spin);
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
   });
@@ -127,7 +127,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.winAmount > 0) {
         hud.setWinStatus(ctx.winAmount);
       } else if (!ctx.turbo) {
-        hud.setStatus('');
+        hud.setStatus(cfg.status.idle);
       }
     },
   });

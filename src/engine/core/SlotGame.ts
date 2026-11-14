@@ -123,7 +123,7 @@ export class SlotGame {
     this.updateBetControls(false);
     try {
       await this.math.load?.();
-      view.hud.setStatus('');
+      view.hud.setStatus(cfg.status.idle);
       view.spinButton.enabled = true;
       this.updateBetControls(true);
     } catch (err) {
@@ -163,6 +163,7 @@ export class SlotGame {
     const { spin } = this.cfg;
 
     let isTurbo = false;
+    let lastWon = false;
     do {
       const ctx: SpinContext = {
         balance: this.balance,
@@ -178,6 +179,7 @@ export class SlotGame {
 
       await this.pipeline.execute(ctx);
       this.balance = ctx.balance;
+      lastWon = ctx.winAmount > 0;
 
       if (ctx.cancelled) {
         this.view.hud.setStatus('Not enough balance');
@@ -191,6 +193,8 @@ export class SlotGame {
     } while ((isTurbo || this.autoplay) && this.balance >= this.totalBet);
 
     if (this.balance < this.totalBet) this.setAutoplay(false);
+    // turbo spins skip the idle text; restore it once the loop is over (a win keeps its WIN line)
+    if (!lastWon && this.balance >= this.totalBet) this.view.hud.setStatus(this.cfg.status.idle);
     this.spinLoopActive = false;
     this.view.spinButton.setStopMode(false);
     this.view.spinButton.enabled = true;
