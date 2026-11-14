@@ -14,22 +14,22 @@ export class ClassicView implements GameView {
   private readonly minus = make('minus', 'minus');
   private readonly plus = make('plus', 'plus');
   private readonly auto = make('auto', 'auto');
-  private readonly info = make('info', 'info');
+  private readonly turbo = make('turbo', 'turbo');
   private readonly infoI = make('info_i', 'infoI');
 
   constructor(actions: GameActions) {
     this.minus.onClick(() => actions.changeBet(-1));
     this.plus.onClick(() => actions.changeBet(1));
     this.auto.onClick(actions.toggleAutoplay);
-    this.info.onClick(actions.openPaytable);
+    this.turbo.onClick(actions.toggleQuickSpin);
     this.infoI.onClick(actions.togglePaytable);
     labelButton(this.spinButton, 'spinLabel', 'button.spin', CLASSIC_SPIN_STYLE);
     labelButton(this.auto, 'autoLabel', 'button.autoSpin', CLASSIC_BUTTON_STYLE);
-    labelButton(this.info, 'infoLabel', 'button.info', CLASSIC_BUTTON_STYLE);
+    labelButton(this.turbo, 'turboLabel', 'button.turbo', CLASSIC_BUTTON_STYLE);
   }
 
   private get buttons(): SpriteButton[] {
-    return [this.spinButton, this.minus, this.plus, this.auto, this.info, this.infoI];
+    return [this.spinButton, this.minus, this.plus, this.auto, this.turbo, this.infoI];
   }
 
   mountBelowReels(stage: Container): void {
@@ -50,6 +50,7 @@ export class ClassicView implements GameView {
   }
 
   setAutoplay(on: boolean): void { this.auto.active = on; }
+  setQuickSpin(on: boolean): void { this.turbo.active = on; }
 
   update(dt: number): void {
     for (const b of this.buttons) b.update(dt);

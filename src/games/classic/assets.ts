@@ -2,7 +2,7 @@ import { Assets, Texture } from 'pixi.js';
 import { assetUrl } from '@/engine';
 import { config } from './config';
 
-export const UI_SPRITES = ['info_i', 'auto', 'spin', 'info', 'minus', 'plus'] as const;
+export const UI_SPRITES = ['info_i', 'auto', 'spin', 'turbo', 'minus', 'plus'] as const;
 export type UiSpriteName = typeof UI_SPRITES[number];
 
 const textures = new Map<string, Texture>();
