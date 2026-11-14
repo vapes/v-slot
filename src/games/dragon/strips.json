@@ -1,0 +1,30 @@
+{
+  "real": {
+    "reels": [
+      ["K","A","J","K","A","chest","egg","10","9","K","goblet","10","9","chest","9","crystal","10","9","goblet","Q","10","J","goblet","9","gold","9","J","9","J","gold","goblet","crystal","Q","J","Q","10","A","K","Q","10","K","chest","gold","crystal","J","crystal","A","gold","Q","A"],
+      ["9","goblet","K","9","chest","K","Q","chest","crystal","gold","crystal","A","K","Q","9","K","Q","10","Q","gold","J","goblet","crystal","A","chest","J","10","J","A","9","J","egg","9","K","J","wild","wild","wild","Q","wild","wild","wild","9","goblet","egg","crystal","10","gold","10","goblet","10","A","J","10","A","gold"],
+      ["gold","goblet","A","9","K","gold","J","goblet","K","chest","9","10","K","J","egg","10","9","crystal","J","crystal","Q","chest","10","J","gold","K","J","crystal","goblet","A","9","A","9","A","Q","9","Q","10","wild","wild","wild","10","Q","J","goblet","Q","egg","wild","wild","wild","crystal","chest","Q","K","10","A"],
+      ["egg","K","chest","wild","wild","wild","10","9","A","goblet","9","A","goblet","gold","A","crystal","Q","9","crystal","9","crystal","J","10","9","gold","K","J","10","goblet","gold","wild","wild","wild","9","Q","10","Q","crystal","K","J","9","chest","goblet","10","K","A","10","9","J","10","9","J","Q","A","gold","J","K","chest","Q"]
+    ],
+    "nest": [
+      ["crystal","gold","goblet","gold","goblet","crystal","gold","goblet","crystal","goblet","chest","crystal","gold","goblet","crystal","gold","goblet","chest","crystal","goblet","crystal","chest","goblet","gold","crystal","chest","goblet","dragon"],
+      ["crystal","gold","goblet","crystal","chest","goblet","gold","crystal","goblet","wild","wild","wild","gold","chest","crystal","goblet","gold","goblet","crystal","gold","goblet","chest","crystal","goblet","crystal","dragon","chest","goblet","crystal","goblet","gold"],
+      ["crystal","gold","crystal","goblet","gold","crystal","goblet","chest","goblet","crystal","gold","goblet","chest","goblet","crystal","gold","chest","crystal","dragon","goblet","wild","wild","wild","crystal","gold","goblet","crystal","chest","goblet","gold","goblet"],
+      ["dragon","wild","wild","wild","chest","crystal","goblet","crystal","gold","crystal","goblet","crystal","goblet","chest","goblet","gold","chest","crystal","gold","chest","goblet","gold","goblet","crystal","gold","crystal","goblet","crystal","goblet","gold","goblet"]
+    ]
+  },
+  "demo": {
+    "reels": [
+      ["Q","gold","A","J","crystal","10","J","goblet","10","chest","gold","A","gold","crystal","Q","9","K","J","10","K","goblet","J","10","gold","10","A","egg","K","goblet","Q","chest","J","9","crystal","9","J","9","K","A","9","A","K","goblet","9","chest","egg","crystal","Q","9","Q","10","egg"],
+      ["10","J","K","J","chest","A","gold","crystal","chest","10","egg","crystal","gold","goblet","Q","A","10","J","9","wild","wild","wild","9","J","9","goblet","10","gold","crystal","K","egg","Q","gold","10","chest","10","J","K","goblet","A","Q","wild","wild","wild","9","A","K","egg","A","Q","goblet","crystal","Q","9","K","9","J"],
+      ["chest","10","chest","9","wild","wild","wild","9","10","K","Q","A","K","gold","10","goblet","egg","10","goblet","A","9","Q","K","crystal","J","K","egg","goblet","10","A","gold","crystal","Q","J","chest","J","9","egg","A","Q","gold","10","crystal","goblet","Q","A","J","Q","9","K","J","9","crystal","J","wild","wild","wild"],
+      ["goblet","Q","9","gold","10","chest","crystal","Q","J","Q","J","9","goblet","10","goblet","10","Q","gold","9","K","crystal","wild","wild","wild","egg","Q","egg","chest","K","9","A","J","gold","crystal","9","J","wild","wild","wild","A","crystal","egg","goblet","K","10","A","K","J","10","9","J","10","gold","9","10","A","9","A","K","chest","9"]
+    ],
+    "nest": [
+      ["goblet","crystal","goblet","crystal","goblet","gold","goblet","gold","goblet","chest","goblet","crystal","goblet","gold","chest","goblet","chest","dragon","crystal","goblet","gold","crystal","gold","crystal","gold","crystal","chest","crystal"],
+      ["wild","wild","wild","crystal","goblet","chest","goblet","chest","crystal","goblet","gold","goblet","crystal","gold","goblet","crystal","goblet","crystal","gold","goblet","gold","chest","dragon","crystal","gold","goblet","crystal","goblet","crystal","chest","gold"],
+      ["chest","goblet","chest","dragon","crystal","goblet","crystal","chest","crystal","goblet","wild","wild","wild","gold","goblet","gold","goblet","crystal","gold","goblet","chest","gold","crystal","goblet","crystal","gold","crystal","goblet","crystal","goblet","gold"],
+      ["crystal","gold","goblet","crystal","goblet","crystal","goblet","crystal","goblet","chest","crystal","goblet","gold","goblet","chest","crystal","goblet","gold","crystal","gold","goblet","chest","wild","wild","wild","gold","goblet","gold","dragon","crystal","chest"]
+    ]
+  }
+}
