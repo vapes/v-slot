@@ -1,50 +1,42 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { GAME_WIDTH, GAME_HEIGHT, REEL_AREA_HEIGHT, REEL_OFFSET_Y } from '../core/Config';
+import { Graphics } from 'pixi.js';
+import { uiAnchor } from '../core/Config';
+import { SpriteButton } from './SpriteButton';
 
-export const BUTTON_SIZE = 100;
+const anchor = uiAnchor('spin');
 
-export class SpinButton {
-  readonly container: Container;
-  private bg: Graphics;
-  private label: Text;
-  private _enabled = true;
+/**
+ * Big dragon-wing spin button. In stop mode a dark disc with a gold
+ * "stop" square covers the arrow. Input is handled by GameInput (hit test).
+ */
+export class SpinButton extends SpriteButton {
+  private stopOverlay: Graphics;
   private _isStopMode = false;
+  private spinAngle = 0;
 
   constructor() {
-    this.container = new Container();
-    this.container.eventMode = 'static';
-    this.container.cursor = 'pointer';
+    super('spin', anchor.r);
+    this.setPosition(anchor.x, anchor.y);
+    // GameInput drives this button from window pointer events (turbo hold detection)
+    this.container.eventMode = 'none';
 
-    this.bg = new Graphics();
-    this.container.addChild(this.bg);
-
-    this.label = new Text('SPIN', new TextStyle({
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      fontSize: 28,
-      fontWeight: 'bold',
-      fill: 0xFFFFFF,
-    }));
-    this.label.anchor.set(0.5);
-    this.label.x = BUTTON_SIZE / 2;
-    this.label.y = BUTTON_SIZE / 2;
-    this.container.addChild(this.label);
-
-    this.draw();
-    this.positionButton();
-
-    this.container.on('pointerover', this.onOver, this);
-    this.container.on('pointerout', this.onOut, this);
+    this.stopOverlay = new Graphics();
+    const r = anchor.r * 0.8;
+    this.stopOverlay.beginFill(0x1A0B05, 0.92);
+    this.stopOverlay.drawCircle(0, 0, r);
+    this.stopOverlay.endFill();
+    this.stopOverlay.lineStyle(3, 0xFFC94A, 0.9);
+    this.stopOverlay.drawCircle(0, 0, r);
+    const s = r * 0.62;
+    this.stopOverlay.lineStyle(0);
+    this.stopOverlay.beginFill(0xFFC94A, 1);
+    this.stopOverlay.drawRoundedRect(-s / 2, -s / 2, s, s, 6);
+    this.stopOverlay.endFill();
+    this.stopOverlay.visible = false;
+    this.container.addChild(this.stopOverlay);
   }
 
-  set enabled(value: boolean) {
-    this._enabled = value;
-    this.container.cursor = value ? 'pointer' : 'default';
-    this.container.alpha = value ? 1 : 0.5;
-  }
-
-  get enabled(): boolean {
-    return this._enabled;
-  }
+  get centerX(): number { return this.container.x; }
+  get centerY(): number { return this.container.y; }
 
   get isStopMode(): boolean {
     return this._isStopMode;
@@ -52,65 +44,16 @@ export class SpinButton {
 
   setStopMode(stop: boolean): void {
     this._isStopMode = stop;
-    this._enabled = true;
-    this.container.cursor = 'pointer';
-    this.container.alpha = 1;
-    this.draw();
+    this.enabled = true;
+    this.stopOverlay.visible = stop;
+    if (!stop) this.sprite.rotation = 0;
   }
 
-  /** @deprecated kept for compatibility */
-  onSpin(_cb: () => void): void { /* no-op */ }
-
-  private draw(): void {
-    this.bg.clear();
-    if (this._isStopMode) {
-      this.bg.beginFill(0xE53935, 1);
-      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-      this.bg.endFill();
-      // Stop icon: white rounded rectangle
-      const iconSize = 30;
-      const iconX = (BUTTON_SIZE - iconSize) / 2;
-      const iconY = (BUTTON_SIZE - iconSize) / 2;
-      this.bg.beginFill(0xFFFFFF, 1);
-      this.bg.drawRoundedRect(iconX, iconY, iconSize, iconSize, 6);
-      this.bg.endFill();
-      this.label.visible = false;
-    } else {
-      this.bg.beginFill(0x4CAF50, 1);
-      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-      this.bg.endFill();
-      this.label.visible = true;
-    }
-  }
-
-  positionButton(): void {
-    const reelBottom = REEL_OFFSET_Y + REEL_AREA_HEIGHT;
-    const centerY = (reelBottom + GAME_HEIGHT) / 2;
-    this.container.x = (GAME_WIDTH - BUTTON_SIZE) / 2;
-    this.container.y = centerY - BUTTON_SIZE / 2;
-  }
-
-  private onOver(): void {
-    if (!this._enabled) return;
-    this.bg.clear();
-    if (this._isStopMode) {
-      this.bg.beginFill(0xEF5350, 1);
-      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-      this.bg.endFill();
-      const iconSize = 30;
-      const iconX = (BUTTON_SIZE - iconSize) / 2;
-      const iconY = (BUTTON_SIZE - iconSize) / 2;
-      this.bg.beginFill(0xFFFFFF, 1);
-      this.bg.drawRoundedRect(iconX, iconY, iconSize, iconSize, 6);
-      this.bg.endFill();
-    } else {
-      this.bg.beginFill(0x66BB6A, 1);
-      this.bg.drawCircle(BUTTON_SIZE / 2, BUTTON_SIZE / 2, BUTTON_SIZE / 2);
-      this.bg.endFill();
-    }
-  }
-
-  private onOut(): void {
-    this.draw();
+  /** Small wobble while the reels spin. */
+  override update(dt: number): void {
+    super.update(dt);
+    if (!this._isStopMode) return;
+    this.spinAngle += dt * 0.25;
+    this.sprite.rotation = Math.sin(this.spinAngle) * 0.03;
   }
 }

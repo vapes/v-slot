@@ -1,10 +1,14 @@
 import type { SpinResult } from '../math/SlotMath';
 
 export interface SpinContext {
+  /** All money values are integer cents. */
   balance: number;
   lineBet: number;
   totalBet: number;
+  /** Hold-to-repeat turbo loop: quick reels + abbreviated win display. */
   turbo: boolean;
+  /** TURBO toggle: quick reels, full win presentation. */
+  quick: boolean;
   result: SpinResult | null;
   winAmount: number;
   cancelled: boolean;

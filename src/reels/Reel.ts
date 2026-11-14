@@ -37,7 +37,6 @@ export class Reel {
   private phaseFrame = 0;
   private onStopCallback: (() => void) | null = null;
 
-  // Distance-based spin tracking
   private totalScrolled = 0;
   private blurDistance = 0;   // pixels of blur symbols before targets
   private totalDistance = 0;  // total pixels to scroll (blur + target entry)
@@ -85,17 +84,6 @@ export class Reel {
     for (const sym of this.symbols) {
       sym.stopWinAnimation();
     }
-  }
-
-  /** Turbo: instantly snap to target symbols, skip all animation. */
-  startTurboSpin(targetSymbols: SymbolId[], onStop: () => void): void {
-    this.targetSymbols = targetSymbols;
-    for (const sym of this.symbols) {
-      sym.stopWinAnimation();
-    }
-    this.snapToTarget();
-    this.state = ReelState.Idle;
-    setTimeout(onStop, 0);
   }
 
   update(dt: number): void {

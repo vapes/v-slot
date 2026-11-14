@@ -1,5 +1,5 @@
 import gameConfig from '../gameConfig.json';
-import type { SymbolId } from '../core/Config';
+import { REEL_COUNT, type SymbolId } from '../core/Config';
 
 export interface PayEntry {
   symbol: SymbolId;
@@ -8,35 +8,30 @@ export interface PayEntry {
 }
 
 /**
- * Paytable definition.
- * Payouts are multipliers of the LINE BET (not total bet).
- *
- * Symbol tiers (highest to lowest):
- *   V → A → P → E → S
- *
- * Designed for ~98% RTP with 20 paylines and weighted reels:
- *   V=10%, A=13.3%, P=20%, E=26.7%, S=30%
+ * Payout multipliers of the LINE BET (line bet = total bet / number of lines).
+ * Wild substitutes for every paying symbol and pays nothing on its own.
+ * Theoretical RTP (exact enumeration, see scripts/build-reels.mjs): gameConfig.rtp.
  */
 const PAY_MAP = gameConfig.paytable as Record<SymbolId, Record<string, number>>;
 
 export class Paytable {
-  /** Get payout multiplier for a given symbol and match count. Returns 0 if no win. */
+  /** Payout multiplier for a symbol and match count. Returns 0 if no win. */
   static getPayout(symbol: SymbolId, matchCount: number): number {
-    if (matchCount < 3) return 0;
-    const effective = Math.min(matchCount, 5);
+    const effective = Math.min(matchCount, REEL_COUNT);
     return PAY_MAP[symbol]?.[String(effective)] ?? 0;
+  }
+
+  /** Match counts that pay, ascending (e.g. [3, 4]). */
+  static payingCounts(symbol: SymbolId): number[] {
+    return Object.keys(PAY_MAP[symbol] ?? {}).map(Number).sort((a, b) => a - b);
   }
 
   /** Get all pay entries for display. */
   static getAllEntries(): PayEntry[] {
     const entries: PayEntry[] = [];
-    for (const symbol of Object.keys(PAY_MAP) as SymbolId[]) {
-      for (const count of [3, 4, 5]) {
-        entries.push({
-          symbol,
-          count,
-          multiplier: PAY_MAP[symbol][String(count)],
-        });
+    for (const symbol of Object.keys(PAY_MAP)) {
+      for (const count of this.payingCounts(symbol)) {
+        entries.push({ symbol, count, multiplier: PAY_MAP[symbol][String(count)] });
       }
     }
     return entries;

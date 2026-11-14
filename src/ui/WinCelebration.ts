@@ -13,7 +13,7 @@ const RCY = REEL_OFFSET_Y + REEL_AREA_HEIGHT / 2;
 
 const OFF = GAME_WIDTH + 350;  // off-screen horizontal padding
 
-const FONT_SIZE = 96;
+const FONT_SIZE = 88;
 const LINE_HALF = FONT_SIZE * 0.58;  // half gap between the two lines
 
 // Durations in PixiJS frames (@ 60 fps)
@@ -54,8 +54,9 @@ function makeText(label: string): Text {
     fontFamily:      'Arial Black, Arial, sans-serif',
     fontSize:        FONT_SIZE,
     fontWeight:      'bold',
-    fill:            0xFFFFFF,
-    stroke:          0x000000,
+    fill:            ['#FFF8D0', '#FFD34A', '#FF8A00', '#C2410C'],
+    fillGradientStops: [0, 0.4, 0.75, 1],
+    stroke:          0x3A0A00,
     strokeThickness: 10,
     dropShadow:      true,
     dropShadowDistance: 4,
@@ -193,13 +194,13 @@ export class WinCelebration {
 
 /**
  * Maps win amount to a celebration category based on win/totalBet ratio.
- * Thresholds: BIG ≥ 2×, HUGE ≥ 5×, EPIC ≥ 20×, MAX ≥ 50×.
+ * Thresholds: BIG ≥ 10×, HUGE ≥ 25×, EPIC ≥ 50×, MAX ≥ 100×.
  */
 export function getWinCategory(winAmount: number, totalBet: number): WinCategory | null {
   const x = winAmount / totalBet;
-  if (x >= 50) return 'max';
-  if (x >= 20) return 'epic';
-  if (x >= 5)  return 'huge';
-  if (x >= 2)  return 'big';
+  if (x >= 100) return 'max';
+  if (x >= 50)  return 'epic';
+  if (x >= 25)  return 'huge';
+  if (x >= 10)  return 'big';
   return null;
 }

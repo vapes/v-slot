@@ -1,10 +1,12 @@
 import {
   REEL_COUNT,
+  ROW_COUNT,
   PAYLINES,
+  REEL_STRIPS,
+  WILD,
   type SymbolId,
 } from '../core/Config';
 import { Paytable } from './Paytable';
-import type { PrecomputedTable } from './PrecomputedTable';
 
 export interface WinResult {
   paylineIndex: number;
@@ -15,67 +17,50 @@ export interface WinResult {
 }
 
 export interface SpinResult {
-  /** The visible 5×3 grid: grid[reel][row] */
+  /** The visible grid: grid[reel][row] */
   grid: SymbolId[][];
   /** All winning paylines */
   wins: WinResult[];
-  /** Total win multiplier (sum of all payline wins) */
+  /** Total win multiplier of the line bet (sum of all payline wins) */
   totalWin: number;
 }
 
+/**
+ * Reel-strip RNG: every reel stops at a uniformly random strip position and
+ * shows ROW_COUNT consecutive symbols. Strips, paytable and paylines come from
+ * gameConfig.json; their exact RTP is computed by scripts/build-reels.mjs.
+ */
 export class SlotMath {
-  private table: PrecomputedTable | null = null;
-
-  /** Attach a loaded PrecomputedTable; subsequent spin() calls will use it. */
-  setTable(table: PrecomputedTable): void {
-    this.table = table;
-  }
-
-  /** Generate a spin result from the precomputed table. */
   spin(): SpinResult {
-    if (!this.table?.isReady) {
-      throw new Error('PrecomputedTable is not ready');
-    }
-
-    const grid = this.table.pickGrid();
-    if (!grid) {
-      throw new Error('Failed to pick a precomputed grid');
-    }
-
-    const wins = this.evaluateWins(grid);
+    const grid = REEL_STRIPS.map(strip => {
+      const stop = Math.floor(Math.random() * strip.length);
+      return Array.from({ length: ROW_COUNT }, (_, row) => strip[(stop + row) % strip.length]);
+    });
+    const wins = SlotMath.evaluate(grid);
     const totalWin = wins.reduce((sum, w) => sum + w.multiplier, 0);
     return { grid, wins, totalWin };
   }
 
-  /** Evaluate all paylines against the grid. */
-  private evaluateWins(grid: SymbolId[][]): WinResult[] {
+  /** Evaluate all paylines left-to-right; wild substitutes for any paying symbol. */
+  static evaluate(grid: SymbolId[][]): WinResult[] {
     const wins: WinResult[] = [];
 
     for (let pl = 0; pl < PAYLINES.length; pl++) {
-      const payline = PAYLINES[pl];
-      const firstSymbol = grid[0][payline[0]];
-      let matchCount = 1;
-      const positions: [number, number][] = [[0, payline[0]]];
+      const line = PAYLINES[pl];
+      let symbol: SymbolId | null = null;
+      const positions: [number, number][] = [];
 
-      for (let reel = 1; reel < REEL_COUNT; reel++) {
-        const sym = grid[reel][payline[reel]];
-        if (sym === firstSymbol) {
-          matchCount++;
-          positions.push([reel, payline[reel]]);
-        } else {
-          break;
-        }
+      for (let reel = 0; reel < REEL_COUNT; reel++) {
+        const sym = grid[reel][line[reel]];
+        if (symbol === null && sym !== WILD) symbol = sym;
+        if (sym !== WILD && sym !== symbol) break;
+        positions.push([reel, line[reel]]);
       }
 
-      const multiplier = Paytable.getPayout(firstSymbol, matchCount);
+      if (symbol === null) continue;
+      const multiplier = Paytable.getPayout(symbol, positions.length);
       if (multiplier > 0) {
-        wins.push({
-          paylineIndex: pl,
-          symbol: firstSymbol,
-          count: matchCount,
-          multiplier,
-          positions,
-        });
+        wins.push({ paylineIndex: pl, symbol, count: positions.length, multiplier, positions });
       }
     }
 

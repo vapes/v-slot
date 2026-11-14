@@ -1,6 +1,7 @@
 import { SpinPipeline } from './SpinPipeline';
 import { spin as spinConfig } from '../gameConfig.json';
 import { getWinCategory } from '../ui/WinCelebration';
+import { REEL_COUNT } from '../core/Config';
 import type { SpinResult } from '../math/SlotMath';
 import type { SlotMath } from '../math/SlotMath';
 import type { ReelController } from '../reels/ReelController';
@@ -61,7 +62,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'showPreSpinUI',
     execute: (ctx) => {
-      hud.setStatus('Good luck!');
+      hud.setStatus('');
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
   });
@@ -80,12 +81,12 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     execute: (ctx) => {
       console.log(ctx.turbo ? 'spin turbo' : 'spin normal');
       return new Promise<void>((resolve) => {
-        if (ctx.turbo) {
+        if (ctx.turbo || ctx.quick) {
           reelController.startTurboSpin(ctx.result!, resolve);
         } else {
           reelController.startSpin(ctx.result!, resolve);
           // If button is held, auto-forceStop after all reels have started
-          const allReelsStartDelay = spinConfig.reelStartInterval * 5;
+          const allReelsStartDelay = spinConfig.reelStartInterval * REEL_COUNT;
           setTimeout(() => {
             if (deps.isButtonHeld()) reelController.forceStop();
           }, allReelsStartDelay);
@@ -126,7 +127,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.winAmount > 0) {
         hud.setWinStatus(ctx.winAmount);
       } else if (!ctx.turbo) {
-        hud.setStatus('Place your bets');
+        hud.setStatus('');
       }
     },
   });

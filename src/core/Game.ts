@@ -1,47 +1,51 @@
-import { Application } from 'pixi.js';
-import { GAME_WIDTH, GAME_HEIGHT, BET_OPTIONS } from './Config';
+import { Application, Sprite } from 'pixi.js';
+import {
+  GAME_WIDTH, GAME_HEIGHT, BET_OPTIONS, DEFAULT_BET_INDEX, START_BALANCE, PAYLINES, SYMBOL_NAMES,
+} from './Config';
 import { spin as spinConfig } from '../gameConfig.json';
 import { GameInput } from './GameInput';
+import { backgroundTexture } from './SkinAssets';
 import { ReelController } from '../reels/ReelController';
 import { SlotMath, type SpinResult } from '../math/SlotMath';
-import { PrecomputedTable } from '../math/PrecomputedTable';
-import { SpinButton } from '../ui/SpinButton';
-import { BetButton } from '../ui/BetButton';
+import { ControlPanel } from '../ui/ControlPanel';
 import { WinCelebration } from '../ui/WinCelebration';
-import { PaytableScreen, InfoButton } from '../ui/PaytableScreen';
+import { PaytableScreen } from '../ui/PaytableScreen';
 import { GameHUD } from '../ui/GameHUD';
+import { formatMoney } from '../utils/Money';
 import type { SpinPipeline, SpinContext } from '../pipeline/SpinPipeline';
 import { buildSpinPipeline } from '../pipeline/buildSpinPipeline';
+
+const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 export class Game {
   private app: Application;
   private reelController: ReelController;
   private slotMath: SlotMath;
-  private spinButton: SpinButton;
+  private controls: ControlPanel;
   private hud: GameHUD;
   private input!: GameInput;
 
-  private betDecrBtn: BetButton;
-  private betIncrBtn: BetButton;
   private winCycleTimer: ReturnType<typeof setTimeout> | null = null;
   private winCelebration: WinCelebration;
   private paytableScreen: PaytableScreen;
-  private infoBtn: InfoButton;
   readonly pipeline: SpinPipeline;
 
-  private balance = 10000;
-  private betIndex = 0;
-  private get lineBet(): number { return BET_OPTIONS[this.betIndex]; }
-  private readonly numLines = 20;
-  private get totalBet(): number { return this.lineBet * this.numLines; }
+  /** Money is kept in integer cents. */
+  private balance = START_BALANCE;
+  private betIndex = DEFAULT_BET_INDEX;
+  private get totalBet(): number { return BET_OPTIONS[this.betIndex]; }
+  private get lineBet(): number { return this.totalBet / PAYLINES.length; }
 
+  private spinLoopActive = false;
+  private autoplay = false;
+  private quickSpin = false;
   private inTurboMode = false;
 
   constructor() {
     this.app = new Application({
       width: GAME_WIDTH,
       height: GAME_HEIGHT,
-      backgroundColor: 0x0D0D1A,
+      backgroundColor: 0x120818,
       antialias: true,
       resolution: Math.min(window.devicePixelRatio || 1, 2),
       autoDensity: true,
@@ -49,13 +53,20 @@ export class Game {
 
     this.slotMath = new SlotMath();
     this.reelController = new ReelController();
-    this.spinButton = new SpinButton();
-    this.betDecrBtn = new BetButton('−');
-    this.betIncrBtn = new BetButton('+');
     this.winCelebration = new WinCelebration();
     this.paytableScreen = new PaytableScreen();
     this.hud = new GameHUD();
-    this.infoBtn = new InfoButton(() => this.paytableScreen.toggle());
+    this.controls = new ControlPanel({
+      onMenu: () => this.paytableScreen.toggle(this.lineBet),
+      onTrophy: () => this.paytableScreen.show(this.lineBet),
+      onCoins: () => this.changeBet(1, true),
+      onAuto: () => this.setAutoplay(!this.autoplay),
+      onTurbo: () => {
+        this.quickSpin = !this.quickSpin;
+        this.controls.turboBtn.active = this.quickSpin;
+      },
+    });
+    const { spinButton, betDecrBtn, betIncrBtn } = this.controls;
 
     this.pipeline = buildSpinPipeline({
       slotMath: this.slotMath,
@@ -65,19 +76,14 @@ export class Game {
       isButtonHeld: () => this.input.buttonHeld,
       setBalance: (b) => { this.balance = b; },
       showStopButton: () => {
-        this.spinButton.setStopMode(true);
-        this.betDecrBtn.enabled = false;
-        this.betIncrBtn.enabled = false;
+        spinButton.setStopMode(true);
+        betDecrBtn.enabled = false;
+        betIncrBtn.enabled = false;
       },
-      hideStopButton: () => {
-        this.spinButton.setStopMode(false);
-      },
-      disableBetButtons: () => {
-        this.betDecrBtn.enabled = false;
-        this.betIncrBtn.enabled = false;
-      },
+      hideStopButton: () => spinButton.setStopMode(false),
+      disableBetButtons: () => this.setBetControlsEnabled(false),
       enableControls: () => {
-        this.spinButton.enabled = true;
+        spinButton.enabled = true;
         this.updateBetButtonStates();
       },
       stopWinCycle: () => this.stopWinCycle(),
@@ -85,99 +91,86 @@ export class Game {
     });
 
     this.hud.updateBalanceDisplay(this.balance, this.totalBet);
-    this.spinButton.enabled = false;
-    this.betDecrBtn.enabled = false;
-    this.betIncrBtn.enabled = false;
-    this.hud.setStatus('Loading screens...');
-  }
-
-async init(): Promise<void> {
-    const canvas = this.app.view as HTMLCanvasElement;
-    document.body.appendChild(canvas);
-
-    this.input = new GameInput(canvas, this.spinButton, this.betDecrBtn, this.betIncrBtn, {
-      onSpin: () => this.doSpin(false),
-      onStop: () => this.reelController.forceStop(),
-      onBetChange: (delta) => {
-        const newIndex = this.betIndex + delta;
-        if (newIndex >= 0 && newIndex < BET_OPTIONS.length) {
-          this.betIndex = newIndex;
-          this.hud.updateBalanceDisplay(this.balance, this.totalBet);
-          this.updateBetButtonStates();
-        }
-      },
-    });
-
-    this.setupStage();
-    this.setupTicker();
-    this.handleResize();
-    window.addEventListener('resize', () => this.handleResize());
-
-    const table = new PrecomputedTable();
-    try {
-      await table.load(import.meta.env.BASE_URL + 'screens.bin');
-      this.slotMath.setTable(table);
-      this.hud.setStatus('Place your bets');
-      this.spinButton.enabled = true;
-      this.updateBetButtonStates();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      this.hud.setStatus('Failed to load screens.bin');
-      console.error('[Game] Failed to load precomputed table:', message);
-    }
-  }
-
-  private setupStage(): void {
-    this.positionBetButtons();
-    this.app.stage.addChild(this.reelController.container);
-    this.app.stage.addChild(this.spinButton.container);
-    this.app.stage.addChild(this.betDecrBtn.container);
-    this.app.stage.addChild(this.betIncrBtn.container);
-    this.hud.addToStage(this.app.stage);
-    this.app.stage.addChild(this.winCelebration.container);
-
-    this.infoBtn.container.x = 46;
-    this.infoBtn.container.y = GAME_HEIGHT - 46;
-    this.app.stage.addChild(this.infoBtn.container);
-    this.app.stage.addChild(this.paytableScreen.container);
-  }
-
-  private positionBetButtons(): void {
-    const spinCenterX = GAME_WIDTH / 2;
-    const spinCenterY = this.spinButton.container.y + 50;
-    const betBtnRadius = 35;
-    const gap = 25;
-
-    this.betDecrBtn.container.x = spinCenterX - 50 - gap - betBtnRadius * 2;
-    this.betDecrBtn.container.y = spinCenterY - betBtnRadius;
-    this.betIncrBtn.container.x = spinCenterX + 50 + gap;
-    this.betIncrBtn.container.y = spinCenterY - betBtnRadius;
-
     this.updateBetButtonStates();
   }
 
-  private updateBetButtonStates(): void {
-    this.betDecrBtn.enabled = this.betIndex > 0;
-    this.betIncrBtn.enabled = this.betIndex < BET_OPTIONS.length - 1;
-  }
+  async init(): Promise<void> {
+    const canvas = this.app.view as HTMLCanvasElement;
+    document.body.appendChild(canvas);
 
-  private setupTicker(): void {
+    const { spinButton, betDecrBtn, betIncrBtn } = this.controls;
+    this.input = new GameInput(canvas, spinButton, betDecrBtn, betIncrBtn, {
+      onSpin: () => {
+        if (this.autoplay) this.setAutoplay(false);
+        else void this.doSpin();
+      },
+      onStop: () => this.reelController.forceStop(),
+      onBetChange: (delta) => this.changeBet(delta, false),
+      canInteract: () => !this.paytableScreen.isOpen,
+    });
+
+    this.setupStage();
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);
       this.winCelebration.update(dt);
+      this.controls.update(dt);
     });
+    this.handleResize();
+    window.addEventListener('resize', () => this.handleResize());
   }
 
-  private async doSpin(turbo: boolean): Promise<void> {
-    if (this.reelController.isSpinning) return;
+  private setupStage(): void {
+    const bg = new Sprite(backgroundTexture());
+    bg.width = GAME_WIDTH;
+    bg.height = GAME_WIDTH * bg.texture.height / bg.texture.width;
+    this.app.stage.addChild(bg);
 
-    let isTurbo = turbo;
+    this.app.stage.addChild(this.reelController.container);
+    this.controls.addToStage(this.app.stage);
+    this.hud.addToStage(this.app.stage);
+    this.app.stage.addChild(this.winCelebration.container);
+    this.app.stage.addChild(this.paytableScreen.container);
+  }
+
+  private changeBet(delta: -1 | 1, wrap: boolean): void {
+    if (this.spinLoopActive) return;
+    let next = this.betIndex + delta;
+    if (wrap) next = (next + BET_OPTIONS.length) % BET_OPTIONS.length;
+    if (next < 0 || next >= BET_OPTIONS.length) return;
+    this.betIndex = next;
+    this.hud.updateBalanceDisplay(this.balance, this.totalBet);
+    this.updateBetButtonStates();
+  }
+
+  private setBetControlsEnabled(on: boolean): void {
+    const { betDecrBtn, betIncrBtn, coinsBtn } = this.controls;
+    betDecrBtn.enabled = on && this.betIndex > 0;
+    betIncrBtn.enabled = on && this.betIndex < BET_OPTIONS.length - 1;
+    coinsBtn.enabled = on;
+  }
+
+  private updateBetButtonStates(): void {
+    this.setBetControlsEnabled(!this.spinLoopActive);
+  }
+
+  private setAutoplay(on: boolean): void {
+    this.autoplay = on;
+    this.controls.autoBtn.active = on;
+    if (on && !this.spinLoopActive) void this.doSpin();
+  }
+
+  private async doSpin(): Promise<void> {
+    if (this.reelController.isSpinning || this.spinLoopActive) return;
+    this.spinLoopActive = true;
+
+    let isTurbo = false;
     do {
       const ctx: SpinContext = {
         balance: this.balance,
         lineBet: this.lineBet,
         totalBet: this.totalBet,
         turbo: isTurbo,
+        quick: this.quickSpin,
         result: null,
         winAmount: 0,
         cancelled: false,
@@ -187,15 +180,23 @@ async init(): Promise<void> {
       await this.pipeline.execute(ctx);
       this.balance = ctx.balance;
 
-      if (ctx.cancelled) break;
+      if (ctx.cancelled) {
+        this.hud.setStatus('Not enough balance');
+        break;
+      }
 
       isTurbo = ctx.turbo && this.input.buttonHeld;
       if (isTurbo && !this.inTurboMode) {
         this.inTurboMode = true;
         console.log('turbo mode started');
       }
-    } while (isTurbo && this.balance >= this.totalBet);
+      if (!isTurbo && this.autoplay) {
+        await delay(ctx.winAmount > 0 ? spinConfig.autoplayWinPause : spinConfig.autoplayPause);
+      }
+    } while ((isTurbo || this.autoplay) && this.balance >= this.totalBet);
 
+    if (this.balance < this.totalBet) this.setAutoplay(false);
+    this.spinLoopActive = false;
     this.endSpinCycle();
   }
 
@@ -204,22 +205,21 @@ async init(): Promise<void> {
       this.inTurboMode = false;
       console.log('turbo mode finished');
     }
-    if (this.spinButton.isStopMode || !this.spinButton.enabled) {
-      this.hud.setStatus('Place your bets');
-      this.spinButton.setStopMode(false);
-      this.spinButton.enabled = true;
-      this.updateBetButtonStates();
-    }
+    const { spinButton } = this.controls;
+    spinButton.setStopMode(false);
+    spinButton.enabled = true;
+    this.updateBetButtonStates();
   }
 
   private startWinCycle(result: SpinResult): void {
     const { winAllDelay, winLineInterval } = spinConfig;
+    const lineBet = this.lineBet;
     let lineIndex = 0;
     const showNextLine = () => {
       const win = result.wins[lineIndex];
       this.reelController.showWinLine(win, winLineInterval);
-      const amount = win.multiplier * this.lineBet;
-      this.hud.setLineInfo(`Line ${win.paylineIndex + 1} pays ${amount}`);
+      const amount = formatMoney(win.multiplier * lineBet);
+      this.hud.setLineInfo(`LINE ${win.paylineIndex + 1}: ${win.count}× ${SYMBOL_NAMES[win.symbol].toUpperCase()} — ${amount}`);
       lineIndex = (lineIndex + 1) % result.wins.length;
       this.winCycleTimer = setTimeout(showNextLine, winLineInterval);
     };

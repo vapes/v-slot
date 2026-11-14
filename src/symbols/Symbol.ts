@@ -1,22 +1,11 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { SYMBOL_WIDTH, SYMBOL_HEIGHT, SYMBOL_COLORS, type SymbolId } from '../core/Config';
-
-const TEXT_STYLE = new TextStyle({
-  fontFamily: 'Arial, Helvetica, sans-serif',
-  fontSize: 48,
-  fontWeight: 'bold',
-  fill: 0xFFFFFF,
-  dropShadow: true,
-  dropShadowColor: 0x000000,
-  dropShadowDistance: 2,
-  dropShadowBlur: 4,
-});
+import { Container, Graphics, Sprite } from 'pixi.js';
+import { SYMBOL_WIDTH, SYMBOL_HEIGHT, type SymbolId } from '../core/Config';
+import { symbolTexture } from '../core/SkinAssets';
 
 export class SlotSymbol extends Container {
   private content: Container;
-  private bg: Graphics;
+  private sprite: Sprite;
   private winBorder: Graphics;
-  private label: Text;
   private _symbolId: SymbolId;
   private _winAnimating = false;
   private _winElapsedMs = 0;
@@ -29,19 +18,13 @@ export class SlotSymbol extends Container {
     this.content = new Container();
     this.addChild(this.content);
 
-    this.bg = new Graphics();
-    this.content.addChild(this.bg);
+    this.sprite = new Sprite(symbolTexture(symbolId));
+    this.sprite.width = SYMBOL_WIDTH;
+    this.sprite.height = SYMBOL_HEIGHT;
+    this.content.addChild(this.sprite);
 
     this.winBorder = new Graphics();
     this.content.addChild(this.winBorder);
-
-    this.label = new Text(symbolId, TEXT_STYLE);
-    this.label.anchor.set(0.5);
-    this.label.x = SYMBOL_WIDTH / 2;
-    this.label.y = SYMBOL_HEIGHT / 2;
-    this.content.addChild(this.label);
-
-    this.drawSymbol();
   }
 
   get symbolId(): SymbolId {
@@ -50,38 +33,36 @@ export class SlotSymbol extends Container {
 
   /** Update symbol identity (used for recycling). */
   setSymbol(id: SymbolId): void {
-    this._symbolId = id;
-    this.label.text = id;
-    this.drawSymbol();
+    if (id !== this._symbolId) {
+      this._symbolId = id;
+      this.sprite.texture = symbolTexture(id);
+      this.sprite.width = SYMBOL_WIDTH;
+      this.sprite.height = SYMBOL_HEIGHT;
+    }
     this.stopWinAnimation();
   }
 
-  private drawSymbol(): void {
-    const color = SYMBOL_COLORS[this._symbolId];
-    this.bg.clear();
-    this.bg.beginFill(color, 0.9);
-    this.bg.drawRoundedRect(0, 0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 12);
-    this.bg.endFill();
-
-    // Subtle border
-    this.bg.lineStyle(2, 0xFFFFFF, 0.15);
-    this.bg.drawRoundedRect(0, 0, SYMBOL_WIDTH, SYMBOL_HEIGHT, 12);
-  }
-
-  /** Start pulsating win animation. One full pulse cycle = cycleMs. */
+  /** Start pulsating win animation with a glowing gold frame. One pulse = cycleMs. */
   startWinAnimation(cycleMs = 1500): void {
     this._winAnimating = true;
     this._winElapsedMs = 0;
     this._winCycleMs = cycleMs;
     this.content.pivot.set(SYMBOL_WIDTH / 2, SYMBOL_HEIGHT / 2);
     this.content.position.set(SYMBOL_WIDTH / 2, SYMBOL_HEIGHT / 2);
+    this.drawFrame();
   }
 
-  /** Show a static yellow border for turbo win highlight. */
+  /** Show a static gold frame for turbo win highlight. */
   showTurboHighlight(): void {
+    this.drawFrame();
+  }
+
+  private drawFrame(): void {
     this.winBorder.clear();
-    this.winBorder.lineStyle(4, 0xFFD700, 1);
-    this.winBorder.drawRoundedRect(2, 2, SYMBOL_WIDTH - 4, SYMBOL_HEIGHT - 4, 12);
+    this.winBorder.lineStyle(6, 0xFF8A00, 0.35);
+    this.winBorder.drawRoundedRect(1, 1, SYMBOL_WIDTH - 2, SYMBOL_HEIGHT - 2, 8);
+    this.winBorder.lineStyle(3, 0xFFD54A, 1);
+    this.winBorder.drawRoundedRect(2, 2, SYMBOL_WIDTH - 4, SYMBOL_HEIGHT - 4, 8);
   }
 
   /** Stop win animation and reset. */
@@ -100,8 +81,6 @@ export class SlotSymbol extends Container {
     if (!this._winAnimating) return;
     this._winElapsedMs += dt * (1000 / 60);
     const phase = (this._winElapsedMs / this._winCycleMs) * Math.PI * 2;
-    const s = 1 + Math.sin(phase) * 0.08;
-    this.content.scale.set(s);
+    this.content.scale.set(1 + Math.sin(phase) * 0.08);
   }
-
 }

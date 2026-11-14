@@ -1,12 +1,13 @@
 import { GAME_WIDTH } from './Config';
 import type { SpinButton } from '../ui/SpinButton';
-import { BUTTON_SIZE } from '../ui/SpinButton';
-import type { BetButton } from '../ui/BetButton';
+import type { SpriteButton } from '../ui/SpriteButton';
 
 export interface InputCallbacks {
   onSpin(): void;
   onStop(): void;
   onBetChange(delta: -1 | 1): void;
+  /** False while a modal (paytable) covers the game. */
+  canInteract(): boolean;
 }
 
 export class GameInput {
@@ -15,12 +16,12 @@ export class GameInput {
   constructor(
     private canvas: HTMLCanvasElement,
     private spinButton: SpinButton,
-    betDecrBtn: BetButton,
-    betIncrBtn: BetButton,
+    betDecrBtn: SpriteButton,
+    betIncrBtn: SpriteButton,
     callbacks: InputCallbacks,
   ) {
     window.addEventListener('pointerdown', (e) => {
-      if (!this.isOnSpinButton(e)) return;
+      if (!callbacks.canInteract() || !this.isOnSpinButton(e)) return;
       if (spinButton.isStopMode) {
         callbacks.onStop();
       } else if (spinButton.enabled) {
@@ -42,7 +43,7 @@ export class GameInput {
     betIncrBtn.onClick(() => callbacks.onBetChange(1));
 
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && !e.repeat) {
+      if (e.code === 'Space' && !e.repeat && callbacks.canInteract()) {
         e.preventDefault();
         if (spinButton.isStopMode) {
           callbacks.onStop();
@@ -66,9 +67,9 @@ export class GameInput {
     const cssScale = rect.width / GAME_WIDTH;
     const gameX = (e.clientX - rect.left) / cssScale;
     const gameY = (e.clientY - rect.top) / cssScale;
-    const cx = this.spinButton.container.x + BUTTON_SIZE / 2;
-    const cy = this.spinButton.container.y + BUTTON_SIZE / 2;
-    const r = BUTTON_SIZE / 2;
+    const cx = this.spinButton.centerX;
+    const cy = this.spinButton.centerY;
+    const r = this.spinButton.radius;
     return (gameX - cx) ** 2 + (gameY - cy) ** 2 <= r * r;
   }
 }
