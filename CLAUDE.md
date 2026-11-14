@@ -14,6 +14,7 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run new-game -- <id> [--from classic] [--title "T"]` | Scaffold + register a new game by cloning one |
 | `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
 | `npm run classic:screens` | Regenerate classic `screens.bin` after classic math changes |
+| `npm run classic:slice` | Re-slice classic art from `src/games/classic/art/source.jpg` (Pillow + numpy) |
 | `npm run dragon:reels` | Rebuild dragon reel strips + exact RTP report |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
@@ -46,11 +47,12 @@ src/
 │   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
 │   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types
-│   ├── ui/                  WinCelebration, PaytableScreen shell + InfoButton, paytableBlocks (pt* helpers), HomeButton
+│   ├── ui/                  WinCelebration, PaytableScreen shell + InfoButton, paytableBlocks (pt* helpers), HomeButton,
+│   │                        SpriteButton / SpriteSpinButton (round buttons cut from a skin mockup)
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
 │   ├── registry.ts          Lobby list (scaffold inserts at @new-game markers)
-│   ├── classic/             5×3 original, Graphics art, precomputed screens.bin math
+│   ├── classic/             5×3 777 Casino Classic, sliced fruit-machine skin, precomputed screens.bin math
 │   └── dragon/              4×5 Dragon Hoard, sliced sprite skin, reel-strip math
 │       ├── GAME.md          ★ read first when touching a game
 │       ├── config.json      engine config + game-specific keys
@@ -86,6 +88,8 @@ const game: GameDefinition = {
 **New game:** `npm run new-game -- <id> --from classic` → edit `config.json` (id/title set for you) → replace `views/` and `math/` as needed (reuse `ReelStripMath` for strip math) → `npm run check` → `npm run dev`, open `?game=<id>` → `npm run thumbnails -- <id>` → fill `GAME.md`.
 
 **Change a game:** read its `GAME.md`; stay inside its folder + `public/games/<id>/`.
+
+**Skin from a mockup image:** put it in `art/`, copy a `tools/slice-skin.py`, measure the reel grid and button centres in source pixels, store anchors in `config.json → skin.ui`, erase baked value texts, build buttons with the engine `SpriteButton` / `SpriteSpinButton` at `SKIN_SCALE` (see dragon/classic `GAME.md`).
 
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 

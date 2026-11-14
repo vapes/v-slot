@@ -1,11 +1,9 @@
-import { Circle, Container, Graphics, Sprite } from 'pixi.js';
-import { SKIN_SCALE } from '../config';
-import { uiTexture, type UiSpriteName } from '../assets';
+import { Circle, Container, Graphics, Sprite, type Texture } from 'pixi.js';
 
 const DISABLED_TINT = 0x6A6A6A;
 
 /**
- * Round button made from a sprite sliced out of the skin mockup.
+ * Round button made from a sprite sliced out of a skin mockup.
  * Positioned by its centre. Supports enabled/disabled (tint) and a toggled
  * "active" state rendered as a pulsing glow ring.
  */
@@ -18,15 +16,16 @@ export class SpriteButton {
   private glowPhase = 0;
   private onClickCallback: (() => void) | null = null;
 
-  constructor(texture: UiSpriteName, readonly radius: number) {
+  /** `scale` maps texture pixels to game pixels (skin source → canvas). */
+  constructor(texture: Texture, readonly radius: number, private readonly scale = 1) {
     this.container = new Container();
     this.container.eventMode = 'static';
     this.container.cursor = 'pointer';
     this.container.hitArea = new Circle(0, 0, radius);
 
-    this.sprite = new Sprite(uiTexture(texture));
+    this.sprite = new Sprite(texture);
     this.sprite.anchor.set(0.5);
-    this.sprite.scale.set(SKIN_SCALE);
+    this.sprite.scale.set(this.scale);
     this.container.addChild(this.sprite);
 
     this.glow = new Graphics();
@@ -35,10 +34,10 @@ export class SpriteButton {
 
     this.container.on('pointerdown', () => {
       if (!this._enabled) return;
-      this.sprite.scale.set(SKIN_SCALE * 0.94);
+      this.sprite.scale.set(this.scale * 0.94);
       this.onClickCallback?.();
     });
-    const release = () => this.sprite.scale.set(SKIN_SCALE);
+    const release = () => this.sprite.scale.set(this.scale);
     this.container.on('pointerup', release);
     this.container.on('pointerupoutside', release);
     this.container.on('pointerout', release);

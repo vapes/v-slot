@@ -1,50 +1,72 @@
-import type { Container } from 'pixi.js';
-import { InfoButton, type BetControlsState, type GameActions, type GameView } from '@/engine';
-import { config } from '../config';
-import { ClassicSpinButton } from './ClassicSpinButton';
-import { ClassicBetButton } from './ClassicBetButton';
+import { Sprite, type Container } from 'pixi.js';
+import {
+  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView, type PaytableTheme,
+} from '@/engine';
+import { config, SKIN_SCALE, uiAnchor, type UiAnchorName } from '../config';
+import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { ClassicHUD } from './ClassicHUD';
-import { buildClassicPaytable } from './ClassicPaytable';
+import { buildClassicPaytable, CLASSIC_THEME } from './ClassicPaytable';
 
-const BET_RADIUS = 35;
-const BET_GAP = 25;
-
-/** Original V-Slot look: flat colours, Graphics buttons, "i" paytable toggle. */
+/** "777 Casino Classic" skin: background art + every button over its baked spot. */
 export class ClassicView implements GameView {
-  readonly spinButton = new ClassicSpinButton();
+  readonly spinButton = makeSpin();
   readonly hud = new ClassicHUD();
-  private readonly betDecr = new ClassicBetButton('−');
-  private readonly betIncr = new ClassicBetButton('+');
-  private readonly infoBtn: InfoButton;
+  readonly paytableTheme: PaytableTheme = CLASSIC_THEME;
+  private readonly minus = make('minus', 'minus');
+  private readonly plus = make('plus', 'plus');
+  private readonly auto = make('auto', 'auto');
+  private readonly info = make('info', 'info');
+  private readonly infoI = make('info_i', 'infoI');
 
   constructor(actions: GameActions) {
-    this.betDecr.onClick(() => actions.changeBet(-1));
-    this.betIncr.onClick(() => actions.changeBet(1));
-    this.infoBtn = new InfoButton(actions.togglePaytable);
-    this.infoBtn.container.position.set(46, config.canvas.height - 46);
-
-    const cx = config.canvas.width / 2;
-    const cy = this.spinButton.container.y + 50;
-    this.betDecr.container.position.set(cx - 50 - BET_GAP - BET_RADIUS * 2, cy - BET_RADIUS);
-    this.betIncr.container.position.set(cx + 50 + BET_GAP, cy - BET_RADIUS);
+    this.minus.onClick(() => actions.changeBet(-1));
+    this.plus.onClick(() => actions.changeBet(1));
+    this.auto.onClick(actions.toggleAutoplay);
+    this.info.onClick(actions.openPaytable);
+    this.infoI.onClick(actions.togglePaytable);
   }
 
-  mountBelowReels(_stage: Container): void {
-    // Plain background colour (config.backgroundColor) + reelStyle panel.
+  private get buttons(): SpriteButton[] {
+    return [this.spinButton, this.minus, this.plus, this.auto, this.info, this.infoI];
+  }
+
+  mountBelowReels(stage: Container): void {
+    const bg = new Sprite(backgroundTexture());
+    bg.width = config.canvas.width;
+    bg.height = config.canvas.width * bg.texture.height / bg.texture.width;
+    stage.addChild(bg);
   }
 
   mountAboveReels(stage: Container): void {
-    stage.addChild(this.spinButton.container, this.betDecr.container, this.betIncr.container);
+    for (const b of this.buttons) stage.addChild(b.container);
     this.hud.addToStage(stage);
-    stage.addChild(this.infoBtn.container);
   }
 
   setBetControls({ enabled, canDecrease, canIncrease }: BetControlsState): void {
-    this.betDecr.enabled = enabled && canDecrease;
-    this.betIncr.enabled = enabled && canIncrease;
+    this.minus.enabled = enabled && canDecrease;
+    this.plus.enabled = enabled && canIncrease;
   }
+
+  setAutoplay(on: boolean): void { this.auto.active = on; }
 
   buildPaytable(root: Container, lineBet: number): number {
     return buildClassicPaytable(root, lineBet);
   }
+
+  update(dt: number): void {
+    for (const b of this.buttons) b.update(dt);
+    this.hud.update(dt);
+  }
+}
+
+function makeSpin(): SpriteSpinButton {
+  const a = uiAnchor('spin');
+  return new SpriteSpinButton(uiTexture('spin'), a.x, a.y, a.r, SKIN_SCALE, { discColor: 0x0B3D12, accent: 0xFFFFFF, discScale: 0.72 });
+}
+
+function make(texture: UiSpriteName, anchor: UiAnchorName): SpriteButton {
+  const a = uiAnchor(anchor);
+  const btn = new SpriteButton(uiTexture(texture), a.r, SKIN_SCALE);
+  btn.setPosition(a.x, a.y);
+  return btn;
 }

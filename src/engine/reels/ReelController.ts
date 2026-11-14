@@ -87,7 +87,7 @@ export class ReelController {
       g.moveTo(i * this.reelWidth, 0);
       g.lineTo(i * this.reelWidth, reelAreaHeight);
     }
-    for (let r = 1; r < this.rowCount; r++) {
+    for (let r = 1; r < this.rowCount && sep.rows !== false; r++) {
       g.moveTo(0, r * cellHeight);
       g.lineTo(reelAreaWidth, r * cellHeight);
     }
