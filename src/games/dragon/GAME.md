@@ -13,7 +13,6 @@
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
 | `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles |
-| `views/DragonPaytable.ts` | Paytable body with symbol art and payouts for the current bet |
 | `tools/build-reels.mjs` | Builds strips + exact RTP report (`npm run dragon:reels`) |
 
 ## Skin pipeline
@@ -30,3 +29,7 @@
 
 ## Controls
 SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy + menu (paytable), fullscreen, home.
+
+## Content CDN
+- Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
+- Translations: `public/cdn/i18n/<lang>/dragon.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.dragon.*`).

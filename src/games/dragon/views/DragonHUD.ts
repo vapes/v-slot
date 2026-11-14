@@ -1,5 +1,5 @@
 import { Text, TextStyle, Container, Graphics } from 'pixi.js';
-import { formatMoney as fmt, type Hud } from '@/engine';
+import { formatMoney as fmt, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName } from '../config';
 
 const formatMoney = (minor: number) => fmt(config, minor);
@@ -69,7 +69,7 @@ export class DragonHUD implements Hud {
 
   /** Show the win of the latest spin in the message strip and LAST WIN panel. */
   setWinStatus(amount: number): void {
-    this.setMessage(`WIN ${formatMoney(amount)}`);
+    this.setMessage(t('hud.win', { amount: formatMoney(amount) }));
     this.setLastWin(amount);
   }
 
@@ -78,7 +78,7 @@ export class DragonHUD implements Hud {
   }
 
   hideLineInfo(): void {
-    if (this.lastWin > 0) this.setMessage(`WIN ${formatMoney(this.lastWin)}`);
+    if (this.lastWin > 0) this.setMessage(t('hud.win', { amount: formatMoney(this.lastWin) }));
   }
 
   setLastWin(amount: number): void {

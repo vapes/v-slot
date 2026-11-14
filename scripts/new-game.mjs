@@ -4,11 +4,12 @@
  *   npm run new-game -- <id> [--from classic] [--title "My Game"]
  *
  * Copies src/games/<from> → src/games/<id> (without art/ sources) and
- * public/games/<from> → public/games/<id>, rewrites ids/titles, registers the
+ * public/games/<from> → public/games/<id> plus its content-CDN files
+ * (public/cdn/paytables, public/cdn/i18n), rewrites ids/titles, registers the
  * manifest in src/games/registry.ts and resets GAME.md. Then: edit config.json,
  * views/, math/; run `npm run check`.
  */
-import { cpSync, existsSync, readFileSync, writeFileSync, rmSync } from 'fs';
+import { cpSync, existsSync, readFileSync, readdirSync, writeFileSync, rmSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -35,6 +36,24 @@ cpSync(src, dst, { recursive: true, filter: (p) => !p.includes(`${from}/art`) })
 const pubSrc = resolve(ROOT, 'public/games', from);
 if (existsSync(pubSrc)) cpSync(pubSrc, resolve(ROOT, 'public/games', id), { recursive: true });
 rmSync(resolve(ROOT, 'public/games', id, 'thumb.jpg'), { force: true });
+
+// Content CDN mirror: paytable templates + per-game translations
+const cdn = resolve(ROOT, 'public/cdn');
+if (existsSync(resolve(cdn, 'paytables', from))) cpSync(resolve(cdn, 'paytables', from), resolve(cdn, 'paytables', id), { recursive: true });
+for (const lang of existsSync(resolve(cdn, 'i18n')) ? readdirSync(resolve(cdn, 'i18n')) : []) {
+  const f = resolve(cdn, 'i18n', lang, `${from}.json`);
+  if (!existsSync(f)) continue;
+  const dict = JSON.parse(readFileSync(f, 'utf8'));
+  dict['game.title'] = title;
+  writeFileSync(resolve(cdn, 'i18n', lang, `${id}.json`), JSON.stringify(dict, null, 2) + '\n');
+  const common = resolve(cdn, 'i18n', lang, 'common.json');
+  if (existsSync(common)) {
+    const c = JSON.parse(readFileSync(common, 'utf8'));
+    c[`game.${id}.title`] = title;
+    c[`game.${id}.subtitle`] = c[`game.${from}.subtitle`] ?? '';
+    writeFileSync(common, JSON.stringify(c, null, 2) + '\n');
+  }
+}
 
 const edit = (file, fn) => writeFileSync(file, fn(readFileSync(file, 'utf8')));
 edit(resolve(dst, 'config.json'), s => {

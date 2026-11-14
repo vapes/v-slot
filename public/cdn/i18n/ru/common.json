@@ -1,0 +1,19 @@
+{
+  "status.idle": "Делайте ставки",
+  "status.spin": "Удачи!",
+  "status.noBalance": "Недостаточно средств",
+  "status.loadFailed": "Не удалось загрузить игру",
+  "hud.win": "ВЫИГРЫШ {amount}",
+  "win.line": "ЛИНИЯ {line}: {count}× {symbol} — {amount}",
+  "celebration.big": "БОЛЬШОЙ",
+  "celebration.huge": "ОГРОМНЫЙ",
+  "celebration.epic": "ЭПИЧЕСКИЙ",
+  "celebration.max": "МАКС",
+  "celebration.win": "ВЫИГРЫШ",
+  "lobby.choose": "ВЫБЕРИТЕ ИГРУ",
+  "lobby.play": "ИГРАТЬ",
+  "game.dragon.title": "Dragon Hoard",
+  "game.dragon.subtitle": "4×5 · 20 линий · стеки вайлдов · RTP 96,2%",
+  "game.classic.title": "777 Casino Classic",
+  "game.classic.subtitle": "5×3 · 20 линий · фруктовая классика · RTP 98%"
+}

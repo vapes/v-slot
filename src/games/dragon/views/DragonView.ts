@@ -1,17 +1,15 @@
 import { Circle, Container, Sprite } from 'pixi.js';
 import {
-  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView, type PaytableTheme,
+  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView,
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { DragonHUD } from './DragonHUD';
-import { buildDragonPaytable, DRAGON_THEME } from './DragonPaytable';
 
 /** Skin background + every button placed exactly over its baked spot. */
 export class DragonView implements GameView {
   readonly spinButton = makeSpin();
   readonly hud = new DragonHUD();
-  readonly paytableTheme: PaytableTheme = DRAGON_THEME;
   private readonly minus = make('minus');
   private readonly plus = make('plus');
   private readonly coins = make('coins');
@@ -64,10 +62,6 @@ export class DragonView implements GameView {
 
   setAutoplay(on: boolean): void { this.auto.active = on; }
   setQuickSpin(on: boolean): void { this.turbo.active = on; }
-
-  buildPaytable(root: Container, lineBet: number): number {
-    return buildDragonPaytable(root, lineBet);
-  }
 
   update(dt: number): void {
     for (const b of this.buttons) b.update(dt);

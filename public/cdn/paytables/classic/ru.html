@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --gold: #FFD54A; --panel: #0C2457; --line: #2E5FB8; --text: #EEF3FF; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: linear-gradient(#0A2A66, #030B22 70%); color: var(--text);
+         font: 15px/1.45 "Roboto Condensed", "Arial Narrow", Arial, sans-serif; padding: 20px 16px 40px; }
+  h1 { margin: 6px 56px 4px 0; font-size: 26px; color: var(--gold); text-shadow: 0 2px 0 #7A3A00; }
+  h2 { margin: 28px 0 12px; font-size: 13px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase;
+       display: flex; align-items: center; gap: 10px; }
+  h2::before, h2::after { content: ""; flex: 1; height: 1px; background: rgba(255,213,74,.4); }
+  .lead { opacity: .85; margin: 0 0 8px; }
+  .card { background: var(--panel); border: 1.5px solid var(--line); border-radius: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sym { padding: 8px 6px 10px; text-align: center; }
+  .sym img { width: 72%; aspect-ratio: 1; border-radius: 8px; display: block; margin: 4px auto 6px; }
+  .sym .n { font-size: 10px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+  .sym .p { font-weight: bold; font-size: 14px; }
+  .pl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .pl { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px 8px; text-align: center; }
+  .pl-n { font-size: 11px; opacity: .6; }
+  .pl-cells { display: grid; gap: 2px; margin-top: 2px; }
+  .pl-cells i { aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,.12); }
+  .pl-cells i.on { background: var(--gold); }
+  .rtp { margin-top: 22px; padding: 14px; text-align: center; }
+  .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
+  .small { font-size: 12px; opacity: .6; }
+</style>
+</head>
+<body>
+  <h1>{{title}}</h1>
+  <p class="lead">Все символы платят слева направо на соседних барабанах, начиная с крайнего левого.
+     Суммы указаны для текущей ставки {{bet}}.</p>
+
+  <h2>Символы</h2>
+  <div class="grid">
+    <div class="card sym"><div class="n">{{symbol:seven}}</div><img src="{{asset:symbols/seven.jpg}}" alt=""><div class="p">5 × {{pay:seven:5}}<br>4 × {{pay:seven:4}}<br>3 × {{pay:seven:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:bar}}</div><img src="{{asset:symbols/bar.jpg}}" alt=""><div class="p">5 × {{pay:bar:5}}<br>4 × {{pay:bar:4}}<br>3 × {{pay:bar:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:bell}}</div><img src="{{asset:symbols/bell.jpg}}" alt=""><div class="p">5 × {{pay:bell:5}}<br>4 × {{pay:bell:4}}<br>3 × {{pay:bell:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:star}}</div><img src="{{asset:symbols/star.jpg}}" alt=""><div class="p">5 × {{pay:star:5}}<br>4 × {{pay:star:4}}<br>3 × {{pay:star:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:melon}}</div><img src="{{asset:symbols/melon.jpg}}" alt=""><div class="p">5 × {{pay:melon:5}}<br>4 × {{pay:melon:4}}<br>3 × {{pay:melon:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:cherry}}</div><img src="{{asset:symbols/cherry.jpg}}" alt=""><div class="p">5 × {{pay:cherry:5}}<br>4 × {{pay:cherry:4}}<br>3 × {{pay:cherry:3}}</div></div>
+  </div>
+
+  <h2>Выигрышные линии ({{lines}})</h2>
+  {{paylines}}
+
+  <div class="card rtp">
+    <div class="small">ВОЗВРАТ ИГРОКУ</div>
+    <div class="v">{{rtp}}</div>
+    <div class="small">Теоретический RTP на длинной дистанции. На каждой линии выплачивается только наибольший выигрыш; выигрыши на разных линиях суммируются. Счётчик MEGA JACKPOT декоративный. Сбой аннулирует все выплаты и игры.</div>
+  </div>
+</body>
+</html>

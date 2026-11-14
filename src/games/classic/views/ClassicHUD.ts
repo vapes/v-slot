@@ -1,5 +1,5 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { formatMoney, type Hud } from '@/engine';
+import { formatMoney, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName } from '../config';
 import { JackpotTicker } from './JackpotTicker';
 
@@ -65,7 +65,7 @@ export class ClassicHUD implements Hud {
   }
 
   setWinStatus(amount: number): void {
-    this.setMessage(`WIN ${money(amount)}`);
+    this.setMessage(t('hud.win', { amount: money(amount) }));
     this.setLastWin(amount);
   }
 

@@ -1,0 +1,16 @@
+{
+  "game.title": "Dragon Hoard",
+  "symbol.wild": "Wild",
+  "symbol.dragon": "Dragon Medal",
+  "symbol.egg": "Dragon Egg",
+  "symbol.chest": "Treasure Chest",
+  "symbol.gold": "Gold Hoard",
+  "symbol.crystal": "Crystal",
+  "symbol.goblet": "Goblet",
+  "symbol.A": "Ace",
+  "symbol.K": "King",
+  "symbol.Q": "Queen",
+  "symbol.J": "Jack",
+  "symbol.10": "Ten",
+  "symbol.9": "Nine"
+}

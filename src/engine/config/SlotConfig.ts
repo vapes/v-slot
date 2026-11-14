@@ -49,8 +49,6 @@ export interface RawSlotConfig {
     autoplayWinPause?: number;
     autoplayPause?: number;
   };
-  /** Status line texts (engine defaults: "Place your bets" / "Good luck!"). */
-  messages?: { idle?: string; spin?: string };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
   rtp: number;
@@ -64,12 +62,7 @@ export interface RawSlotConfig {
   paylines: number[][];
 }
 
-/** Shared status texts used by every game unless its config overrides them. */
-export const DEFAULT_MESSAGES = { idle: 'Place your bets', spin: 'Good luck!' };
-
 export interface SlotConfig extends RawSlotConfig {
-  /** Resolved status texts: idle (waiting for a spin) and spin (reels running). */
-  status: { idle: string; spin: string };
   reelOffsetX: number;
   reelWidth: number;
   cellHeight: number;
@@ -86,7 +79,6 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
   const names = new Map(raw.symbols.map(s => [s.id, s.name ?? s.id]));
   return {
     ...raw,
-    status: { ...DEFAULT_MESSAGES, ...raw.messages },
     reelOffsetX: raw.reelOffsetX ?? (raw.canvas.width - reelAreaWidth) / 2,
     reelWidth,
     cellHeight,

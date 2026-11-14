@@ -10,10 +10,8 @@ export { linePayout, payingCounts, lineBetOf } from './math/Paytable';
 export { ReelStripMath } from './math/ReelStripMath';
 export { SlotGame } from './core/SlotGame';
 export { fitCanvas, goToLobby } from './core/fitCanvas';
-export { InfoButton } from './ui/PaytableScreen';
 export { SpriteButton } from './ui/SpriteButton';
 export { SpriteSpinButton, type SpinButtonStyle } from './ui/SpriteSpinButton';
-export {
-  DEFAULT_THEME, PAD, ptStyle, ptText, ptPanel, ptDivider, ptPaylines, ptRtp, type PaytableTheme,
-} from './ui/paytableBlocks';
+export { i18n, t, detectLanguage, ENGINE_STRINGS, FALLBACK_LANG } from './i18n/I18n';
+export { CONTENT_CDN, cdnUrl } from './content/cdn';
 export { formatMoney, assetUrl } from './utils/Money';

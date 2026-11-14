@@ -17,6 +17,10 @@ export function fitCanvas(app: Application, width: number, height: number): void
   window.addEventListener('resize', apply);
 }
 
+/** Back to the lobby, keeping other query params (e.g. ?lang=). */
 export function goToLobby(): void {
-  window.location.search = '';
+  const params = new URLSearchParams(window.location.search);
+  params.delete('game');
+  const q = params.toString();
+  window.location.search = q ? `?${q}` : '';
 }

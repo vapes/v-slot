@@ -1,0 +1,16 @@
+{
+  "game.title": "Dragon Hoard",
+  "symbol.wild": "Вайлд",
+  "symbol.dragon": "Медаль дракона",
+  "symbol.egg": "Яйцо дракона",
+  "symbol.chest": "Сундук",
+  "symbol.gold": "Золото",
+  "symbol.crystal": "Кристалл",
+  "symbol.goblet": "Кубок",
+  "symbol.A": "Туз",
+  "symbol.K": "Король",
+  "symbol.Q": "Дама",
+  "symbol.J": "Валет",
+  "symbol.10": "Десять",
+  "symbol.9": "Девять"
+}

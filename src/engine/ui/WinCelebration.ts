@@ -1,5 +1,6 @@
 import { Container, Text, TextStyle } from 'pixi.js';
 import type { SlotConfig } from '../config/SlotConfig';
+import { t } from '../i18n/I18n';
 
 export type WinCategory = 'big' | 'huge' | 'epic' | 'max';
 
@@ -11,12 +12,8 @@ const ENTER = 24;
 const HOLD  = 22;
 const EXIT  = 15;
 
-const FIRST_WORD: Record<WinCategory, string> = {
-  big:  'BIG',
-  huge: 'HUGE',
-  epic: 'EPIC',
-  max:  'MAX',
-};
+/** Banner words come from i18n (`celebration.<category>`, `celebration.win`). */
+const firstWord = (c: WinCategory): string => t(`celebration.${c}`);
 
 interface ActiveBanner {
   text: Text;
@@ -84,8 +81,8 @@ export class WinCelebration {
   playStatic(category: WinCategory, durationMs: number): void {
     this.stop();
 
-    const word1 = makeText(FIRST_WORD[category]);
-    const word2 = makeText('WIN');
+    const word1 = makeText(firstWord(category));
+    const word2 = makeText(t('celebration.win'));
 
     word1.anchor.set(0.5, 0.5);
     word2.anchor.set(0.5, 0.5);
@@ -107,8 +104,8 @@ export class WinCelebration {
   play(category: WinCategory): void {
     this.stop();
 
-    const word1 = makeText(FIRST_WORD[category]);
-    const word2 = makeText('WIN');
+    const word1 = makeText(firstWord(category));
+    const word2 = makeText(t('celebration.win'));
 
     word1.anchor.set(0.5, 0.5);
     word2.anchor.set(0.5, 0.5);

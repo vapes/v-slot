@@ -1,5 +1,5 @@
 import { Assets, Container, Graphics, Sprite, Text, TextStyle, Texture } from 'pixi.js';
-import type { GameManifest } from '@/engine';
+import { t, type GameManifest } from '@/engine';
 
 const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
 
@@ -35,11 +35,11 @@ export class GameCard {
     c.addChild(thumb);
     void this.loadThumb(thumb, w - 16, thumbH);
 
-    const title = new Text(game.title.toUpperCase(), new TextStyle({
+    const title = new Text(t(`game.${game.id}.title`, {}, game.title).toUpperCase(), new TextStyle({
       fontFamily: FONT, fontSize: 24, fontWeight: 'bold', fill: 0xFFFFFF, letterSpacing: 1.5,
     }));
     title.position.set(20, thumbH + 20);
-    const sub = new Text(game.subtitle, new TextStyle({ fontFamily: FONT, fontSize: 14, fill: 0xFFFFFF }));
+    const sub = new Text(t(`game.${game.id}.subtitle`, {}, game.subtitle), new TextStyle({ fontFamily: FONT, fontSize: 14, fill: 0xFFFFFF }));
     sub.alpha = 0.65;
     sub.position.set(20, thumbH + 54);
 
@@ -48,7 +48,7 @@ export class GameCard {
     pill.drawRoundedRect(-52, -20, 104, 40, 20);
     pill.endFill();
     pill.position.set(w - 72, thumbH + 48);
-    const play = new Text('PLAY', new TextStyle({ fontFamily: FONT, fontSize: 18, fontWeight: 'bold', fill: 0x140A10 }));
+    const play = new Text(t('lobby.play'), new TextStyle({ fontFamily: FONT, fontSize: 18, fontWeight: 'bold', fill: 0x140A10 }));
     play.anchor.set(0.5);
     pill.addChild(play);
     c.addChild(title, sub, pill);

@@ -7,7 +7,8 @@ import { GameInput } from './GameInput';
 import { fitCanvas, goToLobby } from './fitCanvas';
 import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
-import { PaytableScreen } from '../ui/PaytableScreen';
+import { HtmlPaytable } from '../ui/HtmlPaytable';
+import { t } from '../i18n/I18n';
 import { HomeButton } from '../ui/HomeButton';
 import { formatMoney } from '../utils/Money';
 import type { SpinPipeline, SpinContext } from '../pipeline/SpinPipeline';
@@ -29,7 +30,7 @@ export class SlotGame {
   private view: GameView;
   private input!: GameInput;
   private winCelebration: WinCelebration;
-  private paytable: PaytableScreen;
+  private paytable!: HtmlPaytable;
   private homeButton: HomeButton;
   readonly pipeline: SpinPipeline;
 
@@ -62,15 +63,14 @@ export class SlotGame {
     this.winCelebration = new WinCelebration(cfg);
     this.view = def.createView({
       changeBet: (d, wrap) => this.changeBet(d, wrap ?? false),
-      openPaytable: () => this.paytable.show(this.lineBet),
-      togglePaytable: () => this.paytable.toggle(this.lineBet),
+      openPaytable: () => void this.paytable.show(this.totalBet),
+      togglePaytable: () => this.paytable.toggle(this.totalBet),
       toggleAutoplay: () => this.setAutoplay(!this.autoplay),
       toggleQuickSpin: () => {
         this.quickSpin = !this.quickSpin;
         this.view.setQuickSpin?.(this.quickSpin);
       },
     });
-    this.paytable = new PaytableScreen(cfg, (root, lb) => this.view.buildPaytable(root, lb), this.view.paytableTheme);
     this.homeButton = new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby);
 
     const { view, reelController, winCelebration } = this;
@@ -98,6 +98,7 @@ export class SlotGame {
     const canvas = this.app.view as HTMLCanvasElement;
     document.body.appendChild(canvas);
     const { view, cfg } = this;
+    this.paytable = new HtmlPaytable(cfg, canvas);
 
     this.input = new GameInput(canvas, cfg.canvas.width, view.spinButton, {
       onSpin: () => (this.autoplay ? this.setAutoplay(false) : void this.doSpin()),
@@ -109,7 +110,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reelController.container);
     view.mountAboveReels(stage);
-    stage.addChild(this.homeButton.container, this.winCelebration.container, this.paytable.container);
+    stage.addChild(this.homeButton.container, this.winCelebration.container);
 
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);
@@ -123,11 +124,11 @@ export class SlotGame {
     this.updateBetControls(false);
     try {
       await this.math.load?.();
-      view.hud.setStatus(cfg.status.idle);
+      view.hud.setStatus(t('status.idle'));
       view.spinButton.enabled = true;
       this.updateBetControls(true);
     } catch (err) {
-      view.hud.setStatus('Failed to load game math');
+      view.hud.setStatus(t('status.loadFailed'));
       console.error('[SlotGame] math load failed:', err);
     }
   }
@@ -182,7 +183,7 @@ export class SlotGame {
       lastWon = ctx.winAmount > 0;
 
       if (ctx.cancelled) {
-        this.view.hud.setStatus('Not enough balance');
+        this.view.hud.setStatus(t('status.noBalance'));
         break;
       }
 
@@ -194,7 +195,7 @@ export class SlotGame {
 
     if (this.balance < this.totalBet) this.setAutoplay(false);
     // turbo spins skip the idle text; restore it once the loop is over (a win keeps its WIN line)
-    if (!lastWon && this.balance >= this.totalBet) this.view.hud.setStatus(this.cfg.status.idle);
+    if (!lastWon && this.balance >= this.totalBet) this.view.hud.setStatus(t('status.idle'));
     this.spinLoopActive = false;
     this.view.spinButton.setStopMode(false);
     this.view.spinButton.enabled = true;
@@ -208,9 +209,9 @@ export class SlotGame {
     const showNextLine = () => {
       const win = result.wins[i];
       this.reelController.showWinLine(win, winLineInterval);
-      const name = this.cfg.symbolName(win.symbol).toUpperCase();
+      const symbol = t(`symbol.${win.symbol}`, {}, this.cfg.symbolName(win.symbol)).toUpperCase();
       const amount = formatMoney(this.cfg, win.multiplier * lineBet);
-      this.view.hud.setLineInfo(`LINE ${win.paylineIndex + 1}: ${win.count}× ${name} — ${amount}`);
+      this.view.hud.setLineInfo(t('win.line', { line: win.paylineIndex + 1, count: win.count, symbol, amount }));
       i = (i + 1) % result.wins.length;
       this.winCycleTimer = setTimeout(showNextLine, winLineInterval);
     };

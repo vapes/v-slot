@@ -1,5 +1,6 @@
 import { SpinPipeline } from './SpinPipeline';
 import { getWinCategory } from '../ui/WinCelebration';
+import { t } from '../i18n/I18n';
 import type { SlotConfig } from '../config/SlotConfig';
 import type { SpinResult } from '../math/types';
 import type { Hud, MathModel } from '../contracts';
@@ -62,7 +63,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'showPreSpinUI',
     execute: (ctx) => {
-      hud.setStatus(cfg.status.spin);
+      hud.setStatus(t('status.spin'));
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
   });
@@ -127,7 +128,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.winAmount > 0) {
         hud.setWinStatus(ctx.winAmount);
       } else if (!ctx.turbo) {
-        hud.setStatus(cfg.status.idle);
+        hud.setStatus(t('status.idle'));
       }
     },
   });
