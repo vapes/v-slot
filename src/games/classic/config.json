@@ -22,7 +22,14 @@
       "betValue":     { "x": 770,  "y": 2106 },
       "winValue":     { "x": 1281, "y": 2106 },
       "jackpot":      { "x": 765,  "y": 180 },
-      "message":      { "x": 768,  "y": 1880 }
+      "message":      { "x": 768,  "y": 1880 },
+      "jackpotLabel": { "x": 769,  "y": 73,   "w": 540 },
+      "balanceLabel": { "x": 258,  "y": 1994, "w": 300 },
+      "betLabel":     { "x": 770,  "y": 1994, "w": 300 },
+      "winLabel":     { "x": 1278, "y": 1994, "w": 300 },
+      "autoLabel":    { "x": 381,  "y": 2437, "w": 190 },
+      "infoLabel":    { "x": 1159, "y": 2438, "w": 190 },
+      "spinLabel":    { "x": 768,  "y": 2440, "w": 236 }
     }
   },
   "grid": { "rows": 3, "cols": 5 },

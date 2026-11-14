@@ -4,7 +4,8 @@ import {
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor, type UiAnchorName } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
-import { ClassicHUD } from './ClassicHUD';
+import { ClassicHUD, CLASSIC_BUTTON_STYLE, CLASSIC_SPIN_STYLE } from './ClassicHUD';
+import { labelButton } from './labels';
 
 /** "777 Casino Classic" skin: background art + every button over its baked spot. */
 export class ClassicView implements GameView {
@@ -22,6 +23,9 @@ export class ClassicView implements GameView {
     this.auto.onClick(actions.toggleAutoplay);
     this.info.onClick(actions.openPaytable);
     this.infoI.onClick(actions.togglePaytable);
+    labelButton(this.spinButton, 'spinLabel', 'button.spin', CLASSIC_SPIN_STYLE);
+    labelButton(this.auto, 'autoLabel', 'button.autoSpin', CLASSIC_BUTTON_STYLE);
+    labelButton(this.info, 'infoLabel', 'button.info', CLASSIC_BUTTON_STYLE);
   }
 
   private get buttons(): SpriteButton[] {

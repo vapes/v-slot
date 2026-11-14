@@ -22,7 +22,12 @@
       "balanceValue": { "x": 159, "y": 1337 },
       "lastWinValue": { "x": 473, "y": 1337 },
       "betValue":     { "x": 803, "y": 1337 },
-      "message":      { "x": 486, "y": 1265 }
+      "message":      { "x": 486, "y": 1265 },
+      "balanceLabel": { "x": 159, "y": 1304, "w": 200 },
+      "lastWinLabel": { "x": 473, "y": 1304, "w": 240 },
+      "betLabel":     { "x": 803, "y": 1304, "w": 150 },
+      "autoLabel":    { "x": 249, "y": 1503, "w": 92 },
+      "turboLabel":   { "x": 727, "y": 1503, "w": 92 }
     }
   },
   "grid": { "rows": 5, "cols": 4 },

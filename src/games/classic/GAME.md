@@ -32,3 +32,4 @@ SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), INFO and i (payt
 ## Content CDN
 - Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/classic.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.classic.*`).
+- Translated art text: MEGA JACKPOT, BALANCE / BET / WIN captions and SPIN / AUTO SPIN / INFO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
