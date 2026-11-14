@@ -51,7 +51,8 @@ src/
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
 │   ├── reels/               Reel (state machine, symbol recycling, boost) + ReelController (layers, win highlight)
 │   │                        + AnticipationDirector (extends/boosts teasing reels, drives the FX)
-│   ├── fx/                  AnticipationFX: flameShader (GLSL Mesh, additive) + Sparks (pooled particles) + dim veil
+│   ├── fx/                  AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
+│   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
 │   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, types
 │   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter
@@ -110,7 +111,7 @@ const game: GameDefinition = {
 
 **Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro banner (`feature.title` / `feature.subtitle`) → sticky cells drawn by the game's `SymbolView.setValue` → respins with a meter above the reels → hatch → optional full-grid prize → outro → base grid restored. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`). Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
 
-**Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter/scatterTrigger, extraMs, speedBoost, colors). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX = GLSL flame border + rising sparks + dim veil, coloured per game. Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
+**Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter/scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
 **New pipeline logic:** inject a `PipelineStage` via `pipeline.insertBefore/After()` in `engine/pipeline/buildSpinPipeline.ts`.
 

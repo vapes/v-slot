@@ -83,6 +83,12 @@ export interface RawSlotConfig {
     speedBoost?: number;
     /** Effect colours: [core, outer glow], "0xRRGGBB". */
     colors?: string[];
+    /** Visual style: "flame" (GLSL fire + sparks, default) or "marquee" (chasing casino bulbs). */
+    style?: string;
+    /** Dim veil over the other reels, 0..1 (default 0.32). */
+    veil?: number;
+    /** Rising spark particles (default: on for flame, off for marquee). */
+    sparks?: boolean;
   };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
