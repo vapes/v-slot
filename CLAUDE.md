@@ -43,12 +43,10 @@ src/
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
 │   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
-│   ├── reels/               Reel (state machine, symbol recycling), ReelController (layers, win highlight),
-│   │                        spinPlan (stop times → scroll distance), WinLines (payline paths)
+│   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
 │   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types
-│   ├── ui/                  WinCelebration, WinRollup (win count-up), PaytableScreen shell + InfoButton,
-│   │                        paytableBlocks (pt* helpers), HomeButton
+│   ├── ui/                  WinCelebration, PaytableScreen shell + InfoButton, paytableBlocks (pt* helpers), HomeButton
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
 │   ├── registry.ts          Lobby list (scaffold inserts at @new-game markers)
@@ -99,17 +97,7 @@ const game: GameDefinition = {
 
 1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → clear status
 2. **server** — `math.spin()` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD win count-up → win highlight + payline paths + win cycle → celebration (thresholds `config.celebration`, held while the counter runs) → turbo delay → refresh balance → re-enable controls
-
-## Timing model (Pragmatic Play–style, all in config)
-
-Approximated from typical Pragmatic Play slots (not measured from a specific game); tune per game in `config.json`.
-
-- **Spin (`spin`)**: `reelStartInterval` 0 = all reels start together; `stopTimesMs` = landing time of each reel from spin start (reels land left → right, 200 ms apart). `engine/reels/spinPlan.ts` converts each time into scroll distance from `spinSpeed`, `acceleration` and `bounceUp`, so the landing moment is time-exact. Without `stopTimesMs` the legacy `scrollScreens` distances are used.
-- **Quick spin / hold-turbo**: no bounce-up; every reel lands together at `quickStopMs`. `holdToTurboMs` = how long SPIN must stay pressed before reels are slammed.
-- **Landing**: short overshoot `bounceDown` + `settle`.
-- **Win presentation (`winPresentation`)**: all wins at once with payline paths (`drawLines`, `lineColors`) while the win counts up; count-up length by win ÷ bet (`rollup` tiers) or by banner tier (`bigRollupMs`, banner holds that long). Then each line cycles every `winLineInterval`, starting after `max(winAllDelay, count-up)`. Next spin snaps the counter to its final value.
-- **Autoplay** waits count-up + `autoplayWinPause` after a win, `autoplayPause` otherwise; it never waits for line cycling.
+3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -131,7 +119,7 @@ Stage
 
 - **Symbol recycling:** symbols leaving the bottom jump to the top with a new id: blur zone = random ids at `blurAlpha`, target zone = result ids at full alpha (placed in reverse so they land in the right rows after `snapToTarget()`).
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
-- **Win cycle:** all wins (with line paths and count-up) for `max(winAllDelay, count-up)`, then each line every `winLineInterval` with a fresh pulse.
+- **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
 - **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.

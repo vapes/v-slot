@@ -38,31 +38,13 @@ export interface RawSlotConfig {
     turboSpeedMultiplier: number;
     acceleration: number;
     blurAlpha: number;
-    /** Distance-based spin: blur screens per reel. Ignored when stopTimesMs is set. */
-    scrollScreens?: number[];
-    /** Time-based spin: landing time of each reel, ms from spin start. */
-    stopTimesMs?: number[];
-    /** Quick spin / hold-turbo: all reels land together after this many ms. */
-    quickStopMs?: number;
-    /** Holding SPIN this long after a press slams the reels (hold-to-turbo). */
-    holdToTurboMs?: number;
+    scrollScreens: number[];
     bounceDown: { amount: number; duration: number };
     settle: { duration: number };
     winAllDelay: number;
     winLineInterval: number;
     autoplayWinPause?: number;
     autoplayPause?: number;
-  };
-  /** How wins are presented after the reels land (all optional). */
-  winPresentation?: {
-    /** Draw payline paths over the reels. */
-    drawLines?: boolean;
-    /** Count-up length by win ÷ total bet: first tier whose `below` exceeds the ratio wins. */
-    rollup?: { below: number; ms: number }[];
-    /** Count-up length for banner wins, per celebration tier. */
-    bigRollupMs?: { big: number; huge: number; epic: number; max: number };
-    /** Payline colours ("0xRRGGBB"), cycled by line index. */
-    lineColors?: string[];
   };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
