@@ -1,6 +1,7 @@
 import { Container, Graphics } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
 import { Reel } from './Reel';
+import { AnticipationDirector } from './AnticipationDirector';
 import { SymbolFactory } from '../symbols/SymbolFactory';
 import type { SpinResult, WinResult } from '../math/types';
 import type { SlotSymbol } from '../symbols/SlotSymbol';
@@ -27,6 +28,7 @@ export class ReelController {
   private winLayer: Container;
   /** Layer for feature visuals that sit on top of cells (sticky symbols). */
   readonly overlay = new Container();
+  private anticipation: AnticipationDirector;
   /** While set (e.g. during a feature) spinning blur symbols come only from this pool. */
   private blurPool: string[] | null = null;
   private promotedSymbols: PromotedSymbol[] = [];
@@ -55,7 +57,6 @@ export class ReelController {
       this.container.addChild(bg);
     }
 
-    // Masked layer for all reels
     this.reelLayer = new Container();
     const mask = new Graphics();
     mask.beginFill(0xFFFFFF);
@@ -76,8 +77,10 @@ export class ReelController {
 
     this.container.addChild(this.buildSeparators());
 
-    // Feature overlay (sticky cells) above the spinning reels, below winners
+    // Above the reels, below winners: feature sticky cells, then anticipation FX
     this.container.addChild(this.overlay);
+    this.anticipation = new AnticipationDirector(cfg, this.reels);
+    this.container.addChild(this.anticipation.fx.container);
 
     // Win layer (above mask — winning symbols render here unclipped)
     this.winLayer = new Container();
@@ -106,12 +109,15 @@ export class ReelController {
     return this.spinning;
   }
 
-  startSpin(result: SpinResult, onComplete: () => void): void {
+  /** Normal spin; `anticipate[i]` makes reel i tease (see AnticipationDirector). */
+  startSpin(result: SpinResult, onComplete: () => void, anticipate: boolean[] | null = null, suppressed?: () => boolean): void {
     if (!this.beginSpin(onComplete)) return;
     const { reelStartInterval, scrollScreens } = this.cfg.spin;
+    const extra = this.anticipation.plan(anticipate, suppressed);
     for (let i = 0; i < this.reelCount; i++) {
-      const screens = scrollScreens[i] ?? (i + 1);
+      const screens = (scrollScreens[i] ?? (i + 1)) + extra[i];
       setTimeout(() => {
+        this.anticipation.markStarted(i);
         this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped());
       }, i * reelStartInterval);
     }
@@ -119,6 +125,7 @@ export class ReelController {
 
   startTurboSpin(result: SpinResult, onComplete: () => void): void {
     if (!this.beginSpin(onComplete)) return;
+    this.anticipation.plan(null);
     for (let i = 0; i < this.reelCount; i++) {
       this.reels[i].startSpin(result.grid[i], 1, () => this.onReelStopped(), true);
     }
@@ -137,6 +144,7 @@ export class ReelController {
   /** Instantly stop all spinning reels and snap to their targets. */
   forceStop(): void {
     if (!this.spinning) return;
+    this.anticipation.cancel();
     for (const reel of this.reels) reel.forceStop();
   }
 
@@ -163,6 +171,7 @@ export class ReelController {
 
   update(dt: number): void {
     for (const reel of this.reels) reel.update(dt);
+    this.anticipation.update(dt);
     for (const { symbol } of this.promotedSymbols) symbol.updateWinAnimation(dt);
   }
 

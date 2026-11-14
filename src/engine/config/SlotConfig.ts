@@ -62,6 +62,28 @@ export interface RawSlotConfig {
     /** Per sticky cell during the final collect. */
     collectMs?: number;
   };
+  /**
+   * Anticipation (reel tease): a reel keeps spinning longer and faster with a
+   * particle/shader effect when the reels already landed are one symbol away
+   * from the feature or from a win of `minCategory` or more. Never in turbo
+   * (hold or TURBO toggle). Optional; disabled when omitted.
+   */
+  anticipation?: {
+    enabled?: boolean;
+    /** First reel (0-based) that may anticipate; default 2 (the 3rd reel). */
+    startReel?: number;
+    /** Lowest celebration tier worth a tease: big | huge | epic | max; default "huge" (≈ MEGA). */
+    minCategory?: string;
+    /** Feature scatter id and how many trigger it (tease at trigger − 1). */
+    scatter?: string;
+    scatterTrigger?: number;
+    /** Extra spin time of an anticipating reel, ms (default 1400). */
+    extraMs?: number;
+    /** Top-speed multiplier while anticipating (default 1.6). */
+    speedBoost?: number;
+    /** Effect colours: [core, outer glow], "0xRRGGBB". */
+    colors?: string[];
+  };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
   rtp: number;

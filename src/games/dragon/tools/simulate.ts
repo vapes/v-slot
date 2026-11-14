@@ -13,7 +13,7 @@ declare const process: { argv: string[] };
 
 import raw from '../config.json';
 import strips from '../strips.json';
-import { resolveConfig, type RawSlotConfig } from '@/engine/math';
+import { computeAnticipation, resolveConfig, type RawSlotConfig } from '@/engine/math';
 import { DragonMath } from '../math/DragonMath';
 import { buildProfile, type MathMode } from '../math/respinConfig';
 
@@ -27,13 +27,17 @@ const profile = buildProfile(raw, strips, MODE);
 const LINES = cfg.paylines.length;
 
 const math = new DragonMath(cfg, profile);
-let base = 0, hits = 0, triggers = 0, maxWin = 0;
+let base = 0, hits = 0, triggers = 0, maxWin = 0, teases = 0, teasesWon = 0;
 for (let i = 0; i < SPINS; i++) {
   const r = math.spin();
   base += r.totalWin;
   const total = r.totalWin + (r.feature?.totalWin ?? 0);
   if (total > 0) hits++;
   if (r.feature) triggers++;
+  if (computeAnticipation(cfg, r.grid).some(Boolean)) {
+    teases++;
+    if (r.feature) teasesWon++;
+  }
   if (total > maxWin) maxWin = total;
 }
 
@@ -85,6 +89,7 @@ console.log(`TOTAL RTP        : ${pct(baseRtp + featureRtp)}`);
 const exact = exactTriggerRate();
 console.log(`Exact trigger    : 1 in ${(1 / exact).toFixed(2)} → feature RTP ${pct(exact * meanFeature)} (add the exact base RTP from npm run dragon:reels)`);
 console.log(`Hit frequency    : ${pct(hits / SPINS)}`);
+console.log(`Anticipation     : ${pct(teases / SPINS)} of spins, ${pct(teasesWon / Math.max(1, teases))} of them end in the feature`);
 console.log(`Respins / feature: ${(respins / FEATURES).toFixed(2)}   sticky / feature: ${(eggs / FEATURES).toFixed(2)}`);
 console.log(`GRAND (full nest): 1 in ${grands ? (FEATURES / grands).toFixed(0) : '∞'} features`);
 console.log(`Jackpots / feature: ${Object.entries(tags).map(([k, v]) => `${k} ${(v / FEATURES).toFixed(4)}`).join(', ')}`);

@@ -94,6 +94,12 @@ for (const id of games) {
     if (!ids.includes(sym)) bad(`paytable symbol "${sym}" is not in symbols`);
     for (const n of Object.keys(pays)) if (+n > c.grid.cols || +n < 1) bad(`paytable ${sym}[${n}] impossible on ${c.grid.cols} reels`);
   }
+  if (c.anticipation) {
+    const a = c.anticipation;
+    if (a.minCategory && !['big', 'huge', 'epic', 'max'].includes(a.minCategory)) bad(`anticipation.minCategory "${a.minCategory}" must be big|huge|epic|max`);
+    if (a.scatter && !ids.includes(a.scatter)) bad(`anticipation.scatter "${a.scatter}" is not a symbol`);
+    if ((a.startReel ?? 2) < 1 || (a.startReel ?? 2) >= c.grid.cols) bad('anticipation.startReel must be 1..cols-1');
+  }
   c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
   if (c.defaultBetIndex < 0 || c.defaultBetIndex >= c.betOptions.length) bad('defaultBetIndex out of range');
   if (c.spin.scrollScreens.length < c.grid.cols) bad(`spin.scrollScreens needs ${c.grid.cols} entries`);

@@ -33,3 +33,6 @@ SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick ree
 - Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/classic.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.classic.*`).
 - Translated art text: MEGA JACKPOT, BALANCE / BET / WIN captions and SPIN / AUTO SPIN / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
+
+## Anticipation
+`config.json → anticipation` (engine feature, see CLAUDE.md). Fires when a HUGE+ (≥5× bet) line win is one symbol away, from reel 3 (no scatter in this game); gold/blue colours. ≈10% of spins. QA: `npm run dev`, `?game=classic&force=anticipation`.
