@@ -9,7 +9,6 @@ import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
 import { PaytableScreen } from '../ui/PaytableScreen';
 import { HomeButton } from '../ui/HomeButton';
-import { WinRollup, rollupDuration } from '../ui/WinRollup';
 import { formatMoney } from '../utils/Money';
 import type { SpinPipeline, SpinContext } from '../pipeline/SpinPipeline';
 import { buildSpinPipeline } from '../pipeline/buildSpinPipeline';
@@ -35,8 +34,6 @@ export class SlotGame {
   readonly pipeline: SpinPipeline;
 
   private winCycleTimer: ReturnType<typeof setTimeout> | null = null;
-  private rollup = new WinRollup();
-  private lastRollupMs = 0;
   private balance: number;
   private betIndex: number;
   private spinLoopActive = false;
@@ -94,11 +91,6 @@ export class SlotGame {
       },
       stopWinCycle: () => this.stopWinCycle(),
       startWinCycle: (result) => this.startWinCycle(result),
-      startRollup: (amount, totalBet) => {
-        this.lastRollupMs = rollupDuration(cfg, amount, totalBet);
-        this.rollup.start(amount, this.lastRollupMs, (v) => view.hud.setWinStatus(v));
-        return this.lastRollupMs;
-      },
     });
   }
 
@@ -122,7 +114,6 @@ export class SlotGame {
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);
       this.winCelebration.update(dt);
-      this.rollup.update(dt);
       view.update?.(dt);
     });
     fitCanvas(this.app, cfg.canvas.width, cfg.canvas.height);
@@ -195,8 +186,7 @@ export class SlotGame {
 
       isTurbo = ctx.turbo && this.input.buttonHeld;
       if (!isTurbo && this.autoplay) {
-        const won = ctx.winAmount > 0;
-        await delay(won ? this.lastRollupMs + (spin.autoplayWinPause ?? 1600) : spin.autoplayPause ?? 250);
+        await delay(ctx.winAmount > 0 ? spin.autoplayWinPause ?? 1600 : spin.autoplayPause ?? 250);
       }
     } while ((isTurbo || this.autoplay) && this.balance >= this.totalBet);
 
@@ -220,13 +210,10 @@ export class SlotGame {
       i = (i + 1) % result.wins.length;
       this.winCycleTimer = setTimeout(showNextLine, winLineInterval);
     };
-    // all wins stay on screen at least until the counter has finished
-    this.winCycleTimer = setTimeout(showNextLine, Math.max(winAllDelay, this.lastRollupMs));
+    this.winCycleTimer = setTimeout(showNextLine, winAllDelay);
   }
 
   private stopWinCycle(): void {
-    this.rollup.finish();
-    this.lastRollupMs = 0;
     if (this.winCycleTimer !== null) {
       clearTimeout(this.winCycleTimer);
       this.winCycleTimer = null;

@@ -24,6 +24,3 @@ The original V-Slot: 5 reels × 3 rows, 20 lines, flat Graphics art (coloured ti
 - Money: `currency.decimals = 0`, so minor units are credits (start 10 000, bets 20…2000).
 - Celebration thresholds are low (BIG ≥ 2× bet) on purpose — matches the original game.
 - This game is the default template for `npm run new-game`.
-
-## Timing
-Pragmatic Play–style timings (see CLAUDE.md → Timing model): reels start together and land at `spin.stopTimesMs`, quick spin lands everything at `quickStopMs` (450 ms), wins show payline paths with a count-up (`winPresentation`), then lines cycle every 1.3 s.

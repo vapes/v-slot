@@ -6,8 +6,6 @@ import type { SpinResult, WinResult } from '../math/types';
 import type { SlotSymbol } from '../symbols/SlotSymbol';
 import type { SymbolRenderer } from '../contracts';
 import { createSymbolPicker } from '../utils/Random';
-import { planSpin } from './spinPlan';
-import { WinLines } from './WinLines';
 
 interface PromotedSymbol {
   symbol: SlotSymbol;
@@ -28,7 +26,6 @@ export class ReelController {
   private reelLayer: Container;
   private winLayer: Container;
   private promotedSymbols: PromotedSymbol[] = [];
-  private winLines: WinLines;
   private readonly reelCount: number;
   private readonly rowCount: number;
   private readonly reelWidth: number;
@@ -77,10 +74,6 @@ export class ReelController {
     // Win layer (above mask — winning symbols render here unclipped)
     this.winLayer = new Container();
     this.container.addChild(this.winLayer);
-
-    // Payline paths above the winning symbols (cfg.winPresentation.drawLines)
-    this.winLines = new WinLines(cfg);
-    this.container.addChild(this.winLines.graphics);
   }
 
   /** Optional thin grid lines between cells (cfg.reelStyle.separators). */
@@ -107,19 +100,20 @@ export class ReelController {
 
   startSpin(result: SpinResult, onComplete: () => void): void {
     if (!this.beginSpin(onComplete)) return;
-    planSpin(this.cfg, false).forEach(({ delayMs, screens }, i) => {
-      const go = () => this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped());
-      if (delayMs > 0) setTimeout(go, delayMs);
-      else go();
-    });
+    const { reelStartInterval, scrollScreens } = this.cfg.spin;
+    for (let i = 0; i < this.reelCount; i++) {
+      const screens = scrollScreens[i] ?? (i + 1);
+      setTimeout(() => {
+        this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped());
+      }, i * reelStartInterval);
+    }
   }
 
-  /** Quick spin / hold-turbo: no bounce-up, all reels land together. */
   startTurboSpin(result: SpinResult, onComplete: () => void): void {
     if (!this.beginSpin(onComplete)) return;
-    planSpin(this.cfg, true).forEach(({ screens }, i) => {
-      this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped(), true);
-    });
+    for (let i = 0; i < this.reelCount; i++) {
+      this.reels[i].startSpin(result.grid[i], 1, () => this.onReelStopped(), true);
+    }
   }
 
   /** Instantly stop all spinning reels and snap to their targets. */
@@ -157,7 +151,6 @@ export class ReelController {
   /** Highlight every winning position with a pulse; dim the rest. */
   showWins(result: SpinResult, cycleMs = 1500): void {
     this.highlight(result.wins, (sym) => sym.startWinAnimation(cycleMs));
-    this.winLines.show(result.wins);
   }
 
   /** Turbo win display: static gold frame on winners, dim losers. */
@@ -170,7 +163,6 @@ export class ReelController {
     this.demoteWinSymbols();
     this.forEachVisible((sym) => sym.stopWinAnimation());
     this.highlight([win], (sym) => sym.startWinAnimation(cycleMs));
-    this.winLines.show([win]);
   }
 
   /** Clear win highlights and restore all symbols. */
@@ -218,7 +210,6 @@ export class ReelController {
   }
 
   private demoteWinSymbols(): void {
-    this.winLines.clear();
     for (const { symbol, reelIndex, localY } of this.promotedSymbols) {
       symbol.stopWinAnimation();
       symbol.alpha = 1;

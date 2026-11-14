@@ -16,31 +16,17 @@
   "wild": null,
 
   "spin": {
-    "reelStartInterval": 0,
-    "stopTimesMs": [900, 1100, 1300, 1500, 1700],
-    "quickStopMs": 450,
-    "holdToTurboMs": 400,
-    "bounceUp": { "amount": 0.15, "duration": 8 },
+    "reelStartInterval": 100,
+    "bounceUp": { "amount": 0.4, "duration": 14 },
     "spinSpeed": 50,
     "turboSpeedMultiplier": 1.5,
-    "acceleration": 6.0,
+    "acceleration": 3.0,
     "blurAlpha": 0.7,
-    "bounceDown": { "amount": 0.18, "duration": 12 },
-    "settle": { "duration": 6 },
-    "winAllDelay": 1500,
-    "winLineInterval": 1300,
-    "autoplayWinPause": 700,
-    "autoplayPause": 200
-  },
-
-  "winPresentation": {
-    "drawLines": true,
-    "rollup": [
-      { "below": 1, "ms": 500 },
-      { "below": 3, "ms": 1000 },
-      { "below": 1000000, "ms": 1600 }
-    ],
-    "bigRollupMs": { "big": 3000, "huge": 4500, "epic": 6000, "max": 8000 }
+    "scrollScreens": [1, 2, 3, 4, 5],
+    "bounceDown": { "amount": 0.3, "duration": 18 },
+    "settle": { "duration": 8 },
+    "winAllDelay": 2000,
+    "winLineInterval": 1500
   },
 
   "rtp": 0.98,
