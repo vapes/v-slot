@@ -8,6 +8,7 @@ import { fitCanvas, goToLobby } from './fitCanvas';
 import { keepScreenAwake } from './wakeLock';
 import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
+import { RespinPlayer } from '../feature/RespinPlayer';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
 import { HomeButton } from '../ui/HomeButton';
@@ -32,6 +33,7 @@ export class SlotGame {
   private view: GameView;
   private input!: GameInput;
   private winCelebration: WinCelebration;
+  private respins: RespinPlayer;
   private paytable!: HtmlPaytable;
   private homeButton: HomeButton;
   readonly pipeline: SpinPipeline;
@@ -61,7 +63,9 @@ export class SlotGame {
     });
 
     this.math = def.createMath();
-    this.reelController = new ReelController(cfg, def.createSymbolRenderer());
+    const renderer = def.createSymbolRenderer();
+    this.reelController = new ReelController(cfg, renderer);
+    this.respins = new RespinPlayer(cfg, this.reelController, renderer, this.app.stage);
     this.winCelebration = new WinCelebration(cfg);
     this.view = def.createView({
       changeBet: (d, wrap) => this.changeBet(d, wrap ?? false),
@@ -93,6 +97,8 @@ export class SlotGame {
       },
       stopWinCycle: () => this.stopWinCycle(),
       startWinCycle: (result) => this.startWinCycle(result),
+      playFeature: (result, ctx) =>
+        this.respins.play(result.feature!, result.grid, ctx.lineBet, ctx.turbo || ctx.quick, view),
     });
   }
 
@@ -112,6 +118,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reelController.container);
     view.mountAboveReels(stage);
+    this.respins.mount();
     stage.addChild(this.homeButton.container);
     if (cfg.soundButton) {
       const { x, y, r } = cfg.soundButton;
@@ -122,6 +129,7 @@ export class SlotGame {
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);
       this.winCelebration.update(dt);
+      this.respins.update(dt);
       view.update?.(dt);
     });
     fitCanvas(this.app, cfg.canvas.width, cfg.canvas.height);
@@ -211,6 +219,7 @@ export class SlotGame {
   }
 
   private startWinCycle(result: SpinResult): void {
+    if (result.wins.length === 0) return;
     const { winAllDelay, winLineInterval } = this.cfg.spin;
     const lineBet = this.lineBet;
     let i = 0;

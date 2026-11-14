@@ -7,6 +7,8 @@ import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { DragonHUD, DRAGON_LABEL_STYLE } from './DragonHUD';
 import { labelButton } from './labels';
 
+const NIGHT_TINT = 0x8C7BC8;
+
 /** Skin background + every button placed exactly over its baked spot. */
 export class DragonView implements GameView {
   readonly spinButton = makeSpin();
@@ -42,8 +44,10 @@ export class DragonView implements GameView {
     return [this.spinButton, this.minus, this.plus, this.coins, this.auto, this.turbo, this.trophy];
   }
 
+  private bg: Sprite | null = null;
+
   mountBelowReels(stage: Container): void {
-    const bg = new Sprite(backgroundTexture());
+    const bg = (this.bg = new Sprite(backgroundTexture()));
     bg.width = config.canvas.width;
     bg.height = config.canvas.width * bg.texture.height / bg.texture.width;
     stage.addChild(bg);
@@ -62,6 +66,8 @@ export class DragonView implements GameView {
   }
 
   setAutoplay(on: boolean): void { this.auto.active = on; }
+  /** Dragon's Nest: the scene falls into a moonlit night. */
+  setFeatureMode(on: boolean): void { if (this.bg) this.bg.tint = on ? NIGHT_TINT : 0xFFFFFF; }
   setQuickSpin(on: boolean): void { this.turbo.active = on; }
 
   update(dt: number): void {

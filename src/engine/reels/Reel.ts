@@ -148,7 +148,6 @@ export class Reel {
       case ReelState.Settling: {
         this.phaseFrame += dt;
         const progress = Math.min(this.phaseFrame / this.spinConfig.settle.duration, 1);
-        // Smooth ease-out cubic
         const ease = 1 - Math.pow(1 - progress, 3);
 
         if (progress >= 1) {
@@ -158,7 +157,6 @@ export class Reel {
           this.onStopCallback = null;
           cb?.();
         } else {
-          // Gentle settle from any residual offset
           this.symbolContainer.y *= (1 - ease * 0.3);
         }
         break;
@@ -226,9 +224,10 @@ export class Reel {
     }
   }
 
-  private snapToTarget(): void {
+  /** Snap instantly to the target column (or to `ids`, e.g. restoring a grid after a feature). */
+  snapToTarget(ids?: SymbolId[]): void {
+    if (ids) this.targetSymbols = ids;
     if (!this.targetSymbols) return;
-
     this.symbols.sort((a, b) => a.y - b.y);
 
     for (let i = 0; i < this.bufferCount; i++) {

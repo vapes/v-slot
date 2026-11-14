@@ -54,7 +54,7 @@
     "autoplayPause": 250
   },
 
-  "rtp": 0.962,
+  "rtp": 0.96,
   "wild": "wild",
 
   "symbols": [
@@ -74,18 +74,17 @@
   ],
 
   "paytable": {
-    "dragon":  { "3": 100, "4": 1000 },
-    "egg":     { "3": 60,  "4": 400 },
-    "chest":   { "3": 50,  "4": 250 },
-    "gold":    { "3": 40,  "4": 150 },
-    "crystal": { "3": 30,  "4": 100 },
-    "goblet":  { "3": 25,  "4": 80 },
-    "A":       { "3": 15,  "4": 50 },
-    "K":       { "3": 12,  "4": 40 },
-    "Q":       { "3": 10,  "4": 35 },
-    "J":       { "3": 8,   "4": 25 },
-    "10":      { "3": 6,   "4": 20 },
-    "9":       { "3": 5,   "4": 15 }
+    "dragon": { "3": 75, "4": 750 },
+    "chest": { "3": 40, "4": 200 },
+    "gold": { "3": 30, "4": 120 },
+    "crystal": { "3": 22, "4": 75 },
+    "goblet": { "3": 18, "4": 60 },
+    "A": { "3": 11, "4": 38 },
+    "K": { "3": 9, "4": 30 },
+    "Q": { "3": 7, "4": 26 },
+    "J": { "3": 6, "4": 19 },
+    "10": { "3": 5, "4": 15 },
+    "9": { "3": 4, "4": 11 }
   },
 
   "paylines": [
@@ -95,19 +94,48 @@
     [1,2,3,4], [3,2,1,0], [2,3,2,3], [1,2,1,2], [3,2,3,2]
   ],
 
+  "respin": {
+    "scatter": "egg",
+    "trigger": 3,
+    "respins": 3,
+    "values": [
+      { "x": 1, "w": 360 },
+      { "x": 2, "w": 260 },
+      { "x": 3, "w": 160 },
+      { "x": 5, "w": 100 },
+      { "x": 10, "w": 75 },
+      { "x": 25, "w": 33 },
+      { "x": 50, "w": 9, "tag": "mini" },
+      { "x": 150, "w": 3, "tag": "major" }
+    ],
+    "grand": 1000,
+    "composition": [
+      {"egg": 1, "dragon": 2, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9},
+      {"egg": 1, "wild": 1, "dragon": 2, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9},
+      {"egg": 1, "wild": 1, "dragon": 2, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9},
+      {"egg": 1, "wild": 1, "dragon": 2, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9}
+    ],
+    "strips": [
+      ["goblet","dragon","goblet","gold","crystal","chest","gold","goblet","gold","crystal","goblet","chest","gold","goblet","dragon","crystal","goblet","chest","crystal","goblet","crystal","chest","crystal","goblet","crystal","egg","goblet","gold","crystal","gold"],
+      ["gold","goblet","dragon","crystal","goblet","dragon","crystal","goblet","gold","crystal","gold","goblet","chest","crystal","wild","wild","wild","goblet","crystal","egg","gold","goblet","chest","goblet","gold","crystal","chest","crystal","gold","chest","goblet","crystal","goblet"],
+      ["chest","goblet","crystal","goblet","crystal","goblet","chest","gold","goblet","dragon","gold","crystal","goblet","gold","goblet","gold","goblet","gold","goblet","crystal","chest","gold","crystal","wild","wild","wild","crystal","egg","crystal","chest","goblet","crystal","dragon"],
+      ["goblet","crystal","goblet","crystal","dragon","gold","crystal","dragon","goblet","crystal","goblet","gold","crystal","chest","goblet","chest","goblet","crystal","gold","chest","goblet","crystal","chest","goblet","gold","wild","wild","wild","gold","goblet","egg","gold","crystal"]
+    ]
+  },
+
   "reelStacks": { "wild": 3 },
 
   "reelComposition": [
-    { "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 7 },
-    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 6 },
-    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 3, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 6, "J": 6, "10": 6, "9": 6 },
-    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 7, "9": 9 }
+    {"egg": 1, "dragon": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 7},
+    {"egg": 2, "wild": 2, "dragon": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 6},
+    {"egg": 2, "wild": 2, "dragon": 2, "chest": 3, "gold": 3, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 6, "J": 6, "10": 6, "9": 6},
+    {"egg": 1, "wild": 2, "dragon": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 7, "9": 9}
   ],
 
   "reels": [
-    ["J","9","goblet","egg","gold","goblet","dragon","A","10","A","dragon","K","chest","K","Q","10","J","gold","goblet","10","K","Q","9","A","Q","egg","9","crystal","chest","crystal","A","Q","10","J","gold","K","gold","9","chest","crystal","9","goblet","Q","J","crystal","J","A","10","J","10","K","9","egg","9"],
-    ["crystal","J","K","9","J","goblet","chest","egg","crystal","9","crystal","A","10","K","J","chest","9","chest","9","A","wild","wild","wild","K","egg","A","gold","J","10","A","Q","A","gold","goblet","wild","wild","wild","J","9","10","Q","dragon","gold","egg","K","dragon","gold","Q","10","Q","10","goblet","J","10","crystal","Q","K","9","goblet"],
-    ["J","egg","crystal","dragon","Q","10","9","crystal","wild","wild","wild","9","goblet","A","goblet","Q","9","Q","K","egg","chest","10","A","9","A","9","gold","chest","Q","goblet","J","K","10","9","K","J","K","gold","J","K","A","wild","wild","wild","chest","gold","Q","dragon","10","crystal","J","egg","crystal","goblet","J","10","A","Q","10"],
-    ["crystal","9","gold","Q","dragon","goblet","10","J","egg","J","Q","K","dragon","K","gold","9","Q","goblet","9","crystal","J","egg","A","10","9","10","Q","wild","wild","wild","crystal","K","9","10","goblet","A","Q","chest","9","egg","chest","A","J","10","goblet","crystal","gold","9","K","9","10","gold","9","10","A","chest","K","wild","wild","wild","J","A","J"]
+    ["goblet","egg","A","J","A","10","9","10","dragon","A","J","9","K","goblet","dragon","K","Q","gold","10","9","K","9","crystal","chest","goblet","crystal","9","gold","10","J","A","chest","Q","J","9","crystal","10","K","A","chest","Q","J","gold","crystal","J","10","goblet","Q","K","gold","Q","9"],
+    ["gold","K","goblet","gold","9","J","goblet","10","egg","A","K","A","wild","wild","wild","dragon","Q","K","9","A","10","wild","wild","wild","Q","egg","9","A","J","A","gold","K","dragon","Q","goblet","K","gold","Q","9","10","crystal","10","9","crystal","J","9","goblet","10","Q","10","crystal","J","chest","J","chest","crystal","J","chest"],
+    ["K","wild","wild","wild","K","10","A","K","9","10","crystal","J","gold","A","crystal","J","egg","Q","A","goblet","chest","10","9","J","Q","dragon","goblet","Q","wild","wild","wild","crystal","gold","Q","J","9","J","10","A","crystal","chest","K","chest","9","egg","goblet","J","9","dragon","goblet","gold","K","10","Q","A","Q","9","10"],
+    ["wild","wild","wild","9","10","A","Q","goblet","K","gold","crystal","10","Q","K","crystal","10","gold","9","A","10","dragon","A","gold","A","Q","9","K","wild","wild","wild","10","9","Q","goblet","J","9","chest","goblet","chest","J","gold","9","crystal","9","egg","J","10","goblet","A","crystal","J","Q","chest","9","10","K","9","dragon","J","K","J"]
   ]
 }

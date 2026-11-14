@@ -11,6 +11,8 @@ import type { SpinResult } from './math/types';
 export interface SymbolView {
   readonly display: DisplayObject;
   setSymbol(id: string): void;
+  /** Optional caption on the symbol (sticky cash value / jackpot name); null hides it. */
+  setValue?(label: string | null): void;
 }
 
 export interface SymbolRenderer {
@@ -71,6 +73,8 @@ export interface GameView {
   setBetControls(state: BetControlsState): void;
   setAutoplay?(on: boolean): void;
   setQuickSpin?(on: boolean): void;
+  /** Bonus feature (e.g. respins) started / ended — switch background mood, hide base-only UI. */
+  setFeatureMode?(on: boolean): void;
   update?(dt: number): void;
 }
 
