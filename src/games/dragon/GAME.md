@@ -8,7 +8,7 @@
 | `art/source.png` | 971×1619 mockup — the single source of all art |
 | `tools/slice-skin.py` | Slices the mockup into `public/games/dragon/` (`npm run dragon:slice`) |
 | `config.json` | Engine config + `skin.ui` anchors (source px) + real math inputs (`reelComposition`, `reelStacks`, `respin`) + `demo` overrides |
-| `config.ts` | Typed config, `SKIN_SCALE`, `uiAnchor()`, `REEL_STRIPS` |
+| `config.ts` | Typed config, `skin` (engine `createSkin`: `SKIN_SCALE`, `uiAnchor()`, captions), `REEL_STRIPS` |
 | `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
@@ -52,7 +52,10 @@ SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TU
 ## Content CDN
 - Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/dragon.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.dragon.*`).
-- Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
+- Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
 
 ## Anticipation
 `config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 eggs already landed (scatter tease) or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈6.8% of real spins (≈11% of those reach the nest), ≈19% in demo. QA: `npm run dev`, `?game=dragon&force=anticipation`.
+
+## Tests
+`tests/games/dragon.test.ts` (both profiles, seeded): dragon never on base strips / egg never in the nest, triggering eggs become sticky dragons, sticky cells stay, respins reset/count down, totals add up, values come from the table, same seed → same round.

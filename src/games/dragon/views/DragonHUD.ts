@@ -1,7 +1,6 @@
 import { Text, TextStyle, Container, Graphics } from 'pixi.js';
 import { formatMoney as fmt, t, type Hud } from '@/engine';
-import { config, uiAnchor, type UiAnchorName } from '../config';
-import { skinLabel } from './labels';
+import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 
 const formatMoney = (minor: number) => fmt(config, minor);
 
@@ -54,9 +53,9 @@ export class DragonHUD implements Hud {
 
   addToStage(stage: Container): void {
     stage.addChild(
-      skinLabel('balanceLabel', 'label.balance', DRAGON_LABEL_STYLE),
-      skinLabel('lastWinLabel', 'label.lastWin', DRAGON_LABEL_STYLE),
-      skinLabel('betLabel', 'label.bet', DRAGON_LABEL_STYLE),
+      skin.label('balanceLabel', 'label.balance', DRAGON_LABEL_STYLE),
+      skin.label('lastWinLabel', 'label.lastWin', DRAGON_LABEL_STYLE),
+      skin.label('betLabel', 'label.bet', DRAGON_LABEL_STYLE),
       this.balanceValue, this.lastWinValue, this.betValue, this.messageBg, this.message,
     );
   }

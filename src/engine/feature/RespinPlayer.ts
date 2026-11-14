@@ -8,6 +8,7 @@ import { formatMoney } from '../utils/Money';
 import { FeatureBanner } from '../ui/FeatureBanner';
 import { FeatureMeter } from './FeatureMeter';
 import { StickyLayer } from './StickyLayer';
+import { gameEvents } from '../core/GameEvents';
 
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -38,8 +39,8 @@ export class RespinPlayer {
   }
 
   async play(f: FeatureRound, baseGrid: string[][], lineBet: number, fast: boolean, view: GameView): Promise<void> {
-    const fc = this.cfg.feature ?? {};
-    const ms = (normal: number, quick: number) => (fast ? quick : normal);
+    const ft = this.cfg.featureTiming;
+    const ms = (normal: number) => (fast ? normal * ft.fastFactor : normal);
     const money = (v: number) => formatMoney(this.cfg, v * lineBet);
     const label = (c: StickyCell) => (c.tag ? t(`feature.jackpot.${c.tag}`) : formatMoney(this.cfg, c.value * lineBet, false));
     if (!this.meter) {
@@ -48,15 +49,16 @@ export class RespinPlayer {
     }
     const meter = this.meter;
 
+    gameEvents.emit('featureStart', { feature: f });
     // 1. trigger: scatters pulse, then the intro banner
     const scatter = f.initialSticky[0]?.symbol ?? '';
     const triggerWin: WinResult = { paylineIndex: -1, symbol: scatter, count: f.trigger.length, multiplier: 0, positions: f.trigger };
     this.reels.showWins({ grid: baseGrid, wins: [triggerWin], totalWin: 0 }, 700);
-    await wait(ms(1200, 400));
+    await wait(ms(ft.triggerMs));
     this.reels.clearWins();
     view.setFeatureMode?.(true);
     this.reels.setBlurPool(f.reelSymbols ?? null);
-    await this.banner.show(t('feature.title'), t('feature.subtitle', { n: f.initialRespins }), ms(fc.introMs ?? 2000, 900));
+    await this.banner.show(t('feature.title'), t('feature.subtitle', { n: f.initialRespins }), ms(ft.introMs));
 
     // 2. triggering scatters become sticky
     let running = 0;
@@ -65,7 +67,7 @@ export class RespinPlayer {
       running += c.value;
     }
     meter.show(f.initialRespins, money(running));
-    await wait(ms(600, 200));
+    await wait(ms(ft.stickMs));
 
     // 3. respins
     let respins = f.initialRespins;
@@ -78,36 +80,38 @@ export class RespinPlayer {
       }
       running += step.lineWin;
       meter.setTotal(money(running));
-      if (step.newSticky.length) await wait(ms(450, 150));
+      if (step.newSticky.length) await wait(ms(ft.newStickyMs));
       if (step.wins.length) {
         this.reels.showWins({ grid: step.grid, wins: step.wins, totalWin: step.lineWin }, 700);
-        await wait(ms(900, 250));
+        await wait(ms(ft.stepWinMs));
         this.reels.clearWins();
       }
       respins = step.respinsLeft;
       meter.setRespins(respins);
-      await wait(ms(fc.stepPauseMs ?? 300, 80));
+      gameEvents.emit('featureStep', { index: f.steps.indexOf(step), newSticky: step.newSticky.length, respinsLeft: respins });
+      await wait(ms(ft.stepPauseMs));
     }
 
     // 4. hatch: every sticky cell pays, one after another
     const cells = [...this.sticky.cells].sort((a, b) => a.reel - b.reel || a.row - b.row);
     for (const c of cells) {
       this.sticky.bump(c);
-      await wait(ms(fc.collectMs ?? 130, 40));
+      await wait(ms(ft.collectMs));
     }
     if (f.fullBonus > 0) {
       running += f.fullBonus;
       meter.setTotal(money(running));
-      await this.banner.show(t('feature.grand'), money(f.fullBonus), ms(2600, 1200));
+      await this.banner.show(t('feature.grand'), money(f.fullBonus), ms(ft.grandMs));
     }
 
     // 5. outro, back to the base game
-    await this.banner.show(t('feature.total'), money(f.totalWin), ms(fc.outroMs ?? 2200, 1000));
+    await this.banner.show(t('feature.total'), money(f.totalWin), ms(ft.outroMs));
     this.sticky.clear();
     meter.hide();
     this.reels.setBlurPool(null);
     this.reels.snapTo(baseGrid);
     view.setFeatureMode?.(false);
+    gameEvents.emit('featureEnd', { totalWin: f.totalWin * lineBet });
   }
 
   private spin(grid: string[][], fast: boolean): Promise<void> {

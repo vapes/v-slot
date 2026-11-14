@@ -1,6 +1,7 @@
 import type { SlotConfig } from '../config/SlotConfig';
 import { AnticipationFX } from '../fx/AnticipationFX';
 import type { Reel } from './Reel';
+import { gameEvents } from '../core/GameEvents';
 
 /**
  * Runs anticipation for one spin: extends the planned distance of the
@@ -26,9 +27,9 @@ export class AnticipationDirector {
     this.started = new Array(cols).fill(false);
     this.state = new Array(cols).fill('idle');
     this.suppressed = suppressed ?? (() => false);
-    const a = this.cfg.anticipation ?? {};
-    const frames = (a.extraMs ?? 1400) / (1000 / 60);
-    const extra = (frames * this.cfg.spin.spinSpeed * (a.speedBoost ?? 1.6)) / this.cfg.reelAreaHeight;
+    const a = this.cfg.tease;
+    const frames = (a?.extraMs ?? 0) / (1000 / 60);
+    const extra = (frames * this.cfg.spin.spinSpeed * (a?.speedBoost ?? 1)) / this.cfg.reelAreaHeight;
     let acc = 0;
     return this.flags.map(f => (acc += f ? extra : 0));
   }
@@ -47,12 +48,14 @@ export class AnticipationDirector {
           this.state[i] = 'done';
         } else {
           this.state[i] = 'active';
-          this.reels[i].boost(this.cfg.anticipation?.speedBoost ?? 1.6);
+          this.reels[i].boost(this.cfg.tease?.speedBoost ?? 1);
           this.fx.start(i);
+          gameEvents.emit('anticipationStart', { reel: i });
         }
       } else if (this.state[i] === 'active' && landed(i)) {
         this.state[i] = 'done';
         this.fx.stop(i);
+        gameEvents.emit('anticipationEnd', { reel: i });
       }
     });
     this.fx.update(dt);

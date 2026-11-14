@@ -1,6 +1,8 @@
 import { SpinPipeline, type SpinContext } from './SpinPipeline';
 import { getWinCategory } from '../ui/WinCelebration';
 import { computeAnticipation } from '../math/anticipation';
+import { debugging, forced } from '../core/devFlags';
+import { gameEvents } from '../core/GameEvents';
 import { t } from '../i18n/I18n';
 import type { SlotConfig } from '../config/SlotConfig';
 import type { SpinResult } from '../math/types';
@@ -24,13 +26,6 @@ export interface PipelineDeps {
   startWinCycle(result: SpinResult): void;
   /** Play a bonus round decided by the math (e.g. sticky respins). */
   playFeature(result: SpinResult, ctx: SpinContext): Promise<void>;
-}
-
-/** Dev/QA only: `?force=anticipation` makes every eligible reel tease. */
-function forceAnticipation(cfg: SlotConfig): boolean[] | null {
-  if (!import.meta.env.DEV || new URLSearchParams(window.location.search).get('force') !== 'anticipation') return null;
-  const start = cfg.anticipation?.startReel ?? 2;
-  return Array.from({ length: cfg.grid.cols }, (_, i) => i >= start);
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
@@ -74,6 +69,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'showPreSpinUI',
     execute: (ctx) => {
       hud.setStatus(t('status.spin'));
+      gameEvents.emit('spinStart', { totalBet: ctx.totalBet, turbo: ctx.turbo, quick: ctx.quick });
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
   });
@@ -90,13 +86,14 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('post', {
     name: 'spinAnimation',
     execute: (ctx) => {
-      console.log(ctx.turbo ? 'spin turbo' : 'spin normal');
       return new Promise<void>((resolve) => {
         if (ctx.turbo || ctx.quick) {
           reelController.startTurboSpin(ctx.result!, resolve);
         } else {
           // anticipation never in turbo / quick; also skipped while SPIN is held
-          const tease = forceAnticipation(cfg) ?? computeAnticipation(cfg, ctx.result!.grid);
+          const tease = forced('anticipation')
+            ? Array.from({ length: cfg.grid.cols }, (_, i) => i >= (cfg.tease?.startReel ?? cfg.grid.cols))
+            : computeAnticipation(cfg, ctx.result!.grid);
           reelController.startSpin(ctx.result!, resolve, tease, deps.isButtonHeld);
           // If button is held, auto-forceStop after all reels have started
           const allReelsStartDelay = spinConfig.reelStartInterval * cfg.grid.cols;
@@ -111,6 +108,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('post', {
     name: 'resolveTurboMode',
     execute: (ctx) => {
+      gameEvents.emit('reelsStopped', { result: ctx.result! });
       ctx.turbo = deps.isButtonHeld();
     },
   });
@@ -170,9 +168,10 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     execute: (ctx) => {
       if (ctx.winAmount <= 0) return;
       const category = getWinCategory(cfg, ctx.winAmount, ctx.totalBet);
+      gameEvents.emit('win', { amount: ctx.winAmount, totalBet: ctx.totalBet, category });
       if (!category) return;
       if (ctx.turbo) {
-        winCelebration.playStatic(category, 500);
+        winCelebration.playStatic(category, cfg.timing.turboBannerMs);
       } else {
         winCelebration.play(category);
       }
@@ -183,7 +182,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'turboWinDelay',
     execute: async (ctx) => {
       if (!ctx.turbo || ctx.winAmount <= 0) return;
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, cfg.timing.turboWinMs));
       reelController.clearWins();
     },
   });
@@ -204,6 +203,6 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     },
   });
 
-  console.log(pipeline.describe());
+  if (debugging('pipeline')) console.info(pipeline.describe());
   return pipeline;
 }

@@ -2,10 +2,9 @@ import { Circle, Container, Sprite } from 'pixi.js';
 import {
   SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView,
 } from '@/engine';
-import { config, SKIN_SCALE, uiAnchor } from '../config';
+import { config, SKIN_SCALE, uiAnchor, skin } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { DragonHUD, DRAGON_LABEL_STYLE } from './DragonHUD';
-import { labelButton } from './labels';
 
 const NIGHT_TINT = 0x8C7BC8;
 
@@ -28,8 +27,8 @@ export class DragonView implements GameView {
     this.auto.onClick(actions.toggleAutoplay);
     this.turbo.onClick(actions.toggleQuickSpin);
     this.trophy.onClick(actions.openPaytable);
-    labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
-    labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
+    skin.labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
+    skin.labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
 
     // The fullscreen icon is baked into the background; this is its hit zone.
     const z = this.fullscreenZone;

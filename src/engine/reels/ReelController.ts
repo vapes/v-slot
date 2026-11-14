@@ -2,19 +2,12 @@ import { Container, Graphics } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
 import { Reel } from './Reel';
 import { AnticipationDirector } from './AnticipationDirector';
+import { WinPresenter } from './WinPresenter';
+import { gameEvents } from '../core/GameEvents';
 import { SymbolFactory } from '../symbols/SymbolFactory';
 import type { SpinResult, WinResult } from '../math/types';
-import type { SlotSymbol } from '../symbols/SlotSymbol';
 import type { SymbolRenderer } from '../contracts';
 import { createSymbolPicker } from '../utils/Random';
-
-interface PromotedSymbol {
-  symbol: SlotSymbol;
-  reelIndex: number;
-  localY: number;
-}
-
-const DIM_ALPHA = 0.4;
 
 export class ReelController {
   readonly container: Container;
@@ -25,13 +18,13 @@ export class ReelController {
   private onAllStoppedCallback: (() => void) | null = null;
 
   private reelLayer: Container;
-  private winLayer: Container;
+  private wins: WinPresenter;
+  private wasSpinning: boolean[] = [];
   /** Layer for feature visuals that sit on top of cells (sticky symbols). */
   readonly overlay = new Container();
   private anticipation: AnticipationDirector;
   /** While set (e.g. during a feature) spinning blur symbols come only from this pool. */
   private blurPool: string[] | null = null;
-  private promotedSymbols: PromotedSymbol[] = [];
   private readonly reelCount: number;
   private readonly rowCount: number;
   private readonly reelWidth: number;
@@ -83,8 +76,8 @@ export class ReelController {
     this.container.addChild(this.anticipation.fx.container);
 
     // Win layer (above mask — winning symbols render here unclipped)
-    this.winLayer = new Container();
-    this.container.addChild(this.winLayer);
+    this.wins = new WinPresenter(cfg, this.reels);
+    this.container.addChild(this.wins.layer);
   }
 
   /** Optional thin grid lines between cells (cfg.reelStyle.separators). */
@@ -137,7 +130,7 @@ export class ReelController {
 
   /** Show a grid instantly (no spin), e.g. the base grid after a feature. */
   snapTo(grid: string[][]): void {
-    this.demoteWinSymbols();
+    this.wins.demote();
     grid.forEach((col, i) => this.reels[i].snapToTarget(col));
   }
 
@@ -153,8 +146,8 @@ export class ReelController {
     this.spinning = true;
     this.reelsStopped = 0;
     this.onAllStoppedCallback = onComplete;
-    this.demoteWinSymbols();
-    this.forEachVisible((sym) => {
+    this.wins.demote();
+    this.wins.forEachVisible((sym) => {
       sym.stopWinAnimation();
       sym.alpha = 1;
     });
@@ -170,81 +163,35 @@ export class ReelController {
   }
 
   update(dt: number): void {
-    for (const reel of this.reels) reel.update(dt);
+    this.reels.forEach((reel, i) => {
+      reel.update(dt);
+      if (this.wasSpinning[i] && !reel.isSpinning) gameEvents.emit('reelLand', { reel: i });
+      this.wasSpinning[i] = reel.isSpinning;
+    });
     this.anticipation.update(dt);
-    for (const { symbol } of this.promotedSymbols) symbol.updateWinAnimation(dt);
+    this.wins.update(dt);
   }
 
   /** Highlight every winning position with a pulse; dim the rest. */
   showWins(result: SpinResult, cycleMs = 1500): void {
-    this.highlight(result.wins, (sym) => sym.startWinAnimation(cycleMs));
+    this.wins.highlight(result.wins, (sym) => sym.startWinAnimation(cycleMs));
   }
 
   /** Turbo win display: static gold frame on winners, dim losers. */
   showWinsTurbo(result: SpinResult): void {
-    this.highlight(result.wins, (sym) => sym.showTurboHighlight());
+    this.wins.highlight(result.wins, (sym) => sym.showTurboHighlight());
   }
 
   /** Show only the symbols belonging to a single winning line. */
   showWinLine(win: WinResult, cycleMs = 1500): void {
-    this.demoteWinSymbols();
-    this.forEachVisible((sym) => sym.stopWinAnimation());
-    this.highlight([win], (sym) => sym.startWinAnimation(cycleMs));
+    this.wins.demote();
+    this.wins.resetAll();
+    this.wins.highlight([win], (sym) => sym.startWinAnimation(cycleMs));
   }
 
   /** Clear win highlights and restore all symbols. */
   clearWins(): void {
-    this.demoteWinSymbols();
-    this.forEachVisible((sym) => { sym.alpha = 1; });
-  }
-
-  private highlight(wins: WinResult[], decorate: (sym: SlotSymbol) => void): void {
-    if (wins.length === 0) return;
-    const posSet = new Set<string>();
-    for (const win of wins) {
-      for (const [reel, row] of win.positions) posSet.add(`${reel},${row}`);
-    }
-
-    this.forEachVisible((sym, r, row) => {
-      if (posSet.has(`${r},${row}`)) {
-        this.promote(sym, r);
-        sym.alpha = 1;
-        decorate(sym);
-      } else {
-        sym.alpha = DIM_ALPHA;
-      }
-    });
-  }
-
-  private forEachVisible(fn: (sym: SlotSymbol, reel: number, row: number) => void): void {
-    for (let r = 0; r < this.reelCount; r++) {
-      const visible = this.reels[r].getVisibleSymbols();
-      for (let row = 0; row < this.rowCount; row++) {
-        const sym = visible[row];
-        if (sym) fn(sym, r, row);
-      }
-    }
-  }
-
-  private promote(sym: SlotSymbol, reelIndex: number): void {
-    if (sym.parent === this.winLayer) return;
-    const localY = sym.y;
-    sym.parent?.removeChild(sym);
-    sym.x = reelIndex * this.reelWidth;
-    sym.y = localY;
-    this.winLayer.addChild(sym);
-    this.promotedSymbols.push({ symbol: sym, reelIndex, localY });
-  }
-
-  private demoteWinSymbols(): void {
-    for (const { symbol, reelIndex, localY } of this.promotedSymbols) {
-      symbol.stopWinAnimation();
-      symbol.alpha = 1;
-      this.winLayer.removeChild(symbol);
-      symbol.x = 0;
-      symbol.y = localY;
-      this.reels[reelIndex].symbolContainer.addChild(symbol);
-    }
-    this.promotedSymbols = [];
+    this.wins.demote();
+    this.wins.undim();
   }
 }

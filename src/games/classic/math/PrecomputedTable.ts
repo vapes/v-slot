@@ -1,4 +1,4 @@
-import type { SlotConfig } from '@/engine';
+import { random, type SlotConfig } from '@/engine/math';
 
 type SymbolId = string;
 
@@ -45,7 +45,6 @@ export class PrecomputedTable {
     this._ready = true;
 
     const total = this.slices.reduce((s, c) => s + c.count, 0);
-    console.log(`[PrecomputedTable] Loaded ${total.toLocaleString()} precomputed screens`);
   }
 
   /**
@@ -59,7 +58,7 @@ export class PrecomputedTable {
     const slice = this.slices[ci];
     if (slice.count === 0) return null;
 
-    const idx = slice.start + ((Math.random() * slice.count) | 0);
+    const idx = slice.start + ((random() * slice.count) | 0);
     return this._decodeGrid(idx);
   }
 
@@ -95,7 +94,7 @@ export class PrecomputedTable {
 
   /** Sample a category index using the payoutDistribution CDF. */
   private _pickCategory(): number {
-    const r = Math.random();
+    const r = random();
     for (let i = 0; i < this.cumProbs.length - 1; i++) {
       if (r < this.cumProbs[i]) return i;
     }

@@ -9,7 +9,9 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | Command | What it does |
 |---|---|
 | `npm run dev` | Vite dev server, http://localhost:3000/v-slot/ (lobby), `?game=<id>` opens a game |
-| `npm run check` | **Run before every commit.** `tsc --noEmit` + `scripts/check.mjs` (file size, import boundaries, game layout, registry, config sanity) |
+| `npm run check` | **Run before every commit.** `tsc --noEmit` (src + tests) + `scripts/check.mjs` (file size, import boundaries, game layout, registry, config sanity, CDN content, no hardcoded UI text, no `Math.random` in math) |
+| `npm test` | Unit tests (vitest, `tests/`): line evaluation, anticipation, RNG, money, i18n, paytable template, pipeline, events, wallet, dragon + classic math invariants. **Run before every commit.** |
+| `npm run qa [-- <id>]` | Browser smoke test (Playwright): lobby + every game in en/ru — spin, paytable, forced anticipation, forced feature; waits on real game events; screenshots → `qa-shots/`; fails on console errors. Run after UI/engine changes (~2–3 min). |
 | `npm run dev` + `?lang=ru` | Any page in another language (default: browser language, fallback `en`) |
 | `npm run build` | tsc + Vite bundle → `dist/` (GitHub Pages deploys `main`) |
 | `npm run new-game -- <id> [--from classic] [--title "T"]` | Scaffold + register a new game by cloning one |
@@ -20,11 +22,11 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run dragon:sim [-- real\|demo spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (real TS math via tsx) + exact trigger rate |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
-No unit-test framework; verify visually with Playwright (Chromium is preinstalled; `require('playwright')`).
+Verification: `npm run check` + `npm test` always; `npm run qa` for anything visual. URL switches (see `engine/core/devFlags.ts`): `?force=feature,anticipation` and `?debug=pipeline` in dev builds, `?seed=<n>` for a reproducible math RNG (dev + demo), `?lang=`, `?mode=real`. In dev builds `window.__vslot` (`engine/core/qaHooks.ts`) exposes `spin()`, `openPaytable()`, `state()` and the event log for Playwright / agents.
 
 ## Hard Rules
 
-1. **Paytables and translations come from the content CDN, not the bundle.** Paytable = HTML template `paytables/<gameId>/<lang>.html`, shown by the engine `HtmlPaytable` in a sandboxed iframe over the canvas (no scripts). User-facing text = `t('key')` with keys in `i18n/<lang>/{common,<gameId>}.json`; never hardcode UI strings in code (`npm run check` rejects `new Text('literal')`; engine fallbacks live in `ENGINE_STRINGS`). The buttons that open the paytable stay Pixi; all other game UI is Pixi too. Text baked into skin art must be erased by the game's slicer (`LABEL_BOXES`, inpainted) and drawn back as translated Text: panel captions via `skinLabel()`, button captions via `SpriteButton.setLabel()` (auto-shrinks with `fitText`). Only logos/brand names stay baked.
+1. **Paytables and translations come from the content CDN, not the bundle.** Paytable = HTML template `paytables/<gameId>/<lang>.html`, shown by the engine `HtmlPaytable` in a sandboxed iframe over the canvas (no scripts). User-facing text = `t('key')` with keys in `i18n/<lang>/{common,<gameId>}.json`; never hardcode UI strings in code (`npm run check` rejects `new Text('literal')`; engine fallbacks live in `ENGINE_STRINGS`). The buttons that open the paytable stay Pixi; all other game UI is Pixi too. Text baked into skin art must be erased by the game's slicer (`LABEL_BOXES`, inpainted) and drawn back as translated Text: panel captions via `skin.label()`, button captions via `skin.labelButton()` / `SpriteButton.setLabel()` (auto-shrinks with `fitText`). Only logos/brand names stay baked.
 2. **Files ≤ 300 lines.** Split into focused modules by responsibility instead of compressing code (enforced by `npm run check`).
 3. **Import boundaries** (enforced):
    - `src/engine/**` never imports from games or lobby.
@@ -34,6 +36,8 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
 5. **Money is integer minor units** everywhere (`currency.decimals` says how many). Format only via `formatMoney(cfg, value)`.
 6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels` → `strips.json`, never edited by hand) and updating `rtp` in the config and `GAME.md`.
 7. **Play modes:** the platform runs in `demo` unless `?mode=real`. A game may ship a separate demo math profile (dragon: `config.json → demo`, RTP ≈405%); the paytable shows the active profile's RTP. Real-mode math must stay ≈96%.
+8. **Randomness & numbers:** game outcomes use `random()` from `@/engine/math` (seedable), never `Math.random` (visual effects may). Engine fallback timings / feel values live only in `engine/config/defaults.ts` and are resolved into `cfg.timing`, `cfg.featureTiming`, `cfg.tease`.
+9. **Observe, don't couple:** audio, analytics, tutorials and tests subscribe to `gameEvents` (`engine/core/GameEvents.ts`) instead of hooking into engine classes.
 
 ## Layout
 
@@ -42,24 +46,32 @@ src/
 ├── index.ts                 Router: ?game=<id> → SlotGame, else Lobby (switching = page reload)
 ├── engine/                  Game-agnostic core. Public API = engine/index.ts (+ engine/math.ts: pure, no Pixi)
 │   ├── contracts.ts         ★ GameDefinition, GameView, Hud, SpinControl, SymbolRenderer, MathModel, GameManifest
-│   ├── config/SlotConfig.ts ★ RawSlotConfig (JSON schema as a TS type) + resolveConfig (derived geometry)
-│   ├── core/SlotGame.ts     Orchestrator: balance/bet, spin loop (single / hold-turbo / autoplay / quick), win cycle
+│   ├── config/SlotConfig.ts ★ RawSlotConfig (JSON schema as a TS type) + resolveConfig (geometry + defaults)
+│   ├── config/defaults.ts   ★ every engine fallback timing / feel value (TIMING_, FEATURE_TIMING_, ANTICIPATION_DEFAULTS)
+│   ├── core/SlotGame.ts     Composition root: builds and wires every part below to the game's view + math
+│   ├── core/SpinLoop.ts     Single spin, hold-to-turbo loop, autoplay; autoplay / quick-spin toggles
+│   ├── core/Wallet.ts       Balance + bet selection (minor units)
+│   ├── core/WinCycle.ts     Line-by-line win display after a spin
+│   ├── core/GameEvents.ts   ★ typed event bus `gameEvents` (spinStart, reelLand, reelsStopped, win, feature*, anticipation*, balance…)
+│   ├── core/devFlags.ts     URL switches: ?force=, ?debug=, ?seed=
+│   ├── core/qaHooks.ts      window.__vslot in dev builds (QA / agents)
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
 │   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
 │   ├── core/wakeLock.ts     Screen Wake Lock while a game is open (re-acquired on tab return / first tap)
 │   ├── core/playMode.ts     detectPlayMode(): `demo` (default, no money backend) or `real` (`?mode=real`)
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
-│   ├── reels/               Reel (state machine, symbol recycling, boost) + ReelController (layers, win highlight)
+│   ├── reels/               Reel (state machine, symbol recycling, boost), ReelController (spin control, layers),
+│   │                        WinPresenter (promote / dim / pulse winners)
 │   │                        + AnticipationDirector (extends/boosts teasing reels, drives the FX)
 │   ├── fx/                  AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
 │   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
-│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, types
+│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types
 │   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
 │   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton,
-│   │                        SpriteButton / SpriteSpinButton (round buttons cut from a skin mockup)
+│   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions)
 │   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
@@ -78,7 +90,8 @@ src/
 public/games/<id>/           Runtime assets per game (thumb.jpg, screens.bin, sprites…)
 public/cdn/                  Local mirror of the content CDN (deploy it to the CDN as-is):
                              i18n/<lang>/common.json, i18n/<lang>/<gameId>.json, paytables/<gameId>/<lang>.html
-scripts/                     check.mjs, new-game.mjs, make-thumbnails.cjs
+scripts/                     check.mjs, new-game.mjs, make-thumbnails.cjs, qa.cjs, skin_tools.py (shared slicer helpers)
+tests/                       vitest unit tests (helpers.ts builds a tiny test config)
 ```
 
 ## Engine ↔ game contract (src/engine/contracts.ts)
@@ -103,7 +116,7 @@ const game: GameDefinition = {
 
 **Change a game:** read its `GAME.md`; stay inside its folder + `public/games/<id>/`.
 
-**Skin from a mockup image:** put it in `art/`, copy a `tools/slice-skin.py`, measure the reel grid and button centres in source pixels, store anchors in `config.json → skin.ui`, erase baked value texts, build buttons with the engine `SpriteButton` / `SpriteSpinButton` at `SKIN_SCALE` (see dragon/classic `GAME.md`).
+**Skin from a mockup image:** put it in `art/`, copy a `tools/slice-skin.py` (it imports `scripts/skin_tools.py`: `erase_box`, `inpaint`), measure the reel grid and button centres in source pixels, store anchors in `config.json → skin.ui`, erase baked texts, then in `config.ts` `export const skin = createSkin(config.canvas.width, raw.skin)` and build buttons with the engine `SpriteButton` / `SpriteSpinButton` at `skin.scale`; captions via `skin.label()` / `skin.labelButton()` (see dragon/classic `GAME.md`).
 
 **Paytable / translations:** edit `public/cdn/paytables/<id>/<lang>.html` and `public/cdn/i18n/<lang>/*.json` (later: the real CDN). Template placeholders: `{{title}} {{rtp}} {{lines}} {{bet}} {{lineBet}} {{pay:ID:N}} {{mult:ID:N}} {{symbol:ID}} {{asset:PATH}} {{t:KEY}} {{paylines}}` (see `engine/ui/paytableTemplate.ts`). New language = new `i18n/<lang>/` folder + `<lang>.html` per game; missing files fall back to English. `npm run check` validates English presence, key parity and template symbols. Production CDN: build with `VITE_CONTENT_CDN=https://…/` (CDN must allow CORS).
 
@@ -112,6 +125,10 @@ const game: GameDefinition = {
 **Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro banner (`feature.title` / `feature.subtitle`) → sticky cells drawn by the game's `SymbolView.setValue` → respins with a meter above the reels → hatch → optional full-grid prize → outro → base grid restored. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`). Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
 
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter/scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
+
+**Tests:** pure logic gets a vitest test in `tests/` (engine → `tests/engine`, game math → `tests/games/<id>.test.ts`, seed with `createRng`). New game math must at least test its invariants (symbols per reel set, totals add up, reproducible with a seed).
+
+**Sound / analytics:** subscribe to `gameEvents` and respect `soundSettings.muted`; nothing in the engine needs to change.
 
 **New pipeline logic:** inject a `PipelineStage` via `pipeline.insertBefore/After()` in `engine/pipeline/buildSpinPipeline.ts`.
 
