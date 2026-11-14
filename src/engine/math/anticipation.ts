@@ -12,18 +12,18 @@ import { linePayout } from './Paytable';
  *    at least `minCategory` (celebration threshold × total bet) with one more.
  */
 export function computeAnticipation(cfg: SlotConfig, grid: string[][]): boolean[] {
-  const a = cfg.anticipation;
+  const a = cfg.tease;
   const cols = cfg.grid.cols;
   const out = new Array<boolean>(cols).fill(false);
-  if (!a || a.enabled === false) return out;
+  if (!a) return out;
 
   const wild = cfg.wild ?? null;
   const lines = cfg.paylines.length;
-  const tier = (a.minCategory ?? 'huge') as keyof SlotConfig['celebration'];
+  const tier = a.minCategory as keyof SlotConfig['celebration'];
   const threshold = (cfg.celebration[tier] ?? cfg.celebration.huge) * lines; // × line bet
-  const need = (a.scatterTrigger ?? 3) - 1;
+  const need = a.scatterTrigger - 1;
 
-  for (let i = Math.max(1, a.startReel ?? 2); i < cols; i++) {
+  for (let i = Math.max(1, a.startReel); i < cols; i++) {
     if (a.scatter) {
       let count = 0;
       for (let r = 0; r < i; r++) count += grid[r].filter(s => s === a.scatter).length;

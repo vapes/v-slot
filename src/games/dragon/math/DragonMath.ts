@@ -1,5 +1,5 @@
 import {
-  evaluateLines, ReelStripMath,
+  evaluateLines, random, ReelStripMath,
   type FeatureRound, type FeatureStep, type MathModel, type SlotConfig, type SpinResult, type StickyCell,
 } from '@/engine/math';
 import type { MathProfile, RespinConfig } from './respinConfig';
@@ -22,8 +22,8 @@ export class DragonMath implements MathModel {
   private readonly nest: string[][];
 
   constructor(private cfg: SlotConfig, profile: MathProfile,
-              private rng: Rng = Math.random, private forceFeature = false) {
-    this.base = new ReelStripMath(cfg, profile.reels);
+              private rng: Rng = random, private forceFeature = false) {
+    this.base = new ReelStripMath(cfg, profile.reels, rng);
     this.rc = profile.respin;
     this.nest = profile.nest;
     this.lines = cfg.paylines.length;

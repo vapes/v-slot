@@ -14,14 +14,18 @@
     "dragon:reels": "node src/games/dragon/tools/build-reels.mjs",
     "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py",
     "classic:slice": "python3 src/games/classic/tools/slice-skin.py",
-    "dragon:sim": "tsx src/games/dragon/tools/simulate.ts"
+    "dragon:sim": "tsx src/games/dragon/tools/simulate.ts",
+    "test": "vitest run",
+    "qa": "node scripts/qa.cjs"
   },
   "dependencies": {
     "pixi.js": "^7.3.3"
   },
   "devDependencies": {
+    "jsdom": "^25.0.1",
     "tsx": "^4.23.15",
     "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "vite": "^5.0.12",
+    "vitest": "^2.1.9"
   }
 }

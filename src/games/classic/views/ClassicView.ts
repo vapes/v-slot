@@ -2,10 +2,9 @@ import { Sprite, type Container } from 'pixi.js';
 import {
   SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView,
 } from '@/engine';
-import { config, SKIN_SCALE, uiAnchor, type UiAnchorName } from '../config';
+import { config, SKIN_SCALE, uiAnchor, type UiAnchorName, skin } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { ClassicHUD, CLASSIC_BUTTON_STYLE, CLASSIC_SPIN_STYLE } from './ClassicHUD';
-import { labelButton } from './labels';
 
 /** "777 Casino Classic" skin: background art + every button over its baked spot. */
 export class ClassicView implements GameView {
@@ -23,9 +22,9 @@ export class ClassicView implements GameView {
     this.auto.onClick(actions.toggleAutoplay);
     this.turbo.onClick(actions.toggleQuickSpin);
     this.infoI.onClick(actions.togglePaytable);
-    labelButton(this.spinButton, 'spinLabel', 'button.spin', CLASSIC_SPIN_STYLE);
-    labelButton(this.auto, 'autoLabel', 'button.autoSpin', CLASSIC_BUTTON_STYLE);
-    labelButton(this.turbo, 'turboLabel', 'button.turbo', CLASSIC_BUTTON_STYLE);
+    skin.labelButton(this.spinButton, 'spinLabel', 'button.spin', CLASSIC_SPIN_STYLE);
+    skin.labelButton(this.auto, 'autoLabel', 'button.autoSpin', CLASSIC_BUTTON_STYLE);
+    skin.labelButton(this.turbo, 'turboLabel', 'button.turbo', CLASSIC_BUTTON_STYLE);
   }
 
   private get buttons(): SpriteButton[] {

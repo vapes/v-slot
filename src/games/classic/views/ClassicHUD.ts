@@ -1,8 +1,7 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { formatMoney, t, type Hud } from '@/engine';
-import { config, uiAnchor, type UiAnchorName } from '../config';
+import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 import { JackpotTicker } from './JackpotTicker';
-import { skinLabel } from './labels';
 
 const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
 const VALUE_STYLE = new TextStyle({
@@ -55,10 +54,10 @@ export class ClassicHUD implements Hud {
 
   addToStage(stage: Container): void {
     stage.addChild(
-      skinLabel('jackpotLabel', 'label.megaJackpot', JACKPOT_LABEL_STYLE),
-      skinLabel('balanceLabel', 'label.balance', CLASSIC_LABEL_STYLE),
-      skinLabel('betLabel', 'label.bet', CLASSIC_LABEL_STYLE),
-      skinLabel('winLabel', 'label.win', CLASSIC_LABEL_STYLE),
+      skin.label('jackpotLabel', 'label.megaJackpot', JACKPOT_LABEL_STYLE),
+      skin.label('balanceLabel', 'label.balance', CLASSIC_LABEL_STYLE),
+      skin.label('betLabel', 'label.bet', CLASSIC_LABEL_STYLE),
+      skin.label('winLabel', 'label.win', CLASSIC_LABEL_STYLE),
       this.jackpot.text, this.balance, this.bet, this.win, this.messageBg, this.message,
     );
   }

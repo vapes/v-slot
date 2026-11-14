@@ -1,5 +1,6 @@
 import { Container, Graphics, type Mesh, type Shader } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
+import { ANTICIPATION_DEFAULTS } from '../config/defaults';
 import { createFlameMesh } from './flameShader';
 import { MarqueeColumn } from './MarqueeColumn';
 import { Sparks } from './Sparks';
@@ -52,10 +53,10 @@ export class AnticipationFX {
   private readonly veilAlpha: number;
 
   constructor(private cfg: SlotConfig) {
-    const a = cfg.anticipation ?? {};
-    const [core = 0xFFE9A0, glow = 0xFF6A00] = (a.colors ?? []).map(color);
-    const style = a.style ?? 'flame';
-    this.veilAlpha = a.veil ?? 0.32;
+    const a = cfg.tease ?? ANTICIPATION_DEFAULTS;
+    const [core, glow] = [...a.colors, ...ANTICIPATION_DEFAULTS.colors].map(color);
+    const style = a.style;
+    this.veilAlpha = a.veil;
     this.container.addChild(this.veil);
     const make = style === 'marquee' ? marqueeColumn : flameColumn;
     for (let i = 0; i < cfg.grid.cols; i++) {

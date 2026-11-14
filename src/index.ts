@@ -1,4 +1,4 @@
-import { SlotGame, detectLanguage, i18n } from '@/engine';
+import { SlotGame, applySeed, detectLanguage, detectPlayMode, i18n } from '@/engine';
 import { GAMES } from './games/registry';
 import { Lobby } from './lobby/Lobby';
 
@@ -10,6 +10,7 @@ async function boot(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
   const manifest = GAMES.find(g => g.id === params.get('game'));
   const lang = detectLanguage();
+  applySeed(detectPlayMode() === 'real');
   // Translations come from the content CDN: common + the game's own namespace.
   await i18n.load(lang, manifest ? ['common', manifest.id] : ['common']);
 

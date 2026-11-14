@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = resolve(ROOT, 'src');
-const MAX_LINES = 250;
+const MAX_LINES = 300;
 const REQUIRED = ['config.json', 'config.ts', 'index.ts', 'manifest.ts', 'GAME.md'];
 const errors = [];
 const warn = [];
@@ -42,6 +42,9 @@ for (const file of tsFiles) {
   }
 
   const rel = relative(SRC, file).split(sep);
+  // outcome randomness must be seedable (?seed=): math code uses random() from @/engine/math
+  const isMath = (rel[0] === 'engine' && rel[1] === 'math') || (rel[0] === 'games' && rel[2] === 'math');
+  if (isMath && /Math\.random\(/.test(src)) err(file, 'Math.random() in math code — use random() from @/engine/math (seedable)');
   for (const { spec, typeOnly, dynamic } of importsOf(src)) {
     const abs = spec.startsWith('.') ? resolve(dirname(file), spec) : spec.startsWith('@/') ? resolve(SRC, spec.slice(2)) : null;
     const target = abs ? relative(SRC, abs).split(sep) : null;

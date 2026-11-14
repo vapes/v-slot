@@ -1,3 +1,5 @@
+import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, TIMING_DEFAULTS } from './defaults';
+
 /**
  * Slot configuration contract shared by every game.
  *
@@ -49,6 +51,10 @@ export interface RawSlotConfig {
     winAllDelay: number;
     winLineInterval: number;
     autoplayWinPause?: number;
+    /** Turbo (hold): winners framed this long, ms. */
+    turboWinMs?: number;
+    /** Turbo: celebration banner shown statically this long, ms. */
+    turboBannerMs?: number;
     autoplayPause?: number;
   };
   /** Bonus-feature playback (sticky respins). All optional, ms unless noted. */
@@ -61,6 +67,13 @@ export interface RawSlotConfig {
     stepPauseMs?: number;
     /** Per sticky cell during the final collect. */
     collectMs?: number;
+    triggerMs?: number;
+    stickMs?: number;
+    newStickyMs?: number;
+    stepWinMs?: number;
+    grandMs?: number;
+    /** Multiplier for every feature timing in turbo / quick spins. */
+    fastFactor?: number;
   };
   /**
    * Anticipation (reel tease): a reel keeps spinning longer and faster with a
@@ -103,7 +116,15 @@ export interface RawSlotConfig {
   paylines: number[][];
 }
 
+export type TeaseConfig = typeof ANTICIPATION_DEFAULTS;
+
 export interface SlotConfig extends RawSlotConfig {
+  /** Spin pacing with engine defaults applied (see config/defaults.ts). */
+  timing: typeof TIMING_DEFAULTS;
+  /** Feature playback timings with defaults applied. */
+  featureTiming: typeof FEATURE_TIMING_DEFAULTS;
+  /** Resolved anticipation settings, or null when the game has none / disabled it. */
+  tease: TeaseConfig | null;
   reelOffsetX: number;
   reelWidth: number;
   cellHeight: number;
@@ -118,8 +139,20 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
   const cellHeight = raw.symbol.height + raw.symbol.gap;
   const reelAreaWidth = raw.grid.cols * reelWidth;
   const names = new Map(raw.symbols.map(s => [s.id, s.name ?? s.id]));
+  const s = raw.spin;
+  const tease = raw.anticipation && raw.anticipation.enabled !== false
+    ? { ...ANTICIPATION_DEFAULTS, ...raw.anticipation } as TeaseConfig
+    : null;
   return {
     ...raw,
+    timing: {
+      turboWinMs: s.turboWinMs ?? TIMING_DEFAULTS.turboWinMs,
+      turboBannerMs: s.turboBannerMs ?? TIMING_DEFAULTS.turboBannerMs,
+      autoplayWinPauseMs: s.autoplayWinPause ?? TIMING_DEFAULTS.autoplayWinPauseMs,
+      autoplayPauseMs: s.autoplayPause ?? TIMING_DEFAULTS.autoplayPauseMs,
+    },
+    featureTiming: { ...FEATURE_TIMING_DEFAULTS, ...raw.feature },
+    tease,
     reelOffsetX: raw.reelOffsetX ?? (raw.canvas.width - reelAreaWidth) / 2,
     reelWidth,
     cellHeight,

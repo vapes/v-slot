@@ -6,7 +6,8 @@
 export { resolveConfig, color, type RawSlotConfig, type SlotConfig } from './config/SlotConfig';
 export type { SpinResult, WinResult, StickyCell, FeatureStep, FeatureRound } from './math/types';
 export { evaluateLines, toSpinResult } from './math/evaluateLines';
-export { linePayout, payingCounts, lineBetOf } from './math/Paytable';
+export { linePayout, lineBetOf } from './math/Paytable';
+export { random, createRng, setSeed } from './math/rng';
 export { ReelStripMath } from './math/ReelStripMath';
 export { computeAnticipation } from './math/anticipation';
 export type { MathModel } from './contracts';

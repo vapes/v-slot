@@ -9,7 +9,7 @@
 | `tools/slice-skin.py` | Slices the mockup into `public/games/classic/` (`npm run classic:slice`) |
 | `tools/generate-screens.mjs` | Builds `screens.bin` from `config.json` (`npm run classic:screens`) |
 | `config.json` | Engine config + `skin.ui` anchors (source px) + `skin.jackpot` + `reels` (generator only) + `payoutDistribution` |
-| `config.ts` | Typed config, `SKIN_SCALE`, `uiAnchor()`, `JACKPOT`, `PAYOUT_PROBABILITIES` |
+| `config.ts` | Typed config, `skin` (engine `createSkin`: `SKIN_SCALE`, `uiAnchor()`, captions), `JACKPOT`, `PAYOUT_PROBABILITIES` |
 | `assets.ts` | Loads bg, 6 symbol tiles and 6 button sprites |
 | `math/ClassicMath.ts` | `MathModel`: picks a payout category, then a grid from `screens.bin` |
 | `math/PrecomputedTable.ts` | Parses `screens.bin` (nibble-packed grids grouped by category) |
@@ -32,7 +32,10 @@ SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick ree
 ## Content CDN
 - Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/classic.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.classic.*`).
-- Translated art text: MEGA JACKPOT, BALANCE / BET / WIN captions and SPIN / AUTO SPIN / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
+- Translated art text: MEGA JACKPOT, BALANCE / BET / WIN captions and SPIN / AUTO SPIN / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
 
 ## Anticipation
 `config.json → anticipation` (engine feature, see CLAUDE.md). Fires when a HUGE+ (≥5× bet) line win is one symbol away, from reel 3 (no scatter in this game). Style `marquee`: a thin gold frame with chasing casino bulbs, light veil (0.12) — deliberately lighter than dragon's flames. ≈10% of spins. QA: `npm run dev`, `?game=classic&force=anticipation`.
+
+## Tests
+`tests/games/classic.test.ts`: `screens.bin` decodes to 5×3 grids of config symbols and the losing share matches `payoutDistribution` (seeded).
