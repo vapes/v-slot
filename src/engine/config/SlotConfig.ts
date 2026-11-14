@@ -89,6 +89,8 @@ export interface RawSlotConfig {
     minCategory?: string;
     /** Feature scatter id and how many trigger it (tease at trigger − 1). */
     scatter?: string;
+    /** Several scatter ids that count together towards the trigger (e.g. egg + dragon). */
+    scatters?: string[];
     scatterTrigger?: number;
     /** Extra spin time of an anticipating reel, ms (default 1400). */
     extraMs?: number;

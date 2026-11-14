@@ -43,11 +43,11 @@ export class RespinPlayer {
     const ms = (normal: number) => (fast ? normal * ft.fastFactor : normal);
     const money = (v: number) => formatMoney(this.cfg, v * lineBet);
     const label = (c: StickyCell) => (c.tag ? t(`feature.jackpot.${c.tag}`) : formatMoney(this.cfg, c.value * lineBet, false));
-    if (!this.meter) {
-      this.meter = new FeatureMeter(this.cfg, f.initialRespins);
-      this.stage.addChild(this.meter.container);
-    }
-    const meter = this.meter;
+    // the counter can start high (scatter-dependent) and is reset upwards by new sticky cells
+    const maxRespins = Math.max(f.initialRespins, ...f.steps.map(s => s.respinsLeft));
+    this.meter?.container.destroy({ children: true });
+    const meter = (this.meter = new FeatureMeter(this.cfg, maxRespins));
+    this.stage.addChild(meter.container);
 
     gameEvents.emit('featureStart', { feature: f });
     // 1. trigger: scatters pulse, then the intro banner

@@ -36,6 +36,7 @@
   .nest img { width: 96px; border-radius: 8px; box-shadow: 0 0 14px rgba(255,150,0,.6); }
   .nest ol { margin: 10px 0 0; padding-left: 20px; }
   .nest li { margin: 4px 0; }
+  .nest p { margin: 12px 0 0; }
   .jp { display: flex; gap: 8px; margin-top: 10px; }
   .jp div { flex: 1; text-align: center; background: rgba(255,201,74,.1); border: 1px solid rgba(255,201,74,.5); border-radius: 8px; padding: 6px 2px; }
   .jp b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 1px; }
@@ -46,25 +47,22 @@
   <p class="lead">Выигрыши выплачиваются слева направо на соседних барабанах, начиная с крайнего левого.
      Суммы указаны для текущей ставки {{bet}}.</p>
 
-  <div class="card wild">
-    <img src="{{asset:symbols/wild.jpg}}" alt="">
-    <div><b>{{symbol:wild}}</b><br>Выпадает стопками на барабанах 2, 3 и 4 и заменяет любой символ.</div>
-  </div>
-
   <h2>Гнездо дракона</h2>
   <div class="card nest">
     <div class="row"><img src="{{asset:symbols/egg.jpg}}" alt="">
-      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — СКАТТЕР</b><br>3 и более Яйца в любом месте будят дракониху и запускают респины <b>«Гнездо дракона»</b>.</div></div>
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — СКАТТЕР</b><br>Даёт <b>1 респин</b>.</div></div>
+    <div class="row" style="margin-top:10px"><img src="{{asset:symbols/dragon.jpg}}" alt="">
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:dragon}} — СУПЕРСКАТТЕР</b><br>Даёт <b>3 респина</b>.</div></div>
+    <p>3 и более скаттеров в любом месте (Яйца и Драконы в любом сочетании) будят дракониху и запускают респины <b>«Гнездо дракона»</b>. Пример: 2 Яйца + 1 Дракон = 5 респинов.</p>
     <ol>
-      <li>Наступает ночь, и Яйца <b>вылупляются в Драконов</b>. Огонь дракона выжигает мелкие карты: в гнезде крутятся только Драконы, Вайлд, Сундук, Золото, Кристалл и Кубок — Яиц там нет.</li>
-      <li>Каждый <b>Дракон липкий</b>: он остаётся в гнезде и несёт денежный приз от 1× до 25× ставки или джекпот <b>МИНИ</b> / <b>МАЖОР</b>.</li>
-      <li>Даётся <b>3 респина</b>. Каждый новый Дракон возвращает счётчик к 3.</li>
-      <li>Выигрыши по линиям продолжают платить на каждом респине.</li>
-      <li>Когда респины заканчиваются, каждый Дракон приносит своё сокровище.</li>
-      <li>Заполните Драконами все 20 позиций и получите <b>ВЕЛИКИЙ КЛАД</b> — дополнительно 1000× ставки.</li>
+      <li>Наступает ночь: каждый скаттер, запустивший игру, превращается в <b>липкий {{symbol:wild}}</b> с денежным призом от 2× до 40× ставки или джекпотом <b>МИНИ</b> / <b>МАЖОР</b>.</li>
+      <li>У гнезда свои барабаны: там крутятся {{symbol:wild}} и символы сокровищ — Яиц и Драконов нет.</li>
+      <li>Каждый новый {{symbol:wild}} прилипает со своим призом и доводит счётчик респинов до 3 (никогда не уменьшает его).</li>
+      <li>Липкие {{symbol:wild}} заменяют любой символ, а выигрыши по линиям платят на каждом респине.</li>
+      <li>Когда респины заканчиваются, каждый {{symbol:wild}} приносит своё сокровище.</li>
+      <li>Заполните {{symbol:wild}} все 20 позиций и получите <b>ВЕЛИКИЙ КЛАД</b> — дополнительно 1000× ставки.</li>
     </ol>
-    <div class="row" style="margin-top:10px"><img src="{{asset:symbols/dragon.jpg}}" alt="" style="width:72px"><div><b style="color:var(--gold)">{{symbol:dragon}}</b> — встречается только в Гнезде дракона.</div></div>
-    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>50× ставки</div><div><b>{{t:feature.jackpot.major}}</b>150× ставки</div><div><b>{{t:feature.grand}}</b>1000× ставки</div></div>
+    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>75× ставки</div><div><b>{{t:feature.jackpot.major}}</b>250× ставки</div><div><b>{{t:feature.grand}}</b>1000× ставки</div></div>
   </div>
 
   <h2>Символы</h2>

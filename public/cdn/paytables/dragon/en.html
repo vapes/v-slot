@@ -36,6 +36,7 @@
   .nest img { width: 96px; border-radius: 8px; box-shadow: 0 0 14px rgba(255,150,0,.6); }
   .nest ol { margin: 10px 0 0; padding-left: 20px; }
   .nest li { margin: 4px 0; }
+  .nest p { margin: 12px 0 0; }
   .jp { display: flex; gap: 8px; margin-top: 10px; }
   .jp div { flex: 1; text-align: center; background: rgba(255,201,74,.1); border: 1px solid rgba(255,201,74,.5); border-radius: 8px; padding: 6px 2px; }
   .jp b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 1px; }
@@ -46,25 +47,22 @@
   <p class="lead">Wins pay left to right on adjacent reels, starting from the leftmost reel.
      Values are shown for the current bet of {{bet}}.</p>
 
-  <div class="card wild">
-    <img src="{{asset:symbols/wild.jpg}}" alt="">
-    <div><b>{{symbol:wild}}</b><br>Appears stacked on reels 2, 3 and 4 and substitutes for all symbols.</div>
-  </div>
-
   <h2>Dragon's Nest</h2>
   <div class="card nest">
     <div class="row"><img src="{{asset:symbols/egg.jpg}}" alt="">
-      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — SCATTER</b><br>3 or more Eggs anywhere wake the mother dragon and start the <b>Dragon's Nest</b> respins.</div></div>
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — SCATTER</b><br>Worth <b>1 respin</b>.</div></div>
+    <div class="row" style="margin-top:10px"><img src="{{asset:symbols/dragon.jpg}}" alt="">
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:dragon}} — SUPER SCATTER</b><br>Worth <b>3 respins</b>.</div></div>
+    <p>3 or more scatters anywhere (Eggs and Dragons in any mix) wake the mother dragon and start the <b>Dragon's Nest</b> respins. Example: 2 Eggs + 1 Dragon = 5 respins.</p>
     <ol>
-      <li>Night falls and the Eggs <b>hatch into Dragons</b>. The dragon's fire burns away the low cards: only Dragons, Wild, Treasure Chest, Gold Hoard, Crystal and Goblet spin in the nest — no Eggs.</li>
-      <li>Every <b>Dragon is sticky</b>: it stays in the nest and carries a cash prize from 1× to 25× the bet, or a <b>MINI</b> / <b>MAJOR</b> jackpot.</li>
-      <li>You get <b>3 respins</b>. Every new Dragon resets them back to 3.</li>
-      <li>Line wins still pay on every respin.</li>
-      <li>When the respins run out, every Dragon brings its treasure home.</li>
-      <li>Fill all 20 positions with Dragons to win the <b>GRAND HOARD</b> — 1000× the bet on top.</li>
+      <li>Night falls: every triggering scatter turns into a <b>sticky {{symbol:wild}}</b> carrying a cash prize from 2× to 40× the bet, or a <b>MINI</b> / <b>MAJOR</b> jackpot.</li>
+      <li>The nest has its own reels: {{symbol:wild}} and the treasure symbols spin there — no Eggs or Dragons.</li>
+      <li>Every new {{symbol:wild}} sticks with its prize and tops the respins up to 3 (it never lowers the counter).</li>
+      <li>Sticky {{symbol:wild}}s substitute for all symbols, and line wins pay on every respin.</li>
+      <li>When the respins run out, every {{symbol:wild}} brings its treasure home.</li>
+      <li>Fill all 20 positions with {{symbol:wild}}s to win the <b>GRAND HOARD</b> — 1000× the bet on top.</li>
     </ol>
-    <div class="row" style="margin-top:10px"><img src="{{asset:symbols/dragon.jpg}}" alt="" style="width:72px"><div><b style="color:var(--gold)">{{symbol:dragon}}</b> — appears only in the Dragon's Nest.</div></div>
-    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>50× bet</div><div><b>{{t:feature.jackpot.major}}</b>150× bet</div><div><b>{{t:feature.grand}}</b>1000× bet</div></div>
+    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>75× bet</div><div><b>{{t:feature.jackpot.major}}</b>250× bet</div><div><b>{{t:feature.grand}}</b>1000× bet</div></div>
   </div>
 
   <h2>Symbols</h2>

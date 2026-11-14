@@ -102,6 +102,7 @@ for (const id of games) {
     if (a.minCategory && !['big', 'huge', 'epic', 'max'].includes(a.minCategory)) bad(`anticipation.minCategory "${a.minCategory}" must be big|huge|epic|max`);
     if (a.style && !['flame', 'marquee'].includes(a.style)) bad(`anticipation.style "${a.style}" must be flame|marquee`);
     if (a.scatter && !ids.includes(a.scatter)) bad(`anticipation.scatter "${a.scatter}" is not a symbol`);
+    (a.scatters ?? []).forEach(s => { if (!ids.includes(s)) bad(`anticipation.scatters: "${s}" is not a symbol`); });
     if ((a.startReel ?? 2) < 1 || (a.startReel ?? 2) >= c.grid.cols) bad('anticipation.startReel must be 1..cols-1');
   }
   c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
