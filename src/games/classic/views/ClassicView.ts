@@ -1,17 +1,15 @@
 import { Sprite, type Container } from 'pixi.js';
 import {
-  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView, type PaytableTheme,
+  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView,
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor, type UiAnchorName } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { ClassicHUD } from './ClassicHUD';
-import { buildClassicPaytable, CLASSIC_THEME } from './ClassicPaytable';
 
 /** "777 Casino Classic" skin: background art + every button over its baked spot. */
 export class ClassicView implements GameView {
   readonly spinButton = makeSpin();
   readonly hud = new ClassicHUD();
-  readonly paytableTheme: PaytableTheme = CLASSIC_THEME;
   private readonly minus = make('minus', 'minus');
   private readonly plus = make('plus', 'plus');
   private readonly auto = make('auto', 'auto');
@@ -48,10 +46,6 @@ export class ClassicView implements GameView {
   }
 
   setAutoplay(on: boolean): void { this.auto.active = on; }
-
-  buildPaytable(root: Container, lineBet: number): number {
-    return buildClassicPaytable(root, lineBet);
-  }
 
   update(dt: number): void {
     for (const b of this.buttons) b.update(dt);

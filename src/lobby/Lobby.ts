@@ -1,5 +1,5 @@
 import { Application, Graphics, Text, TextStyle } from 'pixi.js';
-import { fitCanvas, type GameManifest } from '@/engine';
+import { fitCanvas, t, type GameManifest } from '@/engine';
 import { GameCard } from './GameCard';
 
 const W = 540;
@@ -39,7 +39,7 @@ export class Lobby {
     }));
     title.anchor.set(0.5, 0);
     title.position.set(W / 2, 44);
-    const sub = new Text('CHOOSE YOUR GAME', new TextStyle({ fontFamily: FONT, fontSize: 16, fill: 0xFFFFFF, letterSpacing: 4 }));
+    const sub = new Text(t('lobby.choose'), new TextStyle({ fontFamily: FONT, fontSize: 16, fill: 0xFFFFFF, letterSpacing: 4 }));
     sub.alpha = 0.6;
     sub.anchor.set(0.5, 0);
     sub.position.set(W / 2, 118);

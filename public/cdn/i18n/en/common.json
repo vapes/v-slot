@@ -1,0 +1,19 @@
+{
+  "status.idle": "Place your bets",
+  "status.spin": "Good luck!",
+  "status.noBalance": "Not enough balance",
+  "status.loadFailed": "Failed to load the game",
+  "hud.win": "WIN {amount}",
+  "win.line": "LINE {line}: {count}× {symbol} — {amount}",
+  "celebration.big": "BIG",
+  "celebration.huge": "HUGE",
+  "celebration.epic": "EPIC",
+  "celebration.max": "MAX",
+  "celebration.win": "WIN",
+  "lobby.choose": "CHOOSE YOUR GAME",
+  "lobby.play": "PLAY",
+  "game.dragon.title": "Dragon Hoard",
+  "game.dragon.subtitle": "4×5 · 20 lines · stacked wilds · RTP 96.2%",
+  "game.classic.title": "777 Casino Classic",
+  "game.classic.subtitle": "5×3 · 20 lines · fruit classic · RTP 98%"
+}

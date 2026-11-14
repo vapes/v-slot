@@ -6,6 +6,8 @@
  *      only; manifests stay light (type imports + dynamic import)
  *   3. game folder layout + registry + ids
  *   4. config.json sanity (grid, paylines, paytable, bets, reels)
+ *   5. content CDN mirror: en translations per game, key parity across
+ *      languages, paytable templates referencing real symbols/pays
  */
 import { readdirSync, readFileSync, existsSync, statSync } from 'fs';
 import { resolve, relative, dirname, sep } from 'path';
@@ -91,6 +93,38 @@ for (const id of games) {
   if (Array.isArray(c.reels) && c.reels.length) {
     if (c.reels.length !== c.grid.cols) bad(`reels has ${c.reels.length} strips for ${c.grid.cols} reels`);
     c.reels.forEach((strip, i) => strip.forEach(s => { if (!ids.includes(s)) bad(`reel ${i + 1} has unknown symbol "${s}"`); }));
+  }
+}
+
+// 5 ── content CDN mirror (public/cdn): translations + paytable templates ─────
+const CDN = resolve(ROOT, 'public/cdn');
+const langs = existsSync(resolve(CDN, 'i18n')) ? readdirSync(resolve(CDN, 'i18n')) : [];
+if (!langs.includes('en')) err(CDN, 'missing i18n/en (English is the fallback language)');
+const readJson = (f) => JSON.parse(readFileSync(f, 'utf8'));
+for (const ns of ['common', ...games]) {
+  const enFile = resolve(CDN, 'i18n/en', `${ns}.json`);
+  if (!existsSync(enFile)) { err(enFile, 'missing English translations'); continue; }
+  const enKeys = Object.keys(readJson(enFile));
+  for (const lang of langs.filter(l => l !== 'en')) {
+    const f = resolve(CDN, 'i18n', lang, `${ns}.json`);
+    if (!existsSync(f)) { warn.push(`${lang}: no ${ns}.json (falls back to English)`); continue; }
+    const missing = enKeys.filter(k => !(k in readJson(f)));
+    if (missing.length) warn.push(`${lang}/${ns}.json: missing ${missing.join(', ')}`);
+  }
+}
+for (const id of games) {
+  const cfgPath = resolve(gamesDir, id, 'config.json');
+  if (!existsSync(cfgPath)) continue;
+  const c = JSON.parse(readFileSync(cfgPath, 'utf8'));
+  const ids = c.symbols.map(s => s.id);
+  const dir = resolve(CDN, 'paytables', id);
+  if (!existsSync(resolve(dir, 'en.html'))) { err(dir, 'missing en.html paytable template'); continue; }
+  for (const f of readdirSync(dir).filter(f => f.endsWith('.html'))) {
+    const html = readFileSync(resolve(dir, f), 'utf8');
+    for (const [, kind, sym, n] of html.matchAll(/\{\{\s*(pay|mult|symbol):([^}:]+)(?::(\d+))?\s*\}\}/g)) {
+      if (!ids.includes(sym)) err(resolve(dir, f), `{{${kind}:${sym}}} — unknown symbol "${sym}"`);
+      else if (n && !c.paytable[sym]?.[n]) err(resolve(dir, f), `{{${kind}:${sym}:${n}}} — symbol has no ${n}-of-a-kind pay`);
+    }
   }
 }
 

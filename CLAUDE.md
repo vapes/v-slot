@@ -2,7 +2,7 @@
 
 Guidance for Claude Code and other agents working in this repository.
 
-V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline, line math, celebrations, paytable shell) plus self-contained **games** in `src/games/<id>/`, and a **lobby** that launches them. PixiJS v7.3.3, TypeScript 5.3 strict, Vite 5. Path alias `@/*` → `src/*`. Portrait mobile only.
+V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline, line math, celebrations, HTML paytable overlay, i18n) plus self-contained **games** in `src/games/<id>/`, and a **lobby** that launches them. PixiJS v7.3.3, TypeScript 5.3 strict, Vite 5. Path alias `@/*` → `src/*`. Portrait mobile only.
 
 ## Commands
 
@@ -10,6 +10,7 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 |---|---|
 | `npm run dev` | Vite dev server, http://localhost:3000/v-slot/ (lobby), `?game=<id>` opens a game |
 | `npm run check` | **Run before every commit.** `tsc --noEmit` + `scripts/check.mjs` (file size, import boundaries, game layout, registry, config sanity) |
+| `npm run dev` + `?lang=ru` | Any page in another language (default: browser language, fallback `en`) |
 | `npm run build` | tsc + Vite bundle → `dist/` (GitHub Pages deploys `main`) |
 | `npm run new-game -- <id> [--from classic] [--title "T"]` | Scaffold + register a new game by cloning one |
 | `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
@@ -22,7 +23,7 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
 
 ## Hard Rules
 
-1. **Paytable screens and their toggle buttons are Pixi objects only** (Container, Graphics, Text, Sprite). Never HTML elements for game UI. `src/engine/ui/jsx.ts` exists only for non-game HTML overlays.
+1. **Paytables and translations come from the content CDN, not the bundle.** Paytable = HTML template `paytables/<gameId>/<lang>.html`, shown by the engine `HtmlPaytable` in a sandboxed iframe over the canvas (no scripts). User-facing text = `t('key')` with keys in `i18n/<lang>/{common,<gameId>}.json`; never hardcode UI strings in code (engine fallbacks live in `ENGINE_STRINGS`). The buttons that open the paytable stay Pixi; all other game UI is Pixi too. Text baked into skin art cannot be translated.
 2. **Files ≤ 250 lines.** Split into focused modules instead (enforced by `npm run check`).
 3. **Import boundaries** (enforced):
    - `src/engine/**` never imports from games or lobby.
@@ -47,7 +48,9 @@ src/
 │   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
 │   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types
-│   ├── ui/                  WinCelebration, PaytableScreen shell + InfoButton, paytableBlocks (pt* helpers), HomeButton,
+│   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
+│   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
+│   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton,
 │   │                        SpriteButton / SpriteSpinButton (round buttons cut from a skin mockup)
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
@@ -64,6 +67,8 @@ src/
 │       └── art/             source art (not shipped)
 └── lobby/                   Lobby + GameCard (Pixi)
 public/games/<id>/           Runtime assets per game (thumb.jpg, screens.bin, sprites…)
+public/cdn/                  Local mirror of the content CDN (deploy it to the CDN as-is):
+                             i18n/<lang>/common.json, i18n/<lang>/<gameId>.json, paytables/<gameId>/<lang>.html
 scripts/                     check.mjs, new-game.mjs, make-thumbnails.cjs
 ```
 
@@ -81,7 +86,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update` / `paytableTheme`, and `buildPaytable(root, lineBet)`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, paytable overlay and the home button itself.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, the HTML paytable overlay and the home button itself.
 
 ## Recipes
 
@@ -91,6 +96,8 @@ const game: GameDefinition = {
 
 **Skin from a mockup image:** put it in `art/`, copy a `tools/slice-skin.py`, measure the reel grid and button centres in source pixels, store anchors in `config.json → skin.ui`, erase baked value texts, build buttons with the engine `SpriteButton` / `SpriteSpinButton` at `SKIN_SCALE` (see dragon/classic `GAME.md`).
 
+**Paytable / translations:** edit `public/cdn/paytables/<id>/<lang>.html` and `public/cdn/i18n/<lang>/*.json` (later: the real CDN). Template placeholders: `{{title}} {{rtp}} {{lines}} {{bet}} {{lineBet}} {{pay:ID:N}} {{mult:ID:N}} {{symbol:ID}} {{asset:PATH}} {{t:KEY}} {{paylines}}` (see `engine/ui/paytableTemplate.ts`). New language = new `i18n/<lang>/` folder + `<lang>.html` per game; missing files fall back to English. `npm run check` validates English presence, key parity and template symbols. Production CDN: build with `VITE_CONTENT_CDN=https://…/` (CDN must allow CORS).
+
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 
 **New pipeline logic:** inject a `PipelineStage` via `pipeline.insertBefore/After()` in `engine/pipeline/buildSpinPipeline.ts`.
@@ -99,9 +106,9 @@ const game: GameDefinition = {
 
 `SpinPipeline.execute(ctx)`; `SpinContext = { balance, lineBet, totalBet, turbo, quick, result, winAmount, cancelled, meta }` (money in minor units).
 
-1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → clear status
+1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → status "Good luck!"
 2. **server** — `math.spin()` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
+3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -113,10 +120,10 @@ Stage
 │   ├── reelLayer (masked) → Reel[i].symbolContainer
 │   ├── optional reelStyle.separators grid
 │   └── winLayer (unmasked; winning symbols promoted here)
-├── GameView.mountAboveReels   (buttons, HUD, InfoButton)
+├── GameView.mountAboveReels   (buttons, HUD)
 ├── HomeButton                 (config.homeButton)
 ├── WinCelebration
-└── PaytableScreen             (full-canvas overlay, hidden by default)
+└── (DOM) HtmlPaytable         iframe overlay placed over the canvas rect, hidden by default
 ```
 
 ## Key patterns
@@ -125,5 +132,6 @@ Stage
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
+- **Status line (all games):** engine-driven via `Hud.setStatus` — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
 - **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.

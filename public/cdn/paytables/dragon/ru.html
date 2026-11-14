@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --gold: #FFC94A; --panel: #1C0D22; --text: #F4EAD8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at 50% 0, #3A1240, #0B0410 60%); color: var(--text);
+         font: 15px/1.45 "Roboto Condensed", "Arial Narrow", Arial, sans-serif; padding: 20px 16px 40px; }
+  h1 { margin: 6px 56px 4px 0; font-size: 24px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+  h2 { margin: 28px 0 12px; font-size: 13px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase;
+       display: flex; align-items: center; gap: 10px; }
+  h2::before, h2::after { content: ""; flex: 1; height: 1px; background: rgba(255,201,74,.35); }
+  .lead { opacity: .8; margin: 0 0 8px; }
+  .card { background: var(--panel); border: 1.5px solid rgba(255,201,74,.55); border-radius: 12px; }
+  .wild { display: flex; gap: 14px; padding: 12px; align-items: center; }
+  .wild img { width: 110px; border-radius: 8px; }
+  .wild b { color: var(--gold); font-size: 20px; letter-spacing: 2px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sym { padding: 8px 6px 10px; text-align: center; }
+  .sym img { width: 78%; aspect-ratio: 121 / 90; border-radius: 6px; display: block; margin: 4px auto 6px; }
+  .sym .n { font-size: 10px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+  .sym .p { font-weight: bold; font-size: 14px; }
+  .pl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .pl { background: var(--panel); border-radius: 8px; padding: 4px 8px 8px; text-align: center; }
+  .pl-n { font-size: 11px; opacity: .6; }
+  .pl-cells { display: grid; gap: 2px; margin-top: 2px; }
+  .pl-cells i { aspect-ratio: 1; border-radius: 2px; background: rgba(255,255,255,.12); }
+  .pl-cells i.on { background: var(--gold); }
+  .rtp { margin-top: 22px; padding: 14px; text-align: center; }
+  .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
+  .small { font-size: 12px; opacity: .55; }
+</style>
+</head>
+<body>
+  <h1>{{title}}</h1>
+  <p class="lead">Выигрыши выплачиваются слева направо на соседних барабанах, начиная с крайнего левого.
+     Суммы указаны для текущей ставки {{bet}}.</p>
+
+  <div class="card wild">
+    <img src="{{asset:symbols/wild.jpg}}" alt="">
+    <div><b>{{symbol:wild}}</b><br>Выпадает стопками на барабанах 2, 3 и 4 и заменяет любой символ.</div>
+  </div>
+
+  <h2>Символы</h2>
+  <div class="grid">
+    <div class="card sym"><div class="n">{{symbol:dragon}}</div><img src="{{asset:symbols/dragon.jpg}}" alt=""><div class="p">4 × {{pay:dragon:4}}<br>3 × {{pay:dragon:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:egg}}</div><img src="{{asset:symbols/egg.jpg}}" alt=""><div class="p">4 × {{pay:egg:4}}<br>3 × {{pay:egg:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:chest}}</div><img src="{{asset:symbols/chest.jpg}}" alt=""><div class="p">4 × {{pay:chest:4}}<br>3 × {{pay:chest:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:gold}}</div><img src="{{asset:symbols/gold.jpg}}" alt=""><div class="p">4 × {{pay:gold:4}}<br>3 × {{pay:gold:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:crystal}}</div><img src="{{asset:symbols/crystal.jpg}}" alt=""><div class="p">4 × {{pay:crystal:4}}<br>3 × {{pay:crystal:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:goblet}}</div><img src="{{asset:symbols/goblet.jpg}}" alt=""><div class="p">4 × {{pay:goblet:4}}<br>3 × {{pay:goblet:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:A}}</div><img src="{{asset:symbols/A.jpg}}" alt=""><div class="p">4 × {{pay:A:4}}<br>3 × {{pay:A:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:K}}</div><img src="{{asset:symbols/K.jpg}}" alt=""><div class="p">4 × {{pay:K:4}}<br>3 × {{pay:K:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:Q}}</div><img src="{{asset:symbols/Q.jpg}}" alt=""><div class="p">4 × {{pay:Q:4}}<br>3 × {{pay:Q:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:J}}</div><img src="{{asset:symbols/J.jpg}}" alt=""><div class="p">4 × {{pay:J:4}}<br>3 × {{pay:J:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:10}}</div><img src="{{asset:symbols/10.jpg}}" alt=""><div class="p">4 × {{pay:10:4}}<br>3 × {{pay:10:3}}</div></div>
+    <div class="card sym"><div class="n">{{symbol:9}}</div><img src="{{asset:symbols/9.jpg}}" alt=""><div class="p">4 × {{pay:9:4}}<br>3 × {{pay:9:3}}</div></div>
+  </div>
+
+  <h2>Выигрышные линии ({{lines}})</h2>
+  {{paylines}}
+
+  <div class="card rtp">
+    <div class="small">ВОЗВРАТ ИГРОКУ</div>
+    <div class="v">{{rtp}}</div>
+    <div class="small">Теоретический RTP на длинной дистанции. На каждой линии выплачивается только наибольший выигрыш; выигрыши на разных линиях суммируются. Сбой аннулирует все выплаты и игры.</div>
+  </div>
+</body>
+</html>

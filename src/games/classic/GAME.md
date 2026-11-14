@@ -17,7 +17,6 @@
 | `views/ClassicHUD.ts` | BALANCE / BET / WIN values, message pill under the reels, jackpot meter |
 | `views/JackpotTicker.ts` | Decorative MEGA JACKPOT meter (`skin.jackpot`, not part of the math) |
 | `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
-| `views/ClassicPaytable.ts` | Paytable body: symbol art + payouts for the current bet, lines, RTP |
 
 ## Skin pipeline
 Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. The speaker icon is decorative; the home button sits top-left.
@@ -29,3 +28,7 @@ Same approach as `dragon`: grid lines and button centres measured on `art/source
 
 ## Controls
 SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), INFO and i (paytable), home.
+
+## Content CDN
+- Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
+- Translations: `public/cdn/i18n/<lang>/classic.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.classic.*`).

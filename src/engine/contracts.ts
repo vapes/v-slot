@@ -6,7 +6,6 @@
 import type { Container, DisplayObject } from 'pixi.js';
 import type { SlotConfig } from './config/SlotConfig';
 import type { SpinResult } from './math/types';
-import type { PaytableTheme } from './ui/paytableBlocks';
 
 /** Visual of one reel cell; recycled while reels spin. */
 export interface SymbolView {
@@ -57,7 +56,11 @@ export interface GameActions {
   toggleQuickSpin(): void;
 }
 
-/** Everything a game draws around the reels: background, buttons, HUD, paytable body. */
+/**
+ * Everything a game draws around the reels: background, buttons, HUD.
+ * The paytable is HTML from the content CDN (engine HtmlPaytable); views only
+ * open it through GameActions.
+ */
 export interface GameView {
   readonly spinButton: SpinControl;
   readonly hud: Hud;
@@ -68,10 +71,6 @@ export interface GameView {
   setBetControls(state: BetControlsState): void;
   setAutoplay?(on: boolean): void;
   setQuickSpin?(on: boolean): void;
-  /** Colours/font of the paytable overlay (engine default if omitted). */
-  readonly paytableTheme?: PaytableTheme;
-  /** Fill the scrollable paytable; return content height. */
-  buildPaytable(root: Container, lineBet: number): number;
   update?(dt: number): void;
 }
 
