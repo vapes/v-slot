@@ -12,7 +12,7 @@ interface Spark {
 let glowTexture: Texture | null = null;
 
 /** Soft round glow dot, generated once (canvas → texture). */
-function sparkTexture(): Texture {
+export function sparkTexture(): Texture {
   if (glowTexture) return glowTexture;
   const size = 64;
   const canvas = document.createElement('canvas');

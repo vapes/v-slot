@@ -35,4 +35,4 @@ SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick ree
 - Translated art text: MEGA JACKPOT, BALANCE / BET / WIN captions and SPIN / AUTO SPIN / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
 
 ## Anticipation
-`config.json → anticipation` (engine feature, see CLAUDE.md). Fires when a HUGE+ (≥5× bet) line win is one symbol away, from reel 3 (no scatter in this game); gold/blue colours. ≈10% of spins. QA: `npm run dev`, `?game=classic&force=anticipation`.
+`config.json → anticipation` (engine feature, see CLAUDE.md). Fires when a HUGE+ (≥5× bet) line win is one symbol away, from reel 3 (no scatter in this game). Style `marquee`: a thin gold frame with chasing casino bulbs, light veil (0.12) — deliberately lighter than dragon's flames. ≈10% of spins. QA: `npm run dev`, `?game=classic&force=anticipation`.
