@@ -34,7 +34,7 @@ BUTTONS = {
     'info_i': (126, 2440, 80),
     'auto': (380, 2442, 128),
     'spin': (770, 2440, 214),
-    'info': (1156, 2440, 128),
+    'turbo': (1156, 2440, 128),  # blank blue button (baked INFO caption erased) → TURBO
     'minus': (600, 2104, 56),
     'plus': (940, 2104, 56),
 }
@@ -43,7 +43,7 @@ BUTTONS = {
 TEXT_BOXES = [(100, 2066, 412, 2146), (680, 2066, 862, 2146), (1150, 2066, 1412, 2146), (388, 122, 1142, 236)]
 
 # Baked labels (drawn translated at runtime): MEGA JACKPOT, BALANCE / BET / WIN,
-# AUTO SPIN, INFO, SPIN
+# AUTO SPIN, INFO (button reused as TURBO), SPIN
 # Glyph mask dilation in px (covers anti-aliasing and outlines)
 GLYPH_GROW = 7
 LABEL_BOXES = [(485, 36, 1053, 110, 'box'), (122, 1964, 395, 2023, 'gold'), (712, 1964, 827, 2023, 'gold'),
