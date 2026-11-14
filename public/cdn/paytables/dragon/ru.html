@@ -31,6 +31,14 @@
   .rtp { margin-top: 22px; padding: 14px; text-align: center; }
   .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
   .small { font-size: 12px; opacity: .55; }
+  .nest { margin-top: 12px; padding: 14px; }
+  .nest .row { display: flex; gap: 12px; align-items: center; }
+  .nest img { width: 96px; border-radius: 8px; box-shadow: 0 0 14px rgba(255,150,0,.6); }
+  .nest ol { margin: 10px 0 0; padding-left: 20px; }
+  .nest li { margin: 4px 0; }
+  .jp { display: flex; gap: 8px; margin-top: 10px; }
+  .jp div { flex: 1; text-align: center; background: rgba(255,201,74,.1); border: 1px solid rgba(255,201,74,.5); border-radius: 8px; padding: 6px 2px; }
+  .jp b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 1px; }
 </style>
 </head>
 <body>
@@ -43,10 +51,24 @@
     <div><b>{{symbol:wild}}</b><br>Выпадает стопками на барабанах 2, 3 и 4 и заменяет любой символ.</div>
   </div>
 
+  <h2>Гнездо дракона</h2>
+  <div class="card nest">
+    <div class="row"><img src="{{asset:symbols/egg.jpg}}" alt="">
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — СКАТТЕР</b><br>3 и более Яйца в любом месте будят дракониху и запускают респины <b>«Гнездо дракона»</b>.</div></div>
+    <ol>
+      <li>Наступает ночь. Огонь дракона выжигает мелкие карты: на барабанах остаются только Яйца, Вайлд, Медаль дракона, Сундук, Золото, Кристалл и Кубок.</li>
+      <li>Каждое Яйцо <b>липкое</b>: оно остаётся в гнезде и несёт денежный приз от 1× до 25× ставки или джекпот <b>МИНИ</b> / <b>МАЖОР</b>.</li>
+      <li>Даётся <b>3 респина</b>. Каждое новое Яйцо возвращает счётчик к 3.</li>
+      <li>Выигрыши по линиям продолжают платить на каждом респине.</li>
+      <li>Когда респины заканчиваются, все Яйца вылупляются и выплачивают свои призы.</li>
+      <li>Заполните Яйцами все 20 позиций и получите <b>ВЕЛИКИЙ КЛАД</b> — дополнительно 1000× ставки.</li>
+    </ol>
+    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>50× ставки</div><div><b>{{t:feature.jackpot.major}}</b>150× ставки</div><div><b>{{t:feature.grand}}</b>1000× ставки</div></div>
+  </div>
+
   <h2>Символы</h2>
   <div class="grid">
     <div class="card sym"><div class="n">{{symbol:dragon}}</div><img src="{{asset:symbols/dragon.jpg}}" alt=""><div class="p">4 × {{pay:dragon:4}}<br>3 × {{pay:dragon:3}}</div></div>
-    <div class="card sym"><div class="n">{{symbol:egg}}</div><img src="{{asset:symbols/egg.jpg}}" alt=""><div class="p">4 × {{pay:egg:4}}<br>3 × {{pay:egg:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:chest}}</div><img src="{{asset:symbols/chest.jpg}}" alt=""><div class="p">4 × {{pay:chest:4}}<br>3 × {{pay:chest:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:gold}}</div><img src="{{asset:symbols/gold.jpg}}" alt=""><div class="p">4 × {{pay:gold:4}}<br>3 × {{pay:gold:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:crystal}}</div><img src="{{asset:symbols/crystal.jpg}}" alt=""><div class="p">4 × {{pay:crystal:4}}<br>3 × {{pay:crystal:3}}</div></div>

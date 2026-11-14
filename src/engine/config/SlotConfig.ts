@@ -51,6 +51,17 @@ export interface RawSlotConfig {
     autoplayWinPause?: number;
     autoplayPause?: number;
   };
+  /** Bonus-feature playback (sticky respins). All optional, ms unless noted. */
+  feature?: {
+    /** Centre y of the respin meter (game px); default: just above the reels. */
+    meterY?: number;
+    introMs?: number;
+    outroMs?: number;
+    /** Pause after each respin (longer when it had line wins). */
+    stepPauseMs?: number;
+    /** Per sticky cell during the final collect. */
+    collectMs?: number;
+  };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
   rtp: number;

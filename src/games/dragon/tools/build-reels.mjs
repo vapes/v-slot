@@ -14,7 +14,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const CONFIG_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '../config.json');
-const raw = readFileSync(CONFIG_PATH, 'utf8');
+let raw = readFileSync(CONFIG_PATH, 'utf8');
 const cfg = JSON.parse(raw);
 const reportOnly = process.argv.includes('--report');
 
@@ -47,6 +47,12 @@ function buildStrip(composition, seed) {
 let reels = cfg.reels;
 if (!reportOnly) {
   reels = cfg.reelComposition.map((comp, i) => buildStrip(comp, 1000 + i));
+  // Nest (respin) strips live in "respin.strips"; base strips in the last key "reels".
+  const nest = cfg.respin.composition.map((comp, i) => buildStrip(comp, 2000 + i));
+  const nestBody = nest.map(r => '      ' + JSON.stringify(r)).join(',\n');
+  raw = raw.replace(/"strips": \[[\s\S]*?\n?    \]|"strips": \[\]/, `"strips": [\n${nestBody}\n    ]`);
+  console.log('Nest strips written:', nest.map(r => r.length).join(' / '));
+
   const body = reels.map(r => '    ' + JSON.stringify(r)).join(',\n');
   // `reels` is the last key of config.json — replace from it to the end.
   const at = raw.indexOf('  "reels": [');

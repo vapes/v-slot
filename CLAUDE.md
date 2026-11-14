@@ -16,7 +16,8 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
 | `npm run classic:screens` | Regenerate classic `screens.bin` after classic math changes |
 | `npm run classic:slice` | Re-slice classic art from `src/games/classic/art/source.jpg` (Pillow + numpy) |
-| `npm run dragon:reels` | Rebuild dragon reel strips + exact RTP report |
+| `npm run dragon:reels` | Rebuild dragon base + nest reel strips; exact base-game RTP report |
+| `npm run dragon:sim [-- spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (runs the real TS math via tsx) |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
 No unit-test framework; verify visually with Playwright (Chromium is preinstalled; `require('playwright')`).
@@ -27,7 +28,7 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
 2. **Files ≤ 250 lines.** Split into focused modules instead (enforced by `npm run check`).
 3. **Import boundaries** (enforced):
    - `src/engine/**` never imports from games or lobby.
-   - `src/games/<id>/**` imports only `pixi.js`, `'@/engine'` (the barrel — never deep paths) and files inside its own folder. Need something new from the engine? Export it in `src/engine/index.ts`.
+   - `src/games/<id>/**` imports only `pixi.js`, `'@/engine'` (the barrel), `'@/engine/math'` (pure, Node-safe subset for math + tools) and files inside its own folder — never other deep paths. Need something new from the engine? Export it in `src/engine/index.ts` (or `math.ts` if it is pure).
    - `manifest.ts` stays light: `import type` + dynamic `import('./index')` only (keeps games code-split).
 4. **Config-driven.** Game design numbers live in `src/games/<id>/config.json`; no magic numbers for math/timing in code.
 5. **Money is integer minor units** everywhere (`currency.decimals` says how many). Format only via `formatMoney(cfg, value)`.
@@ -38,7 +39,7 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
 ```
 src/
 ├── index.ts                 Router: ?game=<id> → SlotGame, else Lobby (switching = page reload)
-├── engine/                  Game-agnostic core. Public API = engine/index.ts
+├── engine/                  Game-agnostic core. Public API = engine/index.ts (+ engine/math.ts: pure, no Pixi)
 │   ├── contracts.ts         ★ GameDefinition, GameView, Hud, SpinControl, SymbolRenderer, MathModel, GameManifest
 │   ├── config/SlotConfig.ts ★ RawSlotConfig (JSON schema as a TS type) + resolveConfig (derived geometry)
 │   ├── core/SlotGame.ts     Orchestrator: balance/bet, spin loop (single / hold-turbo / autoplay / quick), win cycle
@@ -48,7 +49,8 @@ src/
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
 │   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
-│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types
+│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types (SpinResult, FeatureRound…)
+│   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
 │   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton,
@@ -102,6 +104,8 @@ const game: GameDefinition = {
 
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 
+**Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro banner (`feature.title` / `feature.subtitle`) → sticky cells drawn by the game's `SymbolView.setValue` → respins with a meter above the reels → hatch → optional full-grid prize → outro → base grid restored. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`). Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
+
 **New pipeline logic:** inject a `PipelineStage` via `pipeline.insertBefore/After()` in `engine/pipeline/buildSpinPipeline.ts`.
 
 ## Spin flow
@@ -110,7 +114,7 @@ const game: GameDefinition = {
 
 1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → status "Good luck!"
 2. **server** — `math.spin()` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
+3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -121,10 +125,12 @@ Stage
 │   ├── optional reelStyle.background panel
 │   ├── reelLayer (masked) → Reel[i].symbolContainer
 │   ├── optional reelStyle.separators grid
+│   ├── overlay (feature sticky cells)
 │   └── winLayer (unmasked; winning symbols promoted here)
 ├── GameView.mountAboveReels   (buttons, HUD)
 ├── HomeButton                 (config.homeButton — top-left corner in every game)
 ├── SoundButton                (config.soundButton — top-right corner; toggles soundSettings.muted)
+├── FeatureBanner / FeatureMeter (feature intro/outro, respins + running total)
 ├── WinCelebration
 └── (DOM) HtmlPaytable         iframe overlay placed over the canvas rect, hidden by default
 ```

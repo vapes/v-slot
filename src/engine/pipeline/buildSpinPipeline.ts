@@ -1,4 +1,4 @@
-import { SpinPipeline } from './SpinPipeline';
+import { SpinPipeline, type SpinContext } from './SpinPipeline';
 import { getWinCategory } from '../ui/WinCelebration';
 import { t } from '../i18n/I18n';
 import type { SlotConfig } from '../config/SlotConfig';
@@ -21,6 +21,8 @@ export interface PipelineDeps {
   enableControls(): void;
   stopWinCycle(): void;
   startWinCycle(result: SpinResult): void;
+  /** Play a bonus round decided by the math (e.g. sticky respins). */
+  playFeature(result: SpinResult, ctx: SpinContext): Promise<void>;
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
@@ -104,11 +106,17 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   });
 
   pipeline.add('post', {
+    name: 'playFeature',
+    execute: async (ctx) => {
+      if (ctx.result?.feature) await deps.playFeature(ctx.result, ctx);
+    },
+  });
+
+  pipeline.add('post', {
     name: 'calculateWins',
     execute: (ctx) => {
-      if (ctx.result && ctx.result.totalWin > 0) {
-        ctx.winAmount = ctx.result.totalWin * ctx.lineBet;
-      }
+      const total = (ctx.result?.totalWin ?? 0) + (ctx.result?.feature?.totalWin ?? 0);
+      if (total > 0) ctx.winAmount = total * ctx.lineBet;
     },
   });
 
@@ -136,7 +144,8 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('post', {
     name: 'showWinAnimations',
     execute: (ctx) => {
-      if (!ctx.result || ctx.winAmount <= 0) return;
+      // line wins of the base grid only (a feature-only win has none to show)
+      if (!ctx.result || ctx.winAmount <= 0 || ctx.result.wins.length === 0) return;
       if (ctx.turbo) {
         reelController.showWinsTurbo(ctx.result);
       } else {

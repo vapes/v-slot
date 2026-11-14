@@ -3,11 +3,7 @@
  * `npm run check`). Add exports here rather than deep-importing.
  */
 export * from './contracts';
-export { resolveConfig, color, type RawSlotConfig, type SlotConfig } from './config/SlotConfig';
-export type { SpinResult, WinResult } from './math/types';
-export { evaluateLines, toSpinResult } from './math/evaluateLines';
-export { linePayout, payingCounts, lineBetOf } from './math/Paytable';
-export { ReelStripMath } from './math/ReelStripMath';
+export * from './math';
 export { SlotGame } from './core/SlotGame';
 export { fitCanvas, goToLobby } from './core/fitCanvas';
 export { SpriteButton } from './ui/SpriteButton';

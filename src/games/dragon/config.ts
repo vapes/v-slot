@@ -1,5 +1,6 @@
 import raw from './config.json';
 import { resolveConfig, type RawSlotConfig } from '@/engine';
+import type { RespinConfig } from './math/respinConfig';
 
 /** Typed, resolved config. The annotation makes tsc validate config.json. */
 const rawConfig: RawSlotConfig = raw;
@@ -17,3 +18,6 @@ export function uiAnchor(name: UiAnchorName): { x: number; y: number; r: number;
 }
 
 export const REEL_STRIPS: string[][] = raw.reels;
+
+/** Dragon's Nest respin feature (see math/DragonMath.ts, GAME.md). */
+export const RESPIN: RespinConfig = raw.respin;

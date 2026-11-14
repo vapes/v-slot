@@ -13,12 +13,14 @@
     "classic:screens": "node src/games/classic/tools/generate-screens.mjs",
     "dragon:reels": "node src/games/dragon/tools/build-reels.mjs",
     "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py",
-    "classic:slice": "python3 src/games/classic/tools/slice-skin.py"
+    "classic:slice": "python3 src/games/classic/tools/slice-skin.py",
+    "dragon:sim": "tsx src/games/dragon/tools/simulate.ts"
   },
   "dependencies": {
     "pixi.js": "^7.3.3"
   },
   "devDependencies": {
+    "tsx": "^4.23.15",
     "typescript": "^5.3.3",
     "vite": "^5.0.12"
   }

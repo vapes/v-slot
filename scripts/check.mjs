@@ -51,7 +51,8 @@ for (const file of tsFiles) {
     }
     if (rel[0] === 'games' && rel.length > 2 && target) {
       const ownGame = target[0] === 'games' && target[1] === rel[1];
-      const engineRoot = target[0] === 'engine' && target.length === 1;
+      // public engine entries: '@/engine' (index) and '@/engine/math' (pure, Node-safe)
+      const engineRoot = target[0] === 'engine' && (target.length === 1 || (target.length === 2 && target[1] === 'math'));
       if (target[0] === 'engine' && !engineRoot) err(file, `deep engine import "${spec}" — import from '@/engine' (add an export to src/engine/index.ts)`);
       else if (!ownGame && !engineRoot) err(file, `game imports outside its folder: "${spec}"`);
       if (rel[2] === 'manifest.ts' && !typeOnly && !dynamic) err(file, `manifest must be light: use "import type" or dynamic import() for "${spec}"`);

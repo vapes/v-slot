@@ -25,6 +25,10 @@ export class ReelController {
 
   private reelLayer: Container;
   private winLayer: Container;
+  /** Layer for feature visuals that sit on top of cells (sticky symbols). */
+  readonly overlay = new Container();
+  /** While set (e.g. during a feature) spinning blur symbols come only from this pool. */
+  private blurPool: string[] | null = null;
   private promotedSymbols: PromotedSymbol[] = [];
   private readonly reelCount: number;
   private readonly rowCount: number;
@@ -61,7 +65,8 @@ export class ReelController {
     this.reelLayer.mask = mask;
     this.container.addChild(this.reelLayer);
 
-    const pickBlur = createSymbolPicker(cfg);
+    const basePick = createSymbolPicker(cfg);
+    const pickBlur = () => (this.blurPool ? this.blurPool[Math.floor(Math.random() * this.blurPool.length)] : basePick());
     for (let i = 0; i < this.reelCount; i++) {
       const reel = new Reel(cfg, this.factory, pickBlur);
       reel.container.x = i * this.reelWidth;
@@ -70,6 +75,9 @@ export class ReelController {
     }
 
     this.container.addChild(this.buildSeparators());
+
+    // Feature overlay (sticky cells) above the spinning reels, below winners
+    this.container.addChild(this.overlay);
 
     // Win layer (above mask — winning symbols render here unclipped)
     this.winLayer = new Container();
@@ -114,6 +122,16 @@ export class ReelController {
     for (let i = 0; i < this.reelCount; i++) {
       this.reels[i].startSpin(result.grid[i], 1, () => this.onReelStopped(), true);
     }
+  }
+
+  setBlurPool(symbols: string[] | null): void {
+    this.blurPool = symbols?.length ? symbols : null;
+  }
+
+  /** Show a grid instantly (no spin), e.g. the base grid after a feature. */
+  snapTo(grid: string[][]): void {
+    this.demoteWinSymbols();
+    grid.forEach((col, i) => this.reels[i].snapToTarget(col));
   }
 
   /** Instantly stop all spinning reels and snap to their targets. */

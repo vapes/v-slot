@@ -12,5 +12,13 @@
   "symbol.Q": "Дама",
   "symbol.J": "Валет",
   "symbol.10": "Десять",
-  "symbol.9": "Девять"
+  "symbol.9": "Девять",
+  "feature.title": "ГНЕЗДО ДРАКОНА",
+  "feature.subtitle": "{n} РЕСПИНА · ЯЙЦА ЛИПКИЕ",
+  "feature.respins": "РЕСПИНЫ",
+  "feature.collected": "ГНЕЗДО {amount}",
+  "feature.total": "ГНЕЗДО ПЛАТИТ",
+  "feature.grand": "ВЕЛИКИЙ КЛАД",
+  "feature.jackpot.mini": "МИНИ",
+  "feature.jackpot.major": "МАЖОР"
 }

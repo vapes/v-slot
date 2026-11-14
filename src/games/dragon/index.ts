@@ -1,5 +1,6 @@
-import { ReelStripMath, type GameDefinition } from '@/engine';
-import { config, REEL_STRIPS } from './config';
+import type { GameDefinition } from '@/engine';
+import { config, REEL_STRIPS, RESPIN } from './config';
+import { DragonMath } from './math/DragonMath';
 import { loadSkin } from './assets';
 import { dragonSymbols } from './views/DragonSymbols';
 import { DragonView } from './views/DragonView';
@@ -7,7 +8,9 @@ import { DragonView } from './views/DragonView';
 const dragon: GameDefinition = {
   config,
   loadAssets: loadSkin,
-  createMath: () => new ReelStripMath(config, REEL_STRIPS),
+  // Dev/QA only: ?force=feature makes every spin trigger the Dragon's Nest.
+  createMath: () => new DragonMath(config, REEL_STRIPS, RESPIN, Math.random,
+    import.meta.env.DEV && new URLSearchParams(window.location.search).get('force') === 'feature'),
   createSymbolRenderer: () => dragonSymbols,
   createView: (actions) => new DragonView(actions),
 };

@@ -31,6 +31,14 @@
   .rtp { margin-top: 22px; padding: 14px; text-align: center; }
   .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
   .small { font-size: 12px; opacity: .55; }
+  .nest { margin-top: 12px; padding: 14px; }
+  .nest .row { display: flex; gap: 12px; align-items: center; }
+  .nest img { width: 96px; border-radius: 8px; box-shadow: 0 0 14px rgba(255,150,0,.6); }
+  .nest ol { margin: 10px 0 0; padding-left: 20px; }
+  .nest li { margin: 4px 0; }
+  .jp { display: flex; gap: 8px; margin-top: 10px; }
+  .jp div { flex: 1; text-align: center; background: rgba(255,201,74,.1); border: 1px solid rgba(255,201,74,.5); border-radius: 8px; padding: 6px 2px; }
+  .jp b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 1px; }
 </style>
 </head>
 <body>
@@ -43,10 +51,24 @@
     <div><b>{{symbol:wild}}</b><br>Appears stacked on reels 2, 3 and 4 and substitutes for all symbols.</div>
   </div>
 
+  <h2>Dragon's Nest</h2>
+  <div class="card nest">
+    <div class="row"><img src="{{asset:symbols/egg.jpg}}" alt="">
+      <div><b style="color:var(--gold);font-size:18px">{{symbol:egg}} — SCATTER</b><br>3 or more Eggs anywhere wake the mother dragon and start the <b>Dragon's Nest</b> respins.</div></div>
+    <ol>
+      <li>Night falls. The dragon's fire burns away the low cards: only Eggs, Wild, Dragon Medal, Treasure Chest, Gold Hoard, Crystal and Goblet remain on the reels.</li>
+      <li>Every Egg is <b>sticky</b>: it stays in the nest and carries a cash prize from 1× to 25× the bet, or a <b>MINI</b> / <b>MAJOR</b> jackpot.</li>
+      <li>You get <b>3 respins</b>. Every new Egg resets them back to 3.</li>
+      <li>Line wins still pay on every respin.</li>
+      <li>When the respins run out, all Eggs hatch and pay their prizes.</li>
+      <li>Fill all 20 positions with Eggs to win the <b>GRAND HOARD</b> — 1000× the bet on top.</li>
+    </ol>
+    <div class="jp"><div><b>{{t:feature.jackpot.mini}}</b>50× bet</div><div><b>{{t:feature.jackpot.major}}</b>150× bet</div><div><b>{{t:feature.grand}}</b>1000× bet</div></div>
+  </div>
+
   <h2>Symbols</h2>
   <div class="grid">
     <div class="card sym"><div class="n">{{symbol:dragon}}</div><img src="{{asset:symbols/dragon.jpg}}" alt=""><div class="p">4 × {{pay:dragon:4}}<br>3 × {{pay:dragon:3}}</div></div>
-    <div class="card sym"><div class="n">{{symbol:egg}}</div><img src="{{asset:symbols/egg.jpg}}" alt=""><div class="p">4 × {{pay:egg:4}}<br>3 × {{pay:egg:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:chest}}</div><img src="{{asset:symbols/chest.jpg}}" alt=""><div class="p">4 × {{pay:chest:4}}<br>3 × {{pay:chest:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:gold}}</div><img src="{{asset:symbols/gold.jpg}}" alt=""><div class="p">4 × {{pay:gold:4}}<br>3 × {{pay:gold:3}}</div></div>
     <div class="card sym"><div class="n">{{symbol:crystal}}</div><img src="{{asset:symbols/crystal.jpg}}" alt=""><div class="p">4 × {{pay:crystal:4}}<br>3 × {{pay:crystal:3}}</div></div>
