@@ -12,7 +12,7 @@
 | `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
-| `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky dragon's cash value / jackpot |
+| `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky wild's cash value / jackpot |
 | `tools/build-reels.mjs` | Builds base + nest strips for real/demo into `strips.json`, exact base RTP per profile (`npm run dragon:reels`) |
 | `tools/simulate.ts` | Monte-Carlo of base + feature with the real math (`npm run dragon:sim`) |
 | `math/DragonMath.ts` | `MathModel`: base strips + Dragon's Nest sticky respins (pure TS, `@/engine/math` only) |
@@ -30,21 +30,21 @@
 
 | | real | demo |
 |---|---|---|
-| Base-game RTP (exact) | 62.74% | 57.61% |
-| Eggs per base reel | 1 / 2 / 2 / 1 | 3 / 3 / 3 / 3 |
-| Nest trigger (exact) | 1 in 123.4 | 1 in 13.7 |
-| Mean feature win | 41.2× bet | 47.7× bet |
-| Feature RTP | ≈33.4% | ≈347.8% |
-| **Total RTP** (`rtp` / `demo.rtp`) | **≈96.2%** | **≈405%** |
+| Base-game RTP (exact) | 63.55% | 60.39% |
+| Eggs / Dragons per base reel | 1·1·2·1 / 1·1·1·1 | 2·2·2·2 / 2·2·2·2 |
+| Nest trigger (exact) | 1 in 230.0 | 1 in 25.0 |
+| Mean feature win | 74.0× bet | 86.9× bet |
+| Feature RTP | ≈32.2% | ≈347.3% |
+| **Total RTP** (`rtp` / `demo.rtp`) | **≈95.7%** | **≈408%** |
 
-- Base game: 4×5, 20 lines, WILD stacked ×3 on reels 2–4 (substitutes, pays nothing). **No Dragon Medal on the base reels.** **Egg = scatter** (no line pays). Line pays (× line bet) 3/4: chest 40/200, gold 30/120, crystal 22/75, goblet 18/60, A 11/38, K 9/30, Q 7/26, J 6/19, 10 5/15, 9 4/11.
-- **Dragon's Nest** (`respin`, `math/DragonMath.ts`): 3+ eggs anywhere. The eggs hatch: each trigger position becomes a sticky **Dragon** (`respin.sticky`). Respins run on the nest strips (`respin.composition`: dragon, wild, chest, gold, crystal, goblet — **no eggs, no low cards**). Every Dragon is **sticky** with a value from `respin.values` (1×–25× total bet, MINI 50×, MAJOR 150×; demo uses `demo.respin.values`, richer); a new Dragon resets respins to 3; line wins pay on every respin; all 20 cells = GRAND HOARD +1000× bet.
-- `build-reels.mjs` enforces: dragon never on base strips, egg never on nest strips.
+- Base game: 4×5, 20 lines, **no WILD on the base reels**. **Egg = scatter (1 respin)**, **Dragon Medal = super scatter (3 respins)**; neither pays on lines. Line pays (× line bet) 3/4: chest 300/1500, gold 180/700, crystal 120/400, goblet 80/300, A 24/80, K 20/60, Q 16/50, J 12/40, 10 10/30, 9 8/24 (steep on purpose: premiums carry the base game, the nest is mostly low symbols).
+- **Dragon's Nest** (`respin`, `math/DragonMath.ts`): 3+ scatters anywhere, any mix (`respin.trigger`). Initial respins = Σ `respin.scatters[symbol]` (egg 1, dragon 3; e.g. 2 eggs + 1 dragon = 5). Each trigger position becomes a sticky **WILD** (`respin.sticky`) with a value from `respin.values` (2×–40× total bet, MINI 75×, MAJOR 250×; demo uses the same ladder with richer weights in `demo.respin.values`). Respins run on the nest strips (`respin.composition`: wild + all pay symbols, mostly low — **no eggs, no dragons**). A new WILD sticks with a value and tops the counter up to `respin.respins` (3) — `max(left − 1, 3)`, never lowers it. Sticky WILDs substitute on lines; line wins pay on every respin; all 20 cells = GRAND HOARD +1000× bet.
+- `build-reels.mjs` enforces: wild never on base strips, scatters never on nest strips, wild present in the nest. Strips are drawn constructively (seeded, no identical neighbours).
 - Retune: edit compositions / values → `npm run dragon:reels` → `npm run dragon:sim -- real` and `-- demo` (use the "Exact trigger" line + exact base RTP) → update `rtp` / `demo.rtp` and this table.
 - QA: `npm run dev`, `?game=dragon&force=feature` — every spin triggers the nest (dev builds only).
 
 ## Story
-Night falls over the castle; the mother dragon guards her clutch. The triggering eggs hatch into young dragons, her fire burns away the low cards, and every dragon that lands stays in the nest (sticky) carrying treasure; each new dragon buys three more respins. At dawn the dragons bring their treasure home — fill the whole nest and wake the GRAND HOARD. `setFeatureMode` tints the scene to moonlight while the nest is active.
+Night falls over the castle; the mother dragon guards her clutch. Eggs and the rare dragon medals on the reels wake her: each egg buys one respin, each dragon three. In the nest every scatter turns into a burning WILD that stays (sticky) carrying treasure; each new wild keeps the night going for three more respins. At dawn the wilds bring their treasure home — fill the whole nest and wake the GRAND HOARD. `setFeatureMode` tints the scene to moonlight while the nest is active.
 
 ## Controls
 SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy (paytable), fullscreen, sound on/off (top-right), home (top-left).
@@ -55,7 +55,7 @@ SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TU
 - Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
 
 ## Anticipation
-`config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 eggs already landed (scatter tease) or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈6.8% of real spins (≈11% of those reach the nest), ≈19% in demo. QA: `npm run dev`, `?game=dragon&force=anticipation`.
+`config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 scatters (eggs / dragons) already landed or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈8.5% of real spins (≈5% of those reach the nest), ≈16% in demo (≈25%). QA: `npm run dev`, `?game=dragon&force=anticipation`.
 
 ## Tests
-`tests/games/dragon.test.ts` (both profiles, seeded): dragon never on base strips / egg never in the nest, triggering eggs become sticky dragons, sticky cells stay, respins reset/count down, totals add up, values come from the table, same seed → same round.
+`tests/games/dragon.test.ts` (both profiles, seeded): wild only in the nest, eggs / dragons only on base strips, grant egg = 1 / dragon = 3, triggering scatters become sticky wilds, no scatters in nest steps, top-up rule, totals add up, values come from the table, same seed → same round.

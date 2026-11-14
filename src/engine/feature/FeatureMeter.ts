@@ -3,6 +3,8 @@ import type { SlotConfig } from '../config/SlotConfig';
 import { t } from '../i18n/I18n';
 import { fitText } from '../ui/fitText';
 
+const MAX_DOTS = 5;
+
 const STYLE = new TextStyle({
   fontFamily: '"Roboto Condensed", "Arial Narrow", Arial, sans-serif',
   fontSize: 17, fontWeight: 'bold', fill: ['#FFF3C4', '#FFC94A'], stroke: 0x2A0A00, strokeThickness: 3,
@@ -39,12 +41,14 @@ export class FeatureMeter {
     this.setTotal(total);
   }
 
+  /** Dots for up to MAX_DOTS respins, a number beyond that (big scatter triggers). */
   setRespins(n: number): void {
-    this.respins.text = t('feature.respins');
-    fitText(this.respins, this.w * 0.3);
+    const asNumber = this.maxRespins > MAX_DOTS;
+    this.respins.text = asNumber ? `${t('feature.respins')} ${n}` : t('feature.respins');
+    fitText(this.respins, this.w * 0.42);
     const x0 = this.respins.x + this.respins.width + 12;
     this.dots.clear();
-    for (let i = 0; i < this.maxRespins; i++) {
+    for (let i = 0; i < (asNumber ? 0 : this.maxRespins); i++) {
       this.dots.lineStyle(1.5, 0xFFC94A, 1);
       this.dots.beginFill(i < n ? 0xFFC94A : 0x12060F, 1);
       this.dots.drawCircle(x0 + i * 16, 0, 5.5);

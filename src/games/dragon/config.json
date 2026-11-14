@@ -11,7 +11,7 @@
   "anticipation": {
     "startReel": 2,
     "minCategory": "huge",
-    "scatter": "egg",
+    "scatters": ["egg", "dragon"],
     "scatterTrigger": 3,
     "extraMs": 1500,
     "speedBoost": 1.7,
@@ -63,7 +63,7 @@
     "autoplayWinPause": 1600,
     "autoplayPause": 250
   },
-  "rtp": 0.962,
+  "rtp": 0.957,
   "wild": "wild",
   "symbols": [
     { "id": "wild", "name": "Wild", "weight": 2 },
@@ -81,16 +81,16 @@
     { "id": "9", "name": "Nine", "weight": 6 }
   ],
   "paytable": {
-    "chest": { "3": 40, "4": 200 },
-    "gold": { "3": 30, "4": 120 },
-    "crystal": { "3": 22, "4": 75 },
-    "goblet": { "3": 18, "4": 60 },
-    "A": { "3": 11, "4": 38 },
-    "K": { "3": 9, "4": 30 },
-    "Q": { "3": 7, "4": 26 },
-    "J": { "3": 6, "4": 19 },
-    "10": { "3": 5, "4": 15 },
-    "9": { "3": 4, "4": 11 }
+    "chest": { "3": 300, "4": 1500 },
+    "gold": { "3": 180, "4": 700 },
+    "crystal": { "3": 120, "4": 400 },
+    "goblet": { "3": 80, "4": 300 },
+    "A": { "3": 24, "4": 80 },
+    "K": { "3": 20, "4": 60 },
+    "Q": { "3": 16, "4": 50 },
+    "J": { "3": 12, "4": 40 },
+    "10": { "3": 10, "4": 30 },
+    "9": { "3": 8, "4": 24 }
   },
   "paylines": [
     [2, 2, 2, 2],
@@ -115,59 +115,59 @@
     [3, 2, 3, 2]
   ],
   "respin": {
-    "scatter": "egg",
-    "sticky": "dragon",
+    "scatters": { "egg": 1, "dragon": 3 },
+    "sticky": "wild",
     "trigger": 3,
     "respins": 3,
     "values": [
-      { "x": 1, "w": 360 },
-      { "x": 2, "w": 260 },
-      { "x": 3, "w": 160 },
-      { "x": 5, "w": 100 },
-      { "x": 10, "w": 80 },
-      { "x": 25, "w": 32 },
-      { "x": 50, "w": 9, "tag": "mini" },
-      { "x": 150, "w": 2, "tag": "major" }
+      { "x": 2, "w": 360 },
+      { "x": 3, "w": 260 },
+      { "x": 5, "w": 160 },
+      { "x": 10, "w": 100 },
+      { "x": 15, "w": 80 },
+      { "x": 40, "w": 32 },
+      { "x": 75, "w": 9, "tag": "mini" },
+      { "x": 250, "w": 2, "tag": "major" }
     ],
     "grand": 1000,
     "composition": [
-      { "dragon": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-      { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-      { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-      { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 }
+      { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+      { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+      { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+      { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 }
     ]
   },
-  "reelStacks": { "wild": 3 },
+  "reelStacks": {},
   "reelComposition": [
-    { "egg": 1, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 7 },
-    { "egg": 2, "wild": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 6 },
-    { "egg": 2, "wild": 2, "chest": 3, "gold": 3, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 6, "J": 6, "10": 6, "9": 6 },
-    { "egg": 1, "wild": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 7, "9": 9 }
+    { "egg": 1, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+    { "egg": 1, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+    { "egg": 2, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+    { "egg": 1, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 }
   ],
   "demo": {
-    "rtp": 4.05,
+    "rtp": 4.08,
     "reelComposition": [
-      { "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 7 },
-      { "egg": 3, "wild": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 6 },
-      { "egg": 3, "wild": 2, "chest": 3, "gold": 3, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 6, "J": 6, "10": 6, "9": 6 },
-      { "egg": 3, "wild": 2, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 7, "9": 9 }
+      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 }
     ],
     "respin": {
       "composition": [
-        { "dragon": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-        { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-        { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 },
-        { "dragon": 1, "wild": 1, "chest": 4, "gold": 6, "crystal": 8, "goblet": 9 }
+        { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+        { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+        { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 },
+        { "wild": 1, "chest": 2, "gold": 2, "crystal": 3, "goblet": 4, "A": 6, "K": 8, "Q": 12, "J": 16, "10": 22, "9": 26 }
       ],
       "values": [
-        { "x": 1, "w": 340 },
-        { "x": 2, "w": 250 },
-        { "x": 3, "w": 160 },
-        { "x": 5, "w": 110 },
+        { "x": 2, "w": 360 },
+        { "x": 3, "w": 260 },
+        { "x": 5, "w": 160 },
         { "x": 10, "w": 100 },
-        { "x": 25, "w": 55 },
-        { "x": 50, "w": 9, "tag": "mini" },
-        { "x": 150, "w": 3, "tag": "major" }
+        { "x": 15, "w": 95 },
+        { "x": 40, "w": 38 },
+        { "x": 75, "w": 12, "tag": "mini" },
+        { "x": 250, "w": 3, "tag": "major" }
       ]
     }
   }

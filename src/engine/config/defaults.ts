@@ -38,6 +38,7 @@ export const ANTICIPATION_DEFAULTS = {
   startReel: 2,
   minCategory: 'huge',
   scatter: null as string | null,
+  scatters: [] as string[],
   scatterTrigger: 3,
   extraMs: 1400,
   speedBoost: 1.6,

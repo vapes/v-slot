@@ -65,7 +65,7 @@ function exactTriggerRate(): number {
     const d = new Array(rows + 1).fill(0);
     for (let i = 0; i < strip.length; i++) {
       let n = 0;
-      for (let r = 0; r < rows; r++) if (strip[(i + r) % strip.length] === profile.respin.scatter) n++;
+      for (let r = 0; r < rows; r++) if (strip[(i + r) % strip.length] in profile.respin.scatters) n++;
       d[n] += 1 / strip.length;
     }
     const next = new Array(dist.length + rows).fill(0);

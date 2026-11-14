@@ -7,7 +7,7 @@ import { linePayout } from './Paytable';
  *
  * Reel i (i ≥ startReel) anticipates when the reels left of it are exactly
  * one symbol short of
- *  - the feature: (scatterTrigger − 1) scatters already landed, or
+ *  - the feature: (scatterTrigger − 1) scatters (any of `scatter` / `scatters`) already landed, or
  *  - a big win: the paylines whose first i symbols already match would pay
  *    at least `minCategory` (celebration threshold × total bet) with one more.
  */
@@ -24,9 +24,10 @@ export function computeAnticipation(cfg: SlotConfig, grid: string[][]): boolean[
   const need = a.scatterTrigger - 1;
 
   for (let i = Math.max(1, a.startReel); i < cols; i++) {
-    if (a.scatter) {
+    const scatterIds = a.scatter ? [a.scatter, ...a.scatters] : a.scatters;
+    if (scatterIds.length) {
       let count = 0;
-      for (let r = 0; r < i; r++) count += grid[r].filter(s => s === a.scatter).length;
+      for (let r = 0; r < i; r++) count += grid[r].filter(s => scatterIds.includes(s)).length;
       if (count >= need) {
         out[i] = true;
         continue;

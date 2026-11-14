@@ -31,18 +31,33 @@ function mulberry32(seed) {
   };
 }
 
-/** Composition counts are blocks; `reelStacks` gives the block height per symbol. */
+/**
+ * Composition counts are blocks; `reelStacks` gives the block height per symbol.
+ * Constructive seeded draw: each block is picked weighted by what is left,
+ * never equal to the previous one (and the strip must not repeat across the wrap).
+ */
 function buildStrip(composition, seed) {
   const rnd = mulberry32(seed);
   const stacks = cfg.reelStacks ?? {};
-  const bag = Object.entries(composition).flatMap(([s, n]) => Array(n).fill(s));
   for (let attempt = 0; attempt < 10_000; attempt++) {
-    for (let i = bag.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [bag[i], bag[j]] = [bag[j], bag[i]];
+    const left = { ...composition };
+    let total = Object.values(left).reduce((a, b) => a + b, 0);
+    const out = [];
+    while (total > 0) {
+      const prev = out[out.length - 1];
+      const cands = Object.entries(left).filter(([s, n]) => n > 0 && s !== prev);
+      if (cands.length === 0) break;
+      const top = cands.reduce((a, b) => (b[1] > a[1] ? b : a));
+      let pick = top[0];
+      if (top[1] * 2 < total) {
+        let r = rnd() * cands.reduce((a, [, n]) => a + n, 0);
+        for (const [s, n] of cands) { r -= n; if (r < 0) { pick = s; break; } }
+      }
+      out.push(pick); left[pick]--; total--;
     }
-    const ok = bag.every((s, i) => s !== bag[(i + 1) % bag.length]);
-    if (ok) return bag.flatMap(s => Array(stacks[s] ?? 1).fill(s));
+    if (total === 0 && out[0] !== out[out.length - 1]) {
+      return out.flatMap(s => Array(stacks[s] ?? 1).fill(s));
+    }
   }
   throw new Error('Could not build strip without identical neighbours');
 }
@@ -128,11 +143,14 @@ function report(mode, reels) {
   });
 }
 
-// Design invariants: the sticky dragon lives only in the nest, eggs only in the base game.
+// Design invariants: the sticky wild lives only in the nest, the scatters (egg, dragon) only in the base game.
 for (const [mode, s] of Object.entries(strips)) {
-  const { scatter, sticky } = cfg.respin;
+  const { scatters, sticky } = cfg.respin;
   if (s.reels.some(r => r.includes(sticky))) throw new Error(`${mode}: "${sticky}" must not be on the base reels`);
-  if (s.nest.some(r => r.includes(scatter))) throw new Error(`${mode}: "${scatter}" must not be on the nest reels`);
+  for (const sc of Object.keys(scatters)) {
+    if (s.nest.some(r => r.includes(sc))) throw new Error(`${mode}: scatter "${sc}" must not be on the nest reels`);
+    if (!s.reels.some(r => r.includes(sc))) throw new Error(`${mode}: base reels need scatter "${sc}"`);
+  }
   if (!s.nest.some(r => r.includes(sticky))) throw new Error(`${mode}: nest reels need "${sticky}"`);
 }
 
