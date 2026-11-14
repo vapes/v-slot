@@ -16,8 +16,8 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
 | `npm run classic:screens` | Regenerate classic `screens.bin` after classic math changes |
 | `npm run classic:slice` | Re-slice classic art from `src/games/classic/art/source.jpg` (Pillow + numpy) |
-| `npm run dragon:reels` | Rebuild dragon base + nest reel strips; exact base-game RTP report |
-| `npm run dragon:sim [-- spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (runs the real TS math via tsx) |
+| `npm run dragon:reels` | Rebuild dragon base + nest strips for both profiles into `strips.json`; exact base-game RTP per profile |
+| `npm run dragon:sim [-- real\|demo spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (real TS math via tsx) + exact trigger rate |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
 No unit-test framework; verify visually with Playwright (Chromium is preinstalled; `require('playwright')`).
@@ -32,7 +32,8 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
    - `manifest.ts` stays light: `import type` + dynamic `import('./index')` only (keeps games code-split).
 4. **Config-driven.** Game design numbers live in `src/games/<id>/config.json`; no magic numbers for math/timing in code.
 5. **Money is integer minor units** everywhere (`currency.decimals` says how many). Format only via `formatMoney(cfg, value)`.
-6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels`) and updating `rtp` in the config and `GAME.md`.
+6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels` → `strips.json`, never edited by hand) and updating `rtp` in the config and `GAME.md`.
+7. **Play modes:** the platform runs in `demo` unless `?mode=real`. A game may ship a separate demo math profile (dragon: `config.json → demo`, RTP ≈405%); the paytable shows the active profile's RTP. Real-mode math must stay ≈96%.
 
 ## Layout
 
@@ -46,6 +47,7 @@ src/
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
 │   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
 │   ├── core/wakeLock.ts     Screen Wake Lock while a game is open (re-acquired on tab return / first tap)
+│   ├── core/playMode.ts     detectPlayMode(): `demo` (default, no money backend) or `real` (`?mode=real`)
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
 │   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool

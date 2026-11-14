@@ -7,16 +7,17 @@
 |---|---|
 | `art/source.png` | 971×1619 mockup — the single source of all art |
 | `tools/slice-skin.py` | Slices the mockup into `public/games/dragon/` (`npm run dragon:slice`) |
-| `config.json` | Engine config + `skin.ui` anchors (source px) + `reelComposition` / `reelStacks` / `reels` |
+| `config.json` | Engine config + `skin.ui` anchors (source px) + real math inputs (`reelComposition`, `reelStacks`, `respin`) + `demo` overrides |
 | `config.ts` | Typed config, `SKIN_SCALE`, `uiAnchor()`, `REEL_STRIPS` |
 | `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
-| `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky egg's cash value / jackpot |
-| `tools/build-reels.mjs` | Builds base + nest strips, exact base-game RTP report (`npm run dragon:reels`) |
+| `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky dragon's cash value / jackpot |
+| `tools/build-reels.mjs` | Builds base + nest strips for real/demo into `strips.json`, exact base RTP per profile (`npm run dragon:reels`) |
 | `tools/simulate.ts` | Monte-Carlo of base + feature with the real math (`npm run dragon:sim`) |
 | `math/DragonMath.ts` | `MathModel`: base strips + Dragon's Nest sticky respins (pure TS, `@/engine/math` only) |
-| `math/respinConfig.ts` | Type of `config.json → respin` |
+| `math/respinConfig.ts` | Types of `respin` / math profiles, `buildProfile(raw, strips, mode)` |
+| `strips.json` | Generated base + nest strips per profile (`npm run dragon:reels`) |
 
 ## Skin pipeline
 1. Grid lines / button centres are measured on `art/source.png`; constants live in `slice-skin.py` and `config.json → skin.ui` (both in **source pixels**).
@@ -24,16 +25,26 @@
 3. Baked value texts are erased in the background (vertical interpolation); buttons are cut from the erased image (the spin wings overlap the LAST WIN panel).
 4. Engine buttons cover the baked top icons: home (`homeButton`) over the hamburger at top-left, sound toggle (`soundButton`) over the speaker at top-right.
 
-## Math (RTP 96.0%)
-- Base game: 4×5, 20 lines, WILD stacked ×3 on reels 2–4 (substitutes, pays nothing). **Egg = scatter** (no line pays). Line pays (× line bet) 3/4: dragon 75/750, chest 40/200, gold 30/120, crystal 22/75, goblet 18/60, A 11/38, K 9/30, Q 7/26, J 6/19, 10 5/15, 9 4/11.
-- Base-game RTP **67.61%** (exact enumeration, `npm run dragon:reels`), hit rate 35.3%.
-- **Dragon's Nest** (`config.json → respin`, `math/DragonMath.ts`): 3+ eggs anywhere (≈1 in 137 spins). Respins run on the nest strips (`respin.composition` → `respin.strips`: egg, wild, dragon, chest, gold, crystal, goblet — the low cards are "burnt away"). Every egg is **sticky** with a value from `respin.values` (1×–25× total bet, MINI 50×, MAJOR 150×); a new egg resets respins to 3; line wins pay on every respin; all 20 cells = GRAND HOARD +1000× bet.
-- Feature: mean 38.8× bet (eggs 28.4×, lines 10.4×), ~8 respins, ~6.5 eggs; feature RTP **28.3%**; GRAND ≈ 1 in 200 000 features (Monte-Carlo, `npm run dragon:sim -- 4000000 400000`).
-- Retune: edit `reelComposition` / `respin.composition` / `paytable` / `respin.values` → `npm run dragon:reels` (writes both strip sets) → `npm run dragon:sim` → put the total into `config.json → rtp` and this file.
-- QA: `npm run dev`, open `?game=dragon&force=feature` — every spin triggers the nest (dev builds only).
+## Math — two profiles
+`config.ts` picks the profile from `detectPlayMode()`: **demo** (default) or **real** (`?mode=real`). Authored inputs live in `config.json` (real at top level, demo overrides in `demo`); generated strips in `strips.json` (`npm run dragon:reels`, never edit by hand). `{{rtp}}` in the paytable shows the active profile.
+
+| | real | demo |
+|---|---|---|
+| Base-game RTP (exact) | 62.74% | 57.61% |
+| Eggs per base reel | 1 / 2 / 2 / 1 | 3 / 3 / 3 / 3 |
+| Nest trigger (exact) | 1 in 123.4 | 1 in 13.7 |
+| Mean feature win | 41.2× bet | 47.7× bet |
+| Feature RTP | ≈33.4% | ≈347.8% |
+| **Total RTP** (`rtp` / `demo.rtp`) | **≈96.2%** | **≈405%** |
+
+- Base game: 4×5, 20 lines, WILD stacked ×3 on reels 2–4 (substitutes, pays nothing). **No Dragon Medal on the base reels.** **Egg = scatter** (no line pays). Line pays (× line bet) 3/4: chest 40/200, gold 30/120, crystal 22/75, goblet 18/60, A 11/38, K 9/30, Q 7/26, J 6/19, 10 5/15, 9 4/11.
+- **Dragon's Nest** (`respin`, `math/DragonMath.ts`): 3+ eggs anywhere. The eggs hatch: each trigger position becomes a sticky **Dragon** (`respin.sticky`). Respins run on the nest strips (`respin.composition`: dragon, wild, chest, gold, crystal, goblet — **no eggs, no low cards**). Every Dragon is **sticky** with a value from `respin.values` (1×–25× total bet, MINI 50×, MAJOR 150×; demo uses `demo.respin.values`, richer); a new Dragon resets respins to 3; line wins pay on every respin; all 20 cells = GRAND HOARD +1000× bet.
+- `build-reels.mjs` enforces: dragon never on base strips, egg never on nest strips.
+- Retune: edit compositions / values → `npm run dragon:reels` → `npm run dragon:sim -- real` and `-- demo` (use the "Exact trigger" line + exact base RTP) → update `rtp` / `demo.rtp` and this table.
+- QA: `npm run dev`, `?game=dragon&force=feature` — every spin triggers the nest (dev builds only).
 
 ## Story
-Night falls over the castle; the mother dragon guards her clutch. Her fire burns away the low cards, eggs that land stay in the nest (sticky) and every new egg buys three more respins. At dawn the eggs hatch into gold — fill the whole nest and wake the GRAND HOARD. `setFeatureMode` tints the scene to moonlight while the nest is active.
+Night falls over the castle; the mother dragon guards her clutch. The triggering eggs hatch into young dragons, her fire burns away the low cards, and every dragon that lands stays in the nest (sticky) carrying treasure; each new dragon buys three more respins. At dawn the dragons bring their treasure home — fill the whole nest and wake the GRAND HOARD. `setFeatureMode` tints the scene to moonlight while the nest is active.
 
 ## Controls
 SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy (paytable), fullscreen, sound on/off (top-right), home (top-left).

@@ -2,8 +2,8 @@
  * Monte-Carlo report for Dragon Hoard incl. the Dragon's Nest respins.
  * Runs the real game math (math/DragonMath.ts) in Node.
  *
- *   npm run dragon:sim                 (default 5M spins + 200k forced features)
- *   npm run dragon:sim -- 20000000     (more spins)
+ *   npm run dragon:sim                       (real profile, 5M spins + 200k forced features)
+ *   npm run dragon:sim -- demo 2000000 100000 (demo profile, custom sample sizes)
  *
  * Feature RTP = trigger rate × mean feature win; the mean is measured on a
  * separate batch of forced features to keep its variance low.
@@ -12,17 +12,21 @@
 declare const process: { argv: string[] };
 
 import raw from '../config.json';
+import strips from '../strips.json';
 import { resolveConfig, type RawSlotConfig } from '@/engine/math';
 import { DragonMath } from '../math/DragonMath';
-import type { RespinConfig } from '../math/respinConfig';
+import { buildProfile, type MathMode } from '../math/respinConfig';
+
+const MODE: MathMode = process.argv[2] === 'demo' ? 'demo' : 'real';
+const nums = process.argv.slice(2).filter(a => /^\d+$/.test(a)).map(Number);
+const SPINS = nums[0] ?? 5_000_000;
+const FEATURES = nums[1] ?? 200_000;
 
 const cfg = resolveConfig(raw as RawSlotConfig);
-const rc = raw.respin as RespinConfig;
+const profile = buildProfile(raw, strips, MODE);
 const LINES = cfg.paylines.length;
-const SPINS = Number(process.argv[2] ?? 5_000_000);
-const FEATURES = Number(process.argv[3] ?? 200_000);
 
-const math = new DragonMath(cfg, raw.reels, rc);
+const math = new DragonMath(cfg, profile);
 let base = 0, hits = 0, triggers = 0, maxWin = 0;
 for (let i = 0; i < SPINS; i++) {
   const r = math.spin();
@@ -33,7 +37,7 @@ for (let i = 0; i < SPINS; i++) {
   if (total > maxWin) maxWin = total;
 }
 
-const forced = new DragonMath(cfg, raw.reels, rc, Math.random, true);
+const forced = new DragonMath(cfg, profile, Math.random, true);
 let fWin = 0, fCollect = 0, fLines = 0, grands = 0, respins = 0, eggs = 0, fMax = 0;
 const tags: Record<string, number> = {};
 for (let i = 0; i < FEATURES; i++) {
@@ -49,19 +53,39 @@ for (let i = 0; i < FEATURES; i++) {
   fMax = Math.max(fMax, f.totalWin);
 }
 
+/** Exact P(trigger): convolution of per-reel scatter-count distributions over all stops. */
+function exactTriggerRate(): number {
+  const rows = cfg.grid.rows;
+  let dist = [1];
+  for (const strip of profile.reels) {
+    const d = new Array(rows + 1).fill(0);
+    for (let i = 0; i < strip.length; i++) {
+      let n = 0;
+      for (let r = 0; r < rows; r++) if (strip[(i + r) % strip.length] === profile.respin.scatter) n++;
+      d[n] += 1 / strip.length;
+    }
+    const next = new Array(dist.length + rows).fill(0);
+    dist.forEach((p, a) => d.forEach((q, b) => { next[a + b] += p * q; }));
+    dist = next;
+  }
+  return dist.slice(profile.respin.trigger).reduce((a, b) => a + b, 0);
+}
+
 const pct = (x: number) => `${(x * 100).toFixed(3)}%`;
 const trigRate = triggers / SPINS;
 const meanFeature = fWin / FEATURES / LINES; // × total bet
 const baseRtp = base / SPINS / LINES;
 const featureRtp = trigRate * meanFeature;
-console.log(`Spins            : ${SPINS.toLocaleString()}   forced features: ${FEATURES.toLocaleString()}`);
+console.log(`Profile          : ${MODE}   spins: ${SPINS.toLocaleString()}   forced features: ${FEATURES.toLocaleString()}`);
 console.log(`Base-game RTP    : ${pct(baseRtp)}`);
 console.log(`Feature trigger  : 1 in ${(1 / trigRate).toFixed(1)}  (${pct(trigRate)})`);
-console.log(`Mean feature win : ${meanFeature.toFixed(2)} × bet  (eggs ${(fCollect / FEATURES / LINES).toFixed(2)}, lines ${(fLines / FEATURES / LINES).toFixed(2)})`);
+console.log(`Mean feature win : ${meanFeature.toFixed(2)} × bet  (sticky ${(fCollect / FEATURES / LINES).toFixed(2)}, lines ${(fLines / FEATURES / LINES).toFixed(2)})`);
 console.log(`Feature RTP      : ${pct(featureRtp)}`);
 console.log(`TOTAL RTP        : ${pct(baseRtp + featureRtp)}`);
+const exact = exactTriggerRate();
+console.log(`Exact trigger    : 1 in ${(1 / exact).toFixed(2)} → feature RTP ${pct(exact * meanFeature)} (add the exact base RTP from npm run dragon:reels)`);
 console.log(`Hit frequency    : ${pct(hits / SPINS)}`);
-console.log(`Respins / feature: ${(respins / FEATURES).toFixed(2)}   eggs / feature: ${(eggs / FEATURES).toFixed(2)}`);
+console.log(`Respins / feature: ${(respins / FEATURES).toFixed(2)}   sticky / feature: ${(eggs / FEATURES).toFixed(2)}`);
 console.log(`GRAND (full nest): 1 in ${grands ? (FEATURES / grands).toFixed(0) : '∞'} features`);
 console.log(`Jackpots / feature: ${Object.entries(tags).map(([k, v]) => `${k} ${(v / FEATURES).toFixed(4)}`).join(', ')}`);
 console.log(`Max win seen     : base ${(maxWin / LINES).toFixed(1)} × bet, feature ${(fMax / LINES).toFixed(1)} × bet`);

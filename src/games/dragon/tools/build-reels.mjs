@@ -1,10 +1,12 @@
 /**
- * Reel strip builder + exact math report.
+ * Reel strip builder + exact base-game math report, for every math profile.
  *
- * Reads `reelComposition` (symbol counts per reel) from ../config.json,
- * builds deterministic reel strips (seeded shuffle that avoids identical
- * neighbours), writes them to `reels`, then enumerates EVERY stop combination
- * to report exact RTP, hit frequency and win distribution.
+ * Profiles: "real" = top-level `reelComposition` / `respin.composition`,
+ * "demo" = `demo.reelComposition` / `demo.respin.composition` (falls back to
+ * real). Builds deterministic strips (seeded shuffle that avoids identical
+ * neighbours) into ../strips.json (generated — do not edit by hand), then
+ * enumerates EVERY base stop combination per profile for the exact base RTP.
+ * The respin feature is measured by `npm run dragon:sim -- <mode>`.
  *
  * Usage:  npm run dragon:reels                (build strips + report)
  *         npm run dragon:reels -- --report    (report only, keep strips)
@@ -13,9 +15,10 @@ import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const CONFIG_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '../config.json');
-let raw = readFileSync(CONFIG_PATH, 'utf8');
-const cfg = JSON.parse(raw);
+const DIR = dirname(fileURLToPath(import.meta.url));
+const CONFIG_PATH = resolve(DIR, '../config.json');
+const STRIPS_PATH = resolve(DIR, '../strips.json');
+const cfg = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const reportOnly = process.argv.includes('--report');
 
 // ── Strip building ────────────────────────────────────────────────────────────
@@ -44,22 +47,29 @@ function buildStrip(composition, seed) {
   throw new Error('Could not build strip without identical neighbours');
 }
 
-let reels = cfg.reels;
-if (!reportOnly) {
-  reels = cfg.reelComposition.map((comp, i) => buildStrip(comp, 1000 + i));
-  // Nest (respin) strips live in "respin.strips"; base strips in the last key "reels".
-  const nest = cfg.respin.composition.map((comp, i) => buildStrip(comp, 2000 + i));
-  const nestBody = nest.map(r => '      ' + JSON.stringify(r)).join(',\n');
-  raw = raw.replace(/"strips": \[[\s\S]*?\n?    \]|"strips": \[\]/, `"strips": [\n${nestBody}\n    ]`);
-  console.log('Nest strips written:', nest.map(r => r.length).join(' / '));
+const PROFILES = {
+  real: { base: cfg.reelComposition, nest: cfg.respin.composition },
+  demo: { base: cfg.demo?.reelComposition ?? cfg.reelComposition, nest: cfg.demo?.respin?.composition ?? cfg.respin.composition },
+};
 
-  const body = reels.map(r => '    ' + JSON.stringify(r)).join(',\n');
-  // `reels` is the last key of config.json — replace from it to the end.
-  const at = raw.indexOf('  "reels": [');
-  if (at < 0) throw new Error('"reels" key not found in config.json');
-  const out = raw.slice(0, at) + `  "reels": [\n${body}\n  ]\n}\n`;
-  writeFileSync(CONFIG_PATH, out);
-  console.log('Reel strips written:', reels.map(r => r.length).join(' / '));
+let strips;
+if (reportOnly) {
+  strips = JSON.parse(readFileSync(STRIPS_PATH, 'utf8'));
+} else {
+  strips = {};
+  for (const [mode, p] of Object.entries(PROFILES)) {
+    const seed = mode === 'real' ? 0 : 500;
+    strips[mode] = {
+      reels: p.base.map((comp, i) => buildStrip(comp, 1000 + seed + i)),
+      nest: p.nest.map((comp, i) => buildStrip(comp, 2000 + seed + i)),
+    };
+    console.log(`${mode}: base ${strips[mode].reels.map(r => r.length).join('/')}  nest ${strips[mode].nest.map(r => r.length).join('/')}`);
+  }
+  const rows = (arr) => arr.map(r => '      ' + JSON.stringify(r)).join(',\n');
+  const body = Object.entries(strips).map(([m, s]) =>
+    `  "${m}": {\n    "reels": [\n${rows(s.reels)}\n    ],\n    "nest": [\n${rows(s.nest)}\n    ]\n  }`).join(',\n');
+  writeFileSync(STRIPS_PATH, `{\n${body}\n}\n`);
+  console.log('Written', STRIPS_PATH);
 }
 
 // ── Exact evaluation ──────────────────────────────────────────────────────────
@@ -79,41 +89,51 @@ function lineWin(cols, line) {
   return sym === null ? 0 : pay(sym, n);
 }
 
-const [L0, L1, L2, L3] = reels.map(r => r.length);
-const windowAt = (strip, stop) => Array.from({ length: ROWS }, (_, k) => strip[(stop + k) % strip.length]);
-const win0 = reels[0].map((_, i) => windowAt(reels[0], i));
-const win1 = reels[1].map((_, i) => windowAt(reels[1], i));
-const win2 = reels[2].map((_, i) => windowAt(reels[2], i));
-const win3 = reels[3].map((_, i) => windowAt(reels[3], i));
-
 const buckets = [[0, 0], [0.0001, 1], [1, 2], [2, 5], [5, 20], [20, 50], [50, Infinity]];
-const counts = new Array(buckets.length).fill(0);
-let total = 0, hits = 0, maxWin = 0, sumSq = 0;
-const nLines = LINES.length;
 
-for (let a = 0; a < L0; a++) for (let b = 0; b < L1; b++) for (let c = 0; c < L2; c++) for (let d = 0; d < L3; d++) {
-  const cols = [win0[a], win1[b], win2[c], win3[d]];
-  let w = 0;
-  for (const line of LINES) w += lineWin(cols, line);
-  const x = w / nLines; // win in total bets
-  total += x; sumSq += x * x;
-  if (w > 0) hits++;
-  if (x > maxWin) maxWin = x;
-  for (let i = 0; i < buckets.length; i++) {
-    const [lo, hi] = buckets[i];
-    if ((lo === 0 && hi === 0 && x === 0) || (x >= lo && x < hi && hi !== 0)) { counts[i]++; break; }
+/** Exact base-game report: every stop combination of the 4 base strips. */
+function report(mode, reels) {
+  const [L0, L1, L2, L3] = reels.map(r => r.length);
+  const windowAt = (strip, stop) => Array.from({ length: ROWS }, (_, k) => strip[(stop + k) % strip.length]);
+  const [win0, win1, win2, win3] = reels.map(strip => strip.map((_, i) => windowAt(strip, i)));
+  const counts = new Array(buckets.length).fill(0);
+  let total = 0, hits = 0, maxWin = 0, sumSq = 0;
+  const nLines = LINES.length;
+
+  for (let a = 0; a < L0; a++) for (let b = 0; b < L1; b++) for (let c = 0; c < L2; c++) for (let d = 0; d < L3; d++) {
+    const cols = [win0[a], win1[b], win2[c], win3[d]];
+    let w = 0;
+    for (const line of LINES) w += lineWin(cols, line);
+    const x = w / nLines; // win in total bets
+    total += x; sumSq += x * x;
+    if (w > 0) hits++;
+    if (x > maxWin) maxWin = x;
+    for (let i = 0; i < buckets.length; i++) {
+      const [lo, hi] = buckets[i];
+      if ((lo === 0 && hi === 0 && x === 0) || (x >= lo && x < hi && hi !== 0)) { counts[i]++; break; }
+    }
   }
+
+  const N = L0 * L1 * L2 * L3;
+  const rtp = total / N;
+  console.log(`\n── ${mode} base game (lines only; feature: npm run dragon:sim -- ${mode})`);
+  console.log(`Combinations : ${N.toLocaleString()}`);
+  console.log(`Base RTP     : ${(rtp * 100).toFixed(3)}%`);
+  console.log(`Hit frequency: ${(hits / N * 100).toFixed(2)}%  (1 in ${(N / hits).toFixed(2)})`);
+  console.log(`Std deviation: ${Math.sqrt(sumSq / N - rtp * rtp).toFixed(2)} × bet`);
+  console.log(`Max win      : ${maxWin.toFixed(2)} × bet`);
+  buckets.forEach(([lo, hi], i) => {
+    const label = lo === 0 && hi === 0 ? 'no win' : `${lo === 0.0001 ? '>0' : lo}–${hi === Infinity ? '∞' : hi}`;
+    console.log(`  ${label.padEnd(8)} ${(counts[i] / N * 100).toFixed(4)}%`);
+  });
 }
 
-const N = L0 * L1 * L2 * L3;
-const rtp = total / N;
-console.log(`Combinations : ${N.toLocaleString()}`);
-console.log(`RTP          : ${(rtp * 100).toFixed(3)}%`);
-console.log(`Hit frequency: ${(hits / N * 100).toFixed(2)}%  (1 in ${(N / hits).toFixed(2)})`);
-console.log(`Std deviation: ${Math.sqrt(sumSq / N - rtp * rtp).toFixed(2)} × bet`);
-console.log(`Max win      : ${maxWin.toFixed(2)} × bet`);
-console.log('Win distribution (× total bet):');
-buckets.forEach(([lo, hi], i) => {
-  const label = lo === 0 && hi === 0 ? 'no win' : `${lo === 0.0001 ? '>0' : lo}–${hi === Infinity ? '∞' : hi}`;
-  console.log(`  ${label.padEnd(8)} ${(counts[i] / N * 100).toFixed(4)}%`);
-});
+// Design invariants: the sticky dragon lives only in the nest, eggs only in the base game.
+for (const [mode, s] of Object.entries(strips)) {
+  const { scatter, sticky } = cfg.respin;
+  if (s.reels.some(r => r.includes(sticky))) throw new Error(`${mode}: "${sticky}" must not be on the base reels`);
+  if (s.nest.some(r => r.includes(scatter))) throw new Error(`${mode}: "${scatter}" must not be on the nest reels`);
+  if (!s.nest.some(r => r.includes(sticky))) throw new Error(`${mode}: nest reels need "${sticky}"`);
+}
+
+for (const [mode, s] of Object.entries(strips)) report(mode, s.reels);

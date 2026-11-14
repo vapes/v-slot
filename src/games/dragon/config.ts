@@ -1,9 +1,14 @@
 import raw from './config.json';
-import { resolveConfig, type RawSlotConfig } from '@/engine';
-import type { RespinConfig } from './math/respinConfig';
+import strips from './strips.json';
+import { detectPlayMode, resolveConfig, type RawSlotConfig } from '@/engine';
+import { buildProfile, type MathMode } from './math/respinConfig';
 
-/** Typed, resolved config. The annotation makes tsc validate config.json. */
-const rawConfig: RawSlotConfig = raw;
+/** demo (default, generous RTP from config.demo) or real (`?mode=real`). */
+export const MODE: MathMode = detectPlayMode();
+
+/** Typed, resolved config; `rtp` is the active profile's (shown in the paytable). */
+const merged = { ...raw, rtp: MODE === 'demo' ? raw.demo.rtp : raw.rtp };
+const rawConfig: RawSlotConfig = merged;
 export const config = resolveConfig(rawConfig);
 
 /** Source mockup pixels → game pixels (UI sprites are sliced at source scale). */
@@ -17,7 +22,5 @@ export function uiAnchor(name: UiAnchorName): { x: number; y: number; r: number;
   return { x: a.x * SKIN_SCALE, y: a.y * SKIN_SCALE, r: (a.r ?? 0) * SKIN_SCALE, w: (a.w ?? 0) * SKIN_SCALE };
 }
 
-export const REEL_STRIPS: string[][] = raw.reels;
-
-/** Dragon's Nest respin feature (see math/DragonMath.ts, GAME.md). */
-export const RESPIN: RespinConfig = raw.respin;
+/** Base + nest strips and Dragon's Nest settings for the active mode (see math/DragonMath.ts, GAME.md). */
+export const MATH = buildProfile(raw, strips, MODE);

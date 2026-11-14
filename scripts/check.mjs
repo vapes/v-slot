@@ -97,6 +97,14 @@ for (const id of games) {
   c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
   if (c.defaultBetIndex < 0 || c.defaultBetIndex >= c.betOptions.length) bad('defaultBetIndex out of range');
   if (c.spin.scrollScreens.length < c.grid.cols) bad(`spin.scrollScreens needs ${c.grid.cols} entries`);
+  // generated strips (e.g. src/games/<id>/strips.json): every symbol must exist
+  const stripsPath = resolve(dir, 'strips.json');
+  if (existsSync(stripsPath)) {
+    const walk = (v, where) => Array.isArray(v) ? v.forEach((x, i) => walk(x, `${where}[${i}]`))
+      : typeof v === 'object' && v ? Object.entries(v).forEach(([k, x]) => walk(x, `${where}.${k}`))
+      : typeof v === 'string' && !ids.includes(v) && bad(`strips.json${where} has unknown symbol "${v}"`);
+    walk(JSON.parse(readFileSync(stripsPath, 'utf8')), '');
+  }
   if (Array.isArray(c.reels) && c.reels.length) {
     if (c.reels.length !== c.grid.cols) bad(`reels has ${c.reels.length} strips for ${c.grid.cols} reels`);
     c.reels.forEach((strip, i) => strip.forEach(s => { if (!ids.includes(s)) bad(`reel ${i + 1} has unknown symbol "${s}"`); }));

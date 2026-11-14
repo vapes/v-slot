@@ -6,6 +6,7 @@ export * from './contracts';
 export * from './math';
 export { SlotGame } from './core/SlotGame';
 export { fitCanvas, goToLobby } from './core/fitCanvas';
+export { detectPlayMode, type PlayMode } from './core/playMode';
 export { SpriteButton } from './ui/SpriteButton';
 export { fitText } from './ui/fitText';
 export { SpriteSpinButton, type SpinButtonStyle } from './ui/SpriteSpinButton';
