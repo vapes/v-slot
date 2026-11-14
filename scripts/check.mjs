@@ -1,7 +1,7 @@
 /**
  * Architecture guard — run via `npm run check` (after tsc). Fails with a list
  * of violations. Checks:
- *   1. every src/**\/*.ts file ≤ MAX_LINES lines
+ *   1. every src/**\/*.ts file ≤ MAX_LINES lines; no hardcoded Text strings
  *   2. import boundaries: engine ↛ games/lobby; games → '@/engine' + own folder
  *      only; manifests stay light (type imports + dynamic import)
  *   3. game folder layout + registry + ids
@@ -34,6 +34,12 @@ for (const file of tsFiles) {
   const src = readFileSync(file, 'utf8');
   const lines = src.split('\n').length - (src.endsWith('\n') ? 1 : 0);
   if (lines > MAX_LINES) err(file, `${lines} lines (max ${MAX_LINES}) — split into focused modules`);
+
+  // user-facing strings must go through t() (translations come from the content CDN)
+  for (const m of src.matchAll(/new Text\(\s*(['"`])([^'"`]*)\1|\.text\s*=\s*(['"`])([^'"`]*)\3/g)) {
+    const literal = m[2] ?? m[4] ?? '';
+    if (/\p{L}{2,}/u.test(literal.replace(/\$\{[^}]*\}/g, ''))) err(file, `hardcoded UI text "${literal}" — use t('key') + i18n/<lang>/*.json`);
+  }
 
   const rel = relative(SRC, file).split(sep);
   for (const { spec, typeOnly, dynamic } of importsOf(src)) {

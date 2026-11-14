@@ -15,5 +15,19 @@
   "game.dragon.title": "Dragon Hoard",
   "game.dragon.subtitle": "4×5 · 20 линий · стеки вайлдов · RTP 96,2%",
   "game.classic.title": "777 Casino Classic",
-  "game.classic.subtitle": "5×3 · 20 линий · фруктовая классика · RTP 98%"
+  "game.classic.subtitle": "5×3 · 20 линий · фруктовая классика · RTP 98%",
+  "label.balance": "БАЛАНС",
+  "label.lastWin": "ПОСЛ. ВЫИГРЫШ",
+  "label.bet": "СТАВКА",
+  "label.win": "ВЫИГРЫШ",
+  "label.megaJackpot": "МЕГА ДЖЕКПОТ",
+  "button.spin": "СПИН",
+  "button.auto": "АВТО",
+  "button.autoSpin": "АВТО\nИГРА",
+  "button.turbo": "ТУРБО",
+  "button.info": "ИНФО",
+  "paytable.title": "Таблица выплат",
+  "paytable.close": "Закрыть",
+  "paytable.unavailable": "Таблица выплат недоступна. Проверьте соединение и попробуйте снова.",
+  "lobby.title": "V-SLOT"
 }

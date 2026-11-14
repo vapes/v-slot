@@ -1,6 +1,6 @@
 import type { SlotConfig } from '../config/SlotConfig';
 import { fetchText, paytableUrl } from '../content/cdn';
-import { FALLBACK_LANG, i18n } from '../i18n/I18n';
+import { FALLBACK_LANG, i18n, t } from '../i18n/I18n';
 import { renderPaytable } from './paytableTemplate';
 
 /**
@@ -23,13 +23,13 @@ export class HtmlPaytable {
 
     this.frame = document.createElement('iframe');
     this.frame.setAttribute('sandbox', '');
-    this.frame.setAttribute('title', 'Paytable');
+    this.frame.setAttribute('title', t('paytable.title'));
     Object.assign(this.frame.style, { width: '100%', height: '100%', border: '0', display: 'block' });
 
     const close = document.createElement('button');
     close.type = 'button';
     close.textContent = '✕';
-    close.setAttribute('aria-label', 'Close');
+    close.setAttribute('aria-label', t('paytable.close'));
     Object.assign(close.style, {
       position: 'absolute', top: '12px', right: '12px', width: '40px', height: '40px', borderRadius: '50%',
       border: '2px solid rgba(255,214,90,.9)', background: 'rgba(10,10,20,.85)', color: '#FFD65A',
@@ -57,8 +57,8 @@ export class HtmlPaytable {
       this.frame.srcdoc = renderPaytable(html, this.cfg, totalBet, url.slice(0, url.lastIndexOf('/') + 1));
     } catch (err) {
       console.error('[HtmlPaytable]', err);
-      this.frame.srcdoc = '<body style="background:#000;color:#fff;font:16px Arial;padding:80px 24px;text-align:center">'
-        + 'Paytable is unavailable. Check your connection and try again.</body>';
+      const msg = t('paytable.unavailable').replace(/[<>&]/g, '');
+      this.frame.srcdoc = `<body style="background:#000;color:#fff;font:16px Arial;padding:80px 24px;text-align:center">${msg}</body>`;
     }
   }
 

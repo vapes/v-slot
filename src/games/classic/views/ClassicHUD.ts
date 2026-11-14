@@ -2,6 +2,7 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { formatMoney, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName } from '../config';
 import { JackpotTicker } from './JackpotTicker';
+import { skinLabel } from './labels';
 
 const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
 const VALUE_STYLE = new TextStyle({
@@ -11,6 +12,23 @@ const VALUE_STYLE = new TextStyle({
 const WIN_STYLE = new TextStyle({ ...VALUE_STYLE, fill: ['#FFF4C2', '#FFD54A', '#F0A020'] });
 const MESSAGE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3, letterSpacing: 0.5,
+});
+/** Captions replacing the erased baked texts. */
+export const CLASSIC_LABEL_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 19, fontWeight: 'bold', fill: ['#FFE7A0', '#F5C04A'],
+  stroke: 0x10224A, strokeThickness: 3,
+});
+export const CLASSIC_BUTTON_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 19, fontWeight: 'bold', fill: 0xFFFFFF, align: 'center', lineHeight: 18,
+  stroke: 0x0A2A66, strokeThickness: 3,
+});
+export const CLASSIC_SPIN_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 30, fontWeight: 'bold', fill: 0xFFFFFF,
+  stroke: 0x0B5A14, strokeThickness: 4, dropShadow: true, dropShadowDistance: 2, dropShadowAlpha: 0.5,
+});
+const JACKPOT_LABEL_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 22, fontWeight: 'bold', fill: ['#FFF2B8', '#F2B23A'],
+  stroke: 0x6A0E0E, strokeThickness: 4,
 });
 const money = (v: number) => formatMoney(config, v);
 
@@ -36,7 +54,13 @@ export class ClassicHUD implements Hud {
   }
 
   addToStage(stage: Container): void {
-    stage.addChild(this.jackpot.text, this.balance, this.bet, this.win, this.messageBg, this.message);
+    stage.addChild(
+      skinLabel('jackpotLabel', 'label.megaJackpot', JACKPOT_LABEL_STYLE),
+      skinLabel('balanceLabel', 'label.balance', CLASSIC_LABEL_STYLE),
+      skinLabel('betLabel', 'label.bet', CLASSIC_LABEL_STYLE),
+      skinLabel('winLabel', 'label.win', CLASSIC_LABEL_STYLE),
+      this.jackpot.text, this.balance, this.bet, this.win, this.messageBg, this.message,
+    );
   }
 
   update(dt: number): void {

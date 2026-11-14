@@ -55,7 +55,8 @@ export class SpriteSpinButton extends SpriteButton implements SpinControl {
     this._isStopMode = stop;
     this.enabled = true;
     this.stopOverlay.visible = stop;
-    if (!stop) this.sprite.rotation = 0;
+    if (this.label) this.label.visible = !stop;
+    if (!stop) this.face.rotation = 0;
   }
 
   /** Small wobble while the reels spin. */
@@ -63,6 +64,6 @@ export class SpriteSpinButton extends SpriteButton implements SpinControl {
     super.update(dt);
     if (!this._isStopMode) return;
     this.spinAngle += dt * 0.25;
-    this.sprite.rotation = Math.sin(this.spinAngle) * 0.03;
+    this.face.rotation = Math.sin(this.spinAngle) * 0.03;
   }
 }

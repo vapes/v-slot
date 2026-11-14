@@ -20,8 +20,12 @@ export const ENGINE_STRINGS: Dict = {
   'celebration.epic': 'EPIC',
   'celebration.max': 'MAX',
   'celebration.win': 'WIN',
+  'lobby.title': 'V-SLOT',
   'lobby.choose': 'CHOOSE YOUR GAME',
   'lobby.play': 'PLAY',
+  'paytable.title': 'Paytable',
+  'paytable.close': 'Close',
+  'paytable.unavailable': 'Paytable is unavailable. Check your connection and try again.',
 };
 
 /**

@@ -1,15 +1,20 @@
-import { Circle, Container, Graphics, Sprite, type Texture } from 'pixi.js';
+import { Circle, Container, Graphics, Sprite, type Text, type Texture } from 'pixi.js';
+import { fitText } from './fitText';
 
 const DISABLED_TINT = 0x6A6A6A;
 
 /**
  * Round button made from a sprite sliced out of a skin mockup.
  * Positioned by its centre. Supports enabled/disabled (tint) and a toggled
- * "active" state rendered as a pulsing glow ring.
+ * "active" state rendered as a pulsing glow ring. Captions baked into the art
+ * are erased by the slicer and re-added as translated Text via setLabel().
  */
 export class SpriteButton {
   readonly container: Container;
+  /** Sprite + labels; scaled on press, rotated by subclasses. */
+  protected readonly face = new Container();
   protected readonly sprite: Sprite;
+  protected label: Text | null = null;
   private glow: Graphics;
   private _enabled = true;
   private _active = false;
@@ -26,7 +31,8 @@ export class SpriteButton {
     this.sprite = new Sprite(texture);
     this.sprite.anchor.set(0.5);
     this.sprite.scale.set(this.scale);
-    this.container.addChild(this.sprite);
+    this.face.addChild(this.sprite);
+    this.container.addChild(this.face);
 
     this.glow = new Graphics();
     this.glow.visible = false;
@@ -34,13 +40,24 @@ export class SpriteButton {
 
     this.container.on('pointerdown', () => {
       if (!this._enabled) return;
-      this.sprite.scale.set(this.scale * 0.94);
+      this.face.scale.set(0.94);
       this.onClickCallback?.();
     });
-    const release = () => this.sprite.scale.set(this.scale);
+    const release = () => this.face.scale.set(1);
     this.container.on('pointerup', release);
     this.container.on('pointerupoutside', release);
     this.container.on('pointerout', release);
+  }
+
+  /** Caption at (dx, dy) from the centre, shrunk to fit maxWidth (game px). */
+  setLabel(text: Text, dx: number, dy: number, maxWidth: number): void {
+    this.label?.destroy();
+    this.label = text;
+    text.anchor.set(0.5);
+    text.position.set(dx, dy);
+    fitText(text, maxWidth);
+    text.alpha = this._enabled ? 1 : 0.55;
+    this.face.addChild(text);
   }
 
   setPosition(x: number, y: number): void {
@@ -51,6 +68,7 @@ export class SpriteButton {
     this._enabled = value;
     this.container.cursor = value ? 'pointer' : 'default';
     this.sprite.tint = value ? 0xFFFFFF : DISABLED_TINT;
+    if (this.label) this.label.alpha = value ? 1 : 0.55;
   }
 
   get enabled(): boolean {

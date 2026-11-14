@@ -1,6 +1,7 @@
 import { Text, TextStyle, Container, Graphics } from 'pixi.js';
 import { formatMoney as fmt, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName } from '../config';
+import { skinLabel } from './labels';
 
 const formatMoney = (minor: number) => fmt(config, minor);
 
@@ -12,6 +13,11 @@ const VALUE_STYLE = new TextStyle({
 });
 const WIN_VALUE_STYLE = new TextStyle({
   ...VALUE_STYLE, fill: ['#FFF6C8', '#FFC93C', '#FF9A1F'], fillGradientStops: [0, 0.5, 1],
+});
+/** Gold captions over the panels (replace the erased baked BALANCE / LAST WIN / BET). */
+export const DRAGON_LABEL_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 13, fontWeight: 'bold', fill: ['#FFE9A6', '#F2B84B'],
+  dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 1, dropShadowBlur: 1, dropShadowAlpha: 0.8,
 });
 const MESSAGE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3,
@@ -47,7 +53,12 @@ export class DragonHUD implements Hud {
   }
 
   addToStage(stage: Container): void {
-    stage.addChild(this.balanceValue, this.lastWinValue, this.betValue, this.messageBg, this.message);
+    stage.addChild(
+      skinLabel('balanceLabel', 'label.balance', DRAGON_LABEL_STYLE),
+      skinLabel('lastWinLabel', 'label.lastWin', DRAGON_LABEL_STYLE),
+      skinLabel('betLabel', 'label.bet', DRAGON_LABEL_STYLE),
+      this.balanceValue, this.lastWinValue, this.betValue, this.messageBg, this.message,
+    );
   }
 
   private setMessage(text: string): void {

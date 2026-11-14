@@ -32,7 +32,7 @@ export class Lobby {
     }
     stage.addChild(glow);
 
-    const title = new Text('V-SLOT', new TextStyle({
+    const title = new Text(t('lobby.title'), new TextStyle({
       fontFamily: 'Arial Black, Arial, sans-serif', fontSize: 56, fontWeight: 'bold',
       fill: ['#FFF3B0', '#FFC94A', '#E08A12'], letterSpacing: 6,
       dropShadow: true, dropShadowDistance: 3, dropShadowAlpha: 0.6,

@@ -4,7 +4,8 @@ import {
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
-import { DragonHUD } from './DragonHUD';
+import { DragonHUD, DRAGON_LABEL_STYLE } from './DragonHUD';
+import { labelButton } from './labels';
 
 /** Skin background + every button placed exactly over its baked spot. */
 export class DragonView implements GameView {
@@ -26,6 +27,8 @@ export class DragonView implements GameView {
     this.auto.onClick(actions.toggleAutoplay);
     this.turbo.onClick(actions.toggleQuickSpin);
     this.trophy.onClick(actions.openPaytable);
+    labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
+    labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
     this.menu.onClick(actions.togglePaytable);
 
     // The fullscreen icon is baked into the background; this is its hit zone.
