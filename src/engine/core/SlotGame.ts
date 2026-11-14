@@ -11,6 +11,7 @@ import { WinCelebration } from '../ui/WinCelebration';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
 import { HomeButton } from '../ui/HomeButton';
+import { SoundButton } from '../ui/SoundButton';
 import { formatMoney } from '../utils/Money';
 import type { SpinPipeline, SpinContext } from '../pipeline/SpinPipeline';
 import { buildSpinPipeline } from '../pipeline/buildSpinPipeline';
@@ -72,7 +73,7 @@ export class SlotGame {
         this.view.setQuickSpin?.(this.quickSpin);
       },
     });
-    this.homeButton = new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby);
+    this.homeButton = new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r);
 
     const { view, reelController, winCelebration } = this;
     this.pipeline = buildSpinPipeline({
@@ -111,7 +112,12 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reelController.container);
     view.mountAboveReels(stage);
-    stage.addChild(this.homeButton.container, this.winCelebration.container);
+    stage.addChild(this.homeButton.container);
+    if (cfg.soundButton) {
+      const { x, y, r } = cfg.soundButton;
+      stage.addChild(new SoundButton(x, y, r).container);
+    }
+    stage.addChild(this.winCelebration.container);
 
     this.app.ticker.add((dt) => {
       this.reelController.update(dt);

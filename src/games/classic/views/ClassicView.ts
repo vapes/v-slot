@@ -65,7 +65,7 @@ function makeSpin(): SpriteSpinButton {
 
 function make(texture: UiSpriteName, anchor: UiAnchorName): SpriteButton {
   const a = uiAnchor(anchor);
-  const btn = new SpriteButton(uiTexture(texture), a.r, SKIN_SCALE);
+  const btn = new SpriteButton(uiTexture(texture), a.r, SKIN_SCALE * a.s);
   btn.setPosition(a.x, a.y);
   return btn;
 }

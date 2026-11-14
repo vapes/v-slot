@@ -32,8 +32,10 @@ export interface RawSlotConfig {
   /** Total-bet options in minor units; each must divide by paylines.length. */
   betOptions: number[];
   defaultBetIndex: number;
-  /** Home (back to lobby) button centre in game pixels. */
-  homeButton: { x: number; y: number };
+  /** Home (back to lobby) button centre in game pixels — top-left corner by convention. */
+  homeButton: { x: number; y: number; r?: number };
+  /** Sound on/off toggle centre in game pixels — top-right corner by convention. */
+  soundButton?: { x: number; y: number; r?: number };
   spin: {
     reelStartInterval: number;
     bounceUp: { amount: number; duration: number };

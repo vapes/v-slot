@@ -5,13 +5,13 @@
   "canvas": { "width": 540, "height": 900 },
   "backgroundColor": "0x120818",
   "currency": { "code": "PLN", "decimals": 2 },
-  "homeButton": { "x": 453.8, "y": 32.3 },
+  "homeButton": { "x": 32.3, "y": 32.3, "r": 22 },
+  "soundButton": { "x": 453.8, "y": 32.3, "r": 22 },
   "celebration": { "big": 10, "huge": 25, "epic": 50, "max": 100 },
   "reelStyle": { "separators": { "color": "0xC8962E", "alpha": 0.75, "width": 1.5 } },
   "skin": {
     "sourceWidth": 971,
     "ui": {
-      "menu":   { "x": 58,  "y": 58 },
       "coins":  { "x": 92,  "y": 1465, "r": 60 },
       "auto":   { "x": 243, "y": 1465, "r": 60 },
       "spin":   { "x": 487, "y": 1480, "r": 108 },

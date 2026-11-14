@@ -19,7 +19,7 @@
 1. Grid lines / button centres are measured on `art/source.png`; constants live in `slice-skin.py` and `config.json → skin.ui` (both in **source pixels**).
 2. `uiAnchor(name)` × `SKIN_SCALE` (540/971) places sprites exactly over the baked art, so a button sprite covers its own picture.
 3. Baked value texts are erased in the background (vertical interpolation); buttons are cut from the erased image (the spin wings overlap the LAST WIN panel).
-4. The home button sits over the (decorative) sound icon: `homeButton` in config.
+4. Engine buttons cover the baked top icons: home (`homeButton`) over the hamburger at top-left, sound toggle (`soundButton`) over the speaker at top-right.
 
 ## Math (exact, full enumeration of 11.8M stop combinations)
 - WILD stacked ×3 on reels 2–4, substitutes for all, pays nothing itself.
@@ -28,7 +28,7 @@
 - To retune: edit `reelComposition` / `paytable`, run `npm run dragon:reels`, copy the RTP into `config.json → rtp` and this file.
 
 ## Controls
-SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy + menu (paytable), fullscreen, home.
+SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy (paytable), fullscreen, sound on/off (top-right), home (top-left).
 
 ## Content CDN
 - Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.

@@ -53,6 +53,7 @@ src/
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
 │   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton,
 │   │                        SpriteButton / SpriteSpinButton (round buttons cut from a skin mockup)
+│   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
 │   ├── registry.ts          Lobby list (scaffold inserts at @new-game markers)
@@ -87,7 +88,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, the HTML paytable overlay and the home button itself.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
 
 ## Recipes
 
@@ -122,7 +123,8 @@ Stage
 │   ├── optional reelStyle.separators grid
 │   └── winLayer (unmasked; winning symbols promoted here)
 ├── GameView.mountAboveReels   (buttons, HUD)
-├── HomeButton                 (config.homeButton)
+├── HomeButton                 (config.homeButton — top-left corner in every game)
+├── SoundButton                (config.soundButton — top-right corner; toggles soundSettings.muted)
 ├── WinCelebration
 └── (DOM) HtmlPaytable         iframe overlay placed over the canvas rect, hidden by default
 ```
