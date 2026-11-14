@@ -31,3 +31,6 @@
 
 ## Controls
 SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy + menu (paytable), fullscreen, home.
+
+## Timing
+Pragmatic Play–style timings (see CLAUDE.md → Timing model): reels start together and land at `spin.stopTimesMs`, quick spin lands everything at `quickStopMs` (450 ms), wins show payline paths with a count-up (`winPresentation`), then lines cycle every 1.3 s.

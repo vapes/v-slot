@@ -20,6 +20,8 @@ export interface PipelineDeps {
   enableControls(): void;
   stopWinCycle(): void;
   startWinCycle(result: SpinResult): void;
+  /** Start the win count-up; returns its duration in ms. */
+  startRollup(amount: number, totalBet: number): number;
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
@@ -86,7 +88,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
         } else {
           reelController.startSpin(ctx.result!, resolve);
           // If button is held, auto-forceStop after all reels have started
-          const allReelsStartDelay = spinConfig.reelStartInterval * cfg.grid.cols;
+          const allReelsStartDelay = spinConfig.holdToTurboMs ?? spinConfig.reelStartInterval * cfg.grid.cols;
           setTimeout(() => {
             if (deps.isButtonHeld()) reelController.forceStop();
           }, allReelsStartDelay);
@@ -125,7 +127,9 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'updateWinUI',
     execute: (ctx) => {
       if (ctx.winAmount > 0) {
-        hud.setWinStatus(ctx.winAmount);
+        const ms = ctx.turbo ? 0 : deps.startRollup(ctx.winAmount, ctx.totalBet);
+        if (ctx.turbo) hud.setWinStatus(ctx.winAmount);
+        ctx.meta.set('rollupMs', ms);
       } else if (!ctx.turbo) {
         hud.setStatus('');
       }
@@ -154,7 +158,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.turbo) {
         winCelebration.playStatic(category, 500);
       } else {
-        winCelebration.play(category);
+        winCelebration.play(category, Number(ctx.meta.get('rollupMs') ?? 0));
       }
     },
   });
