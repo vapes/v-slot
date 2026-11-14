@@ -50,8 +50,6 @@
     "settle": { "duration": 8 },
     "winAllDelay": 2000,
     "winLineInterval": 1500,
-    "turboWinFrameMs": 400,
-    "turboBannerMs": 600,
     "autoplayWinPause": 1600,
     "autoplayPause": 250
   },

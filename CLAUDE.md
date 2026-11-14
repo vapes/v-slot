@@ -134,7 +134,7 @@ Stage
 - **Symbol recycling:** symbols leaving the bottom jump to the top with a new id: blur zone = random ids at `blurAlpha`, target zone = result ids at full alpha (placed in reverse so they land in the right rows after `snapToTarget()`).
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
-- **Turbo:** holding SPIN keeps `buttonHeld` (`ctx.turbo`, spins loop); the TURBO toggle sets `ctx.quick` (fast reels). In **both** turbo modes wins skip the symbol animation and the line cycle: winners are only framed (`showWinsTurbo`) for `spin.turboWinFrameMs`, banners are static for `spin.turboBannerMs`, then the frame is cleared. AUTO = autoplay loop; SPIN or AUTO stops it.
+- **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
 - **Status line (all games):** engine-driven via `Hud.setStatus` — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
 - **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.

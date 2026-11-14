@@ -26,10 +26,6 @@ export interface PipelineDeps {
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   const { cfg, slotMath, reelController, winCelebration, hud } = deps;
   const spinConfig = cfg.spin;
-  /** Turbo = hold-to-spin loop or the TURBO toggle: wins get a short static frame only. */
-  const isTurbo = (ctx: { turbo: boolean; quick: boolean }) => ctx.turbo || ctx.quick;
-  const turboFrameMs = spinConfig.turboWinFrameMs ?? 300;
-  const turboBannerMs = spinConfig.turboBannerMs ?? 500;
   const pipeline = new SpinPipeline();
 
   // ── PRE (before server) ──────────────────────────
@@ -141,8 +137,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'showWinAnimations',
     execute: (ctx) => {
       if (!ctx.result || ctx.winAmount <= 0) return;
-      if (isTurbo(ctx)) {
-        // no symbol animation and no line cycle — just frame the winners briefly
+      if (ctx.turbo) {
         reelController.showWinsTurbo(ctx.result);
       } else {
         reelController.showWins(ctx.result, spinConfig.winAllDelay);
@@ -157,8 +152,8 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.winAmount <= 0) return;
       const category = getWinCategory(cfg, ctx.winAmount, ctx.totalBet);
       if (!category) return;
-      if (isTurbo(ctx)) {
-        winCelebration.playStatic(category, turboBannerMs);
+      if (ctx.turbo) {
+        winCelebration.playStatic(category, 500);
       } else {
         winCelebration.play(category);
       }
@@ -168,8 +163,8 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('post', {
     name: 'turboWinDelay',
     execute: async (ctx) => {
-      if (!isTurbo(ctx) || ctx.winAmount <= 0) return;
-      await new Promise(r => setTimeout(r, turboFrameMs));
+      if (!ctx.turbo || ctx.winAmount <= 0) return;
+      await new Promise(r => setTimeout(r, 300));
       reelController.clearWins();
     },
   });

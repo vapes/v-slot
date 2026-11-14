@@ -49,10 +49,6 @@ export interface RawSlotConfig {
     winAllDelay: number;
     winLineInterval: number;
     autoplayWinPause?: number;
-    /** Turbo (hold or TURBO toggle): how long winning symbols stay framed, ms (default 300). */
-    turboWinFrameMs?: number;
-    /** Turbo: how long a BIG/HUGE/… banner is shown statically, ms (default 500). */
-    turboBannerMs?: number;
     autoplayPause?: number;
   };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
