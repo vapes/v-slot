@@ -8,6 +8,15 @@
   "homeButton": { "x": 32.3, "y": 32.3, "r": 22 },
   "soundButton": { "x": 453.8, "y": 32.3, "r": 22 },
   "celebration": { "big": 10, "huge": 25, "epic": 50, "max": 100 },
+  "anticipation": {
+    "startReel": 2,
+    "minCategory": "huge",
+    "scatter": "egg",
+    "scatterTrigger": 3,
+    "extraMs": 1500,
+    "speedBoost": 1.7,
+    "colors": ["0xFFD050", "0xFF3A00"]
+  },
   "reelStyle": {
     "separators": { "color": "0xC8962E", "alpha": 0.75, "width": 1.5 }
   },

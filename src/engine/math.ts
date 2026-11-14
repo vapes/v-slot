@@ -8,4 +8,5 @@ export type { SpinResult, WinResult, StickyCell, FeatureStep, FeatureRound } fro
 export { evaluateLines, toSpinResult } from './math/evaluateLines';
 export { linePayout, payingCounts, lineBetOf } from './math/Paytable';
 export { ReelStripMath } from './math/ReelStripMath';
+export { computeAnticipation } from './math/anticipation';
 export type { MathModel } from './contracts';

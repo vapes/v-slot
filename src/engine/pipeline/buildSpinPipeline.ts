@@ -1,5 +1,6 @@
 import { SpinPipeline, type SpinContext } from './SpinPipeline';
 import { getWinCategory } from '../ui/WinCelebration';
+import { computeAnticipation } from '../math/anticipation';
 import { t } from '../i18n/I18n';
 import type { SlotConfig } from '../config/SlotConfig';
 import type { SpinResult } from '../math/types';
@@ -23,6 +24,13 @@ export interface PipelineDeps {
   startWinCycle(result: SpinResult): void;
   /** Play a bonus round decided by the math (e.g. sticky respins). */
   playFeature(result: SpinResult, ctx: SpinContext): Promise<void>;
+}
+
+/** Dev/QA only: `?force=anticipation` makes every eligible reel tease. */
+function forceAnticipation(cfg: SlotConfig): boolean[] | null {
+  if (!import.meta.env.DEV || new URLSearchParams(window.location.search).get('force') !== 'anticipation') return null;
+  const start = cfg.anticipation?.startReel ?? 2;
+  return Array.from({ length: cfg.grid.cols }, (_, i) => i >= start);
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
@@ -87,7 +95,9 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
         if (ctx.turbo || ctx.quick) {
           reelController.startTurboSpin(ctx.result!, resolve);
         } else {
-          reelController.startSpin(ctx.result!, resolve);
+          // anticipation never in turbo / quick; also skipped while SPIN is held
+          const tease = forceAnticipation(cfg) ?? computeAnticipation(cfg, ctx.result!.grid);
+          reelController.startSpin(ctx.result!, resolve, tease, deps.isButtonHeld);
           // If button is held, auto-forceStop after all reels have started
           const allReelsStartDelay = spinConfig.reelStartInterval * cfg.grid.cols;
           setTimeout(() => {

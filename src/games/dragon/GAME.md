@@ -53,3 +53,6 @@ SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TU
 - Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/dragon.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.dragon.*`).
 - Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (`views/labels.ts`; `w` = max width, text shrinks to fit).
+
+## Anticipation
+`config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 eggs already landed (scatter tease) or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈6.8% of real spins (≈11% of those reach the nest), ≈19% in demo. QA: `npm run dev`, `?game=dragon&force=anticipation`.

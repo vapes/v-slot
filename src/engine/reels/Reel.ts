@@ -28,6 +28,7 @@ export class Reel {
 
   private state: ReelState = ReelState.Idle;
   private speed = 0;
+  private maxSpeed = 0;
   private targetSymbols: SymbolId[] | null = null;
 
   private readonly bufferCount: number;
@@ -62,23 +63,18 @@ export class Reel {
     return this.symbols.slice(1, 1 + this.rows);
   }
 
-  /**
-   * Start spinning.
-   * @param targetSymbols final visible symbols (top to bottom)
-   * @param scrollScreens how many screens of blur symbols to scroll before targets appear
-   */
+  /** Spin to `targetSymbols` (top→bottom) after `scrollScreens` screens of blur symbols. */
   startSpin(targetSymbols: SymbolId[], scrollScreens: number, onStop: () => void, skipBounceUp = false): void {
     this.targetSymbols = targetSymbols;
     this.onStopCallback = onStop;
     this.state = skipBounceUp ? ReelState.Spinning : ReelState.BounceUp;
-    this.speed = skipBounceUp ? this.spinConfig.spinSpeed * this.spinConfig.turboSpeedMultiplier : 0;
+    this.maxSpeed = this.spinConfig.spinSpeed * (skipBounceUp ? this.spinConfig.turboSpeedMultiplier : 1);
+    this.speed = skipBounceUp ? this.maxSpeed : 0;
     this.totalScrolled = 0;
     this.targetPlaced = 0;
     this.phaseFrame = 0;
 
-    // Blur zone: scrollScreens worth of random alpha symbols
     this.blurDistance = scrollScreens * this.rows * this.cell;
-    // Total: blur + one more screen for target symbols to scroll into view
     this.totalDistance = this.blurDistance + this.rows * this.cell;
 
     for (const sym of this.symbols) {
@@ -95,9 +91,7 @@ export class Reel {
         this.phaseFrame += dt;
         const cfg = this.spinConfig.bounceUp;
         const progress = Math.min(this.phaseFrame / cfg.duration, 1);
-        // Smooth bell curve: rise then return to 0
         const envelope = Math.sin(progress * Math.PI);
-        // Ease-out for smooth deceleration at peak
         const ease = 1 - Math.pow(1 - Math.min(progress * 2, 1), 3);
         this.symbolContainer.y = -ease * envelope * (cfg.amount * this.cell);
 
@@ -114,8 +108,8 @@ export class Reel {
 
       case ReelState.SpinUp:
         this.speed += this.spinConfig.acceleration * dt;
-        if (this.speed >= this.spinConfig.spinSpeed) {
-          this.speed = this.spinConfig.spinSpeed;
+        if (this.speed >= this.maxSpeed) {
+          this.speed = this.maxSpeed;
           this.state = ReelState.Spinning;
         }
         this.scroll(dt);
@@ -123,6 +117,7 @@ export class Reel {
         break;
 
       case ReelState.Spinning:
+        if (this.speed < this.maxSpeed) this.speed = Math.min(this.maxSpeed, this.speed + this.spinConfig.acceleration * dt);
         this.scroll(dt);
         this.checkScrollComplete();
         break;
@@ -132,7 +127,6 @@ export class Reel {
         const cfg = this.spinConfig.bounceDown;
         const progress = Math.min(this.phaseFrame / cfg.duration, 1);
         const bounceAmount = cfg.amount * this.cell;
-        // Single smooth overshoot: goes down then back with exponential decay
         const decay = Math.pow(1 - progress, 2);
         const wave = Math.sin(progress * Math.PI);
         this.symbolContainer.y = wave * decay * bounceAmount;
@@ -164,8 +158,14 @@ export class Reel {
     }
   }
 
-  get isIdle(): boolean {
-    return this.state === ReelState.Idle;
+  /** Anticipation: raise the top speed of a reel that is still spinning. */
+  boost(multiplier: number): void {
+    this.maxSpeed = this.spinConfig.spinSpeed * multiplier;
+  }
+
+  /** True until the reel has landed on its targets (bounce/settle no longer counts). */
+  get isSpinning(): boolean {
+    return this.state === ReelState.BounceUp || this.state === ReelState.SpinUp || this.state === ReelState.Spinning;
   }
 
   /** Snap to target symbols and play the BounceDown→Settling easing (same as turbo stop). */
