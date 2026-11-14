@@ -1,88 +1,125 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code and other agents working in this repository.
+
+V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline, line math, celebrations, paytable shell) plus self-contained **games** in `src/games/<id>/`, and a **lobby** that launches them. PixiJS v7.3.3, TypeScript 5.3 strict, Vite 5. Path alias `@/*` → `src/*`. Portrait mobile only.
 
 ## Commands
 
-- **Dev server:** `npm run dev` (Vite, port 3000)
-- **Build:** `npm run build` (TypeScript compile + Vite bundle → `dist/`)
-- **Preview:** `npm run preview`
-- **Type check:** `npx tsc --noEmit`
+| Command | What it does |
+|---|---|
+| `npm run dev` | Vite dev server, http://localhost:3000/v-slot/ (lobby), `?game=<id>` opens a game |
+| `npm run check` | **Run before every commit.** `tsc --noEmit` + `scripts/check.mjs` (file size, import boundaries, game layout, registry, config sanity) |
+| `npm run build` | tsc + Vite bundle → `dist/` (GitHub Pages deploys `main`) |
+| `npm run new-game -- <id> [--from classic] [--title "T"]` | Scaffold + register a new game by cloning one |
+| `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
+| `npm run classic:screens` | Regenerate classic `screens.bin` after classic math changes |
+| `npm run dragon:reels` | Rebuild dragon reel strips + exact RTP report |
+| `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
-No test framework is configured.
-
-## Tech Stack
-
-PixiJS v7.3.3, TypeScript 5.3 (strict), Vite 5, ES2020 target. Path alias `@/*` → `src/*`.
+No unit-test framework; verify visually with Playwright (Chromium is preinstalled; `require('playwright')`).
 
 ## Hard Rules
 
-- **PaytableScreen and InfoButton MUST always be implemented as PixiJS objects** (Container, Graphics, Text). Never use HTML elements (`<div>`, `<button>`, `document.createElement`, etc.) for the paytable screen or its toggle button. Both must live entirely on the Pixi stage.
-- **Keep files under 250 lines.** If a file grows beyond that, split it into focused modules.
+1. **Paytable screens and their toggle buttons are Pixi objects only** (Container, Graphics, Text, Sprite). Never HTML elements for game UI. `src/engine/ui/jsx.ts` exists only for non-game HTML overlays.
+2. **Files ≤ 250 lines.** Split into focused modules instead (enforced by `npm run check`).
+3. **Import boundaries** (enforced):
+   - `src/engine/**` never imports from games or lobby.
+   - `src/games/<id>/**` imports only `pixi.js`, `'@/engine'` (the barrel — never deep paths) and files inside its own folder. Need something new from the engine? Export it in `src/engine/index.ts`.
+   - `manifest.ts` stays light: `import type` + dynamic `import('./index')` only (keeps games code-split).
+4. **Config-driven.** Game design numbers live in `src/games/<id>/config.json`; no magic numbers for math/timing in code.
+5. **Money is integer minor units** everywhere (`currency.decimals` says how many). Format only via `formatMoney(cfg, value)`.
+6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels`) and updating `rtp` in the config and `GAME.md`.
 
-## Architecture
+## Layout
 
-5-reel, 3-row slot machine rendered on HTML5 Canvas via PixiJS.
+```
+src/
+├── index.ts                 Router: ?game=<id> → SlotGame, else Lobby (switching = page reload)
+├── engine/                  Game-agnostic core. Public API = engine/index.ts
+│   ├── contracts.ts         ★ GameDefinition, GameView, Hud, SpinControl, SymbolRenderer, MathModel, GameManifest
+│   ├── config/SlotConfig.ts ★ RawSlotConfig (JSON schema as a TS type) + resolveConfig (derived geometry)
+│   ├── core/SlotGame.ts     Orchestrator: balance/bet, spin loop (single / hold-turbo / autoplay / quick), win cycle
+│   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
+│   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
+│   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
+│   ├── reels/               Reel (state machine, symbol recycling) + ReelController (layers, win highlight)
+│   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
+│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, types
+│   ├── ui/                  WinCelebration, PaytableScreen shell + InfoButton, paytableBlocks (pt* helpers), HomeButton
+│   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
+├── games/
+│   ├── registry.ts          Lobby list (scaffold inserts at @new-game markers)
+│   ├── classic/             5×3 original, Graphics art, precomputed screens.bin math
+│   └── dragon/              4×5 Dragon Hoard, sliced sprite skin, reel-strip math
+│       ├── GAME.md          ★ read first when touching a game
+│       ├── config.json      engine config + game-specific keys
+│       ├── config.ts        typed import (`const raw: RawSlotConfig = json` validates it) + game helpers
+│       ├── index.ts         default export GameDefinition
+│       ├── manifest.ts      lobby entry (id, title, subtitle, thumbnail, accent, lazy load)
+│       ├── math/ views/     MathModel / GameView / SymbolRenderer implementations
+│       ├── tools/           offline generators (math tables, art slicing)
+│       └── art/             source art (not shipped)
+└── lobby/                   Lobby + GameCard (Pixi)
+public/games/<id>/           Runtime assets per game (thumb.jpg, screens.bin, sprites…)
+scripts/                     check.mjs, new-game.mjs, make-thumbnails.cjs
+```
 
-### Module Map
+## Engine ↔ game contract (src/engine/contracts.ts)
 
-- **`core/Game.ts`** — Main orchestrator. Creates Pixi Application, instantiates all subsystems, wires `GameInput`, builds the spin pipeline, manages balance/bet state. Owns `startWinCycle` / `stopWinCycle`.
-- **`core/Config.ts`** — All game constants derived from `gameConfig.json` (dimensions, symbol IDs, weights, colors, payline definitions).
-- **`core/GameInput.ts`** — Centralises all input: pointer events on the spin button (with canvas-scale correction), spacebar, and bet button callbacks. Tracks `buttonHeld` for turbo detection.
-- **`gameConfig.json`** — Single source of truth for all math/game-design parameters: RTP, hit rate, symbol weights/colors, paytable multipliers, reel strips, payline definitions, spin timing, and `payoutDistribution` (7 payout categories with probabilities and multiplier ranges).
-- **`pipeline/SpinPipeline.ts`** — Generic async middleware pipeline with three ordered phases: `pre → server → post`. Supports `add`, `insertBefore`, `insertAfter`, `remove`, `replace`. Cancels remaining stages if `ctx.cancelled` is set.
-- **`pipeline/buildSpinPipeline.ts`** — Wires concrete `PipelineStage` implementations into the pipeline. All spin flow logic lives here: balance validation, deduction, reel animation, win calculation, credit, UI updates, celebration, turbo handling.
-- **`reels/ReelController.ts`** — Orchestrates 5 reels with staggered start/stop. Manages two display layers: masked `reelLayer` (clipped reel area) and unmasked `winLayer` (win symbols render above mask). Promotes/demotes symbols between layers for win animations. `showWins()` highlights all winning positions; `showWinLine()` highlights a single payline (used during win cycle); `showWinsTurbo()` / `clearWins()` for turbo mode.
-- **`reels/Reel.ts`** — Single reel column. State machine: `Idle → BounceUp → SpinUp → Spinning → BounceDown → Settling → Idle`. Distance-based spinning with symbol recycling — symbols scrolling off top reposition at bottom. Two-zone recycling: blur zone (random symbols at reduced alpha) then target zone (final symbols at full alpha).
-- **`math/SlotMath.ts`** — Generates random spin grids using weighted reel strips, evaluates all 20 paylines left-to-right. Falls back to live RNG if `PrecomputedTable` is not loaded.
-- **`math/PrecomputedTable.ts`** — Loads `screens.bin` (binary file, nibble-packed 5×3 grids, generated by `generate-screens.mjs`). Provides O(1) random access to pre-categorised spin results matching `payoutDistribution` in `gameConfig.json`.
-- **`math/Paytable.ts`** — Payout multipliers for 3/4/5 symbol matches per symbol type.
-- **`symbols/Symbol.ts`** — `SlotSymbol` extends Pixi Container. Inner `content` container isolates win animation (scale pulse) from positional transforms during spinning. `startWinAnimation(cycleMs)` drives exactly one sine pulse per `cycleMs` ms.
-- **`symbols/SymbolFactory.ts`** — Object pool for `SlotSymbol` instances to avoid GC during spins.
-- **`ui/SpinButton.ts`** — Spin/stop toggle button. Exposes `enabled`, `isStopMode`, `setStopMode()`.
-- **`ui/BetButton.ts`** — Round ± bet adjustment buttons. Exposes `enabled`, `onClick()`.
-- **`ui/GameHUD.ts`** — All in-game text: status/win display, line info, balance+bet row.
-- **`ui/PaytableScreen.ts`** — Pixi-based scrollable paytable overlay (drag + wheel). Also exports `InfoButton` — the Pixi toggle button added to the stage at bottom-left.
-- **`ui/WinCelebration.ts`** — Big win banners (BIG/HUGE/EPIC/MAX WIN). `getWinCategory()` maps win/bet ratio to category. `play()` animates; `playStatic()` shows for fixed duration.
-- **`ui/jsx.ts`** — Minimal JSX runtime (`h` factory) for building HTML DOM elements when HTML overlays are needed (not for game UI — see Hard Rules).
+A game's `index.ts` default-exports:
 
-### Spin Flow
+```ts
+const game: GameDefinition = {
+  config,                                  // resolveConfig(raw)
+  loadAssets?: () => Promise<void>,        // textures etc., before SlotGame is built
+  createMath: () => MathModel,             // spin(): SpinResult; optional async load()
+  createSymbolRenderer: () => SymbolRenderer, // createView(id) → { display, setSymbol(id) }
+  createView: (actions: GameActions) => GameView,
+};
+```
 
-Every spin runs through `SpinPipeline.execute(ctx)` with a `SpinContext` carrying `{ balance, lineBet, totalBet, turbo, result, winAmount, cancelled, meta }`. Phases:
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update` / `paytableTheme`, and `buildPaytable(root, lineBet)`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, paytable overlay and the home button itself.
 
-1. **pre** — validate balance → stop previous wins → deduct bet → disable controls → show UI
-2. **server** — `slotMath.spin()` → `ctx.result`
-3. **post** — reel animation → resolve turbo flag → calculate wins → credit balance → update UI → show win animations → play celebration → handle turbo delay → refresh balance → re-enable controls
+## Recipes
 
-To add game logic, inject a new `PipelineStage` via `pipeline.insertBefore/After()` in `buildSpinPipeline.ts`.
+**New game:** `npm run new-game -- <id> --from classic` → edit `config.json` (id/title set for you) → replace `views/` and `math/` as needed (reuse `ReelStripMath` for strip math) → `npm run check` → `npm run dev`, open `?game=<id>` → `npm run thumbnails -- <id>` → fill `GAME.md`.
 
-### Rendering Layer Order
+**Change a game:** read its `GAME.md`; stay inside its folder + `public/games/<id>/`.
+
+**Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
+
+**New pipeline logic:** inject a `PipelineStage` via `pipeline.insertBefore/After()` in `engine/pipeline/buildSpinPipeline.ts`.
+
+## Spin flow
+
+`SpinPipeline.execute(ctx)`; `SpinContext = { balance, lineBet, totalBet, turbo, quick, result, winAmount, cancelled, meta }` (money in minor units).
+
+1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → clear status
+2. **server** — `math.spin()` → `ctx.result`
+3. **post** — reel animation (quick/turbo = fast) → resolve turbo flag → wins = totalWin × lineBet → credit → HUD → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
+
+## Rendering order
 
 ```
 Stage
-├── ReelController.container (positioned at REEL_OFFSET)
-│   ├── Background (dark rounded rect)
-│   ├── reelLayer (masked to reel area)
-│   │   └── Reel[0..4].symbolContainer (y-scrolled during spin)
-│   ├── Reel separators
-│   └── winLayer (unmasked — winning symbols promoted here)
-├── SpinButton
-├── BetButton (−) / BetButton (+)
-├── GameHUD (statusText, winText, lineInfoText, statsRow)
+├── GameView.mountBelowReels   (e.g. dragon background sprite)
+├── ReelController.container   at (reelOffsetX, reelOffsetY)
+│   ├── optional reelStyle.background panel
+│   ├── reelLayer (masked) → Reel[i].symbolContainer
+│   ├── optional reelStyle.separators grid
+│   └── winLayer (unmasked; winning symbols promoted here)
+├── GameView.mountAboveReels   (buttons, HUD, InfoButton)
+├── HomeButton                 (config.homeButton)
 ├── WinCelebration
-├── InfoButton (bottom-left, x=46 y=GAME_HEIGHT-46)
-└── PaytableScreen (full-canvas overlay, visible=false by default)
+└── PaytableScreen             (full-canvas overlay, hidden by default)
 ```
 
-### Key Patterns
+## Key patterns
 
-- **Symbol recycling:** During spin, symbols passing the bottom edge reposition to top with new identity. Blur zone → random IDs + reduced alpha; target zone → final result IDs + full alpha. Targets placed in reverse so they land in correct rows after `snapToTarget()`.
-- **Win animation z-order:** Winning symbols are removed from their reel's `symbolContainer` and added to `winLayer` (above the mask), then demoted back before the next spin.
-- **Config-driven animation:** All spin timing/easing parameters live in `gameConfig.json` under `"spin"` — no magic numbers in code.
-- **Win cycle:** `startWinCycle()` first shows all winning symbols for `winAllDelay` ms, then cycles through each `WinResult` via `showWinLine()` every `winLineInterval` ms, resetting the pulse animation each time.
-- **Turbo mode:** Holding the spin button sets `buttonHeld = true`. After each spin, if `buttonHeld` is still true the pipeline loops immediately without win animations (abbreviated 300 ms win delay only).
-- **Two-color inline text:** PixiJS v7 has no rich text. Mixed-color labels use two separate `Text` objects with x positions recomputed from measured widths each update.
-
-### PixiJS v7 Limitations
-
-- `BlurFilter` causes darkening even at blur=0 — alpha-based approach used instead for blur symbols during spin.
+- **Symbol recycling:** symbols leaving the bottom jump to the top with a new id: blur zone = random ids at `blurAlpha`, target zone = result ids at full alpha (placed in reverse so they land in the right rows after `snapToTarget()`).
+- **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
+- **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
+- **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
+- **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
+- `BlurFilter` darkens even at blur=0 — use alpha for spin blur.

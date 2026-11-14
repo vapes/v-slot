@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "generate-screens": "node scripts/generate-screens.mjs"
+    "check": "tsc --noEmit && node scripts/check.mjs",
+    "new-game": "node scripts/new-game.mjs",
+    "thumbnails": "node scripts/make-thumbnails.cjs",
+    "classic:screens": "node src/games/classic/tools/generate-screens.mjs",
+    "dragon:reels": "node src/games/dragon/tools/build-reels.mjs",
+    "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py"
   },
   "dependencies": {
     "pixi.js": "^7.3.3"

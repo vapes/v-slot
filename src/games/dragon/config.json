@@ -1,0 +1,108 @@
+{
+  "id": "dragon",
+  "title": "Dragon Hoard",
+  "thumbnailY": 40,
+  "canvas": { "width": 540, "height": 900 },
+  "backgroundColor": "0x120818",
+  "currency": { "code": "PLN", "decimals": 2 },
+  "homeButton": { "x": 453.8, "y": 32.3 },
+  "celebration": { "big": 10, "huge": 25, "epic": 50, "max": 100 },
+  "reelStyle": { "separators": { "color": "0xC8962E", "alpha": 0.75, "width": 1.5 } },
+  "skin": {
+    "sourceWidth": 971,
+    "ui": {
+      "menu":   { "x": 58,  "y": 58 },
+      "coins":  { "x": 92,  "y": 1465, "r": 60 },
+      "auto":   { "x": 243, "y": 1465, "r": 60 },
+      "spin":   { "x": 487, "y": 1480, "r": 108 },
+      "turbo":  { "x": 728, "y": 1465, "r": 60 },
+      "trophy": { "x": 878, "y": 1465, "r": 60 },
+      "minus":  { "x": 688, "y": 1322, "r": 28 },
+      "plus":   { "x": 912, "y": 1322, "r": 28 },
+      "balanceValue": { "x": 159, "y": 1337 },
+      "lastWinValue": { "x": 473, "y": 1337 },
+      "betValue":     { "x": 803, "y": 1337 },
+      "message":      { "x": 486, "y": 1265 }
+    }
+  },
+  "grid": { "rows": 5, "cols": 4 },
+  "symbol": { "width": 121, "height": 90, "gap": 0 },
+  "reelOffsetX": 29.5,
+  "reelOffsetY": 240,
+  "startBalance": 100000,
+  "betOptions": [20, 40, 100, 200, 500, 1000, 2000, 5000, 10000],
+  "defaultBetIndex": 4,
+
+  "spin": {
+    "reelStartInterval": 100,
+    "bounceUp": { "amount": 0.4, "duration": 14 },
+    "spinSpeed": 45,
+    "turboSpeedMultiplier": 1.5,
+    "acceleration": 3.0,
+    "blurAlpha": 0.7,
+    "scrollScreens": [1, 2, 3, 4],
+    "bounceDown": { "amount": 0.3, "duration": 18 },
+    "settle": { "duration": 8 },
+    "winAllDelay": 2000,
+    "winLineInterval": 1500,
+    "autoplayWinPause": 1600,
+    "autoplayPause": 250
+  },
+
+  "rtp": 0.962,
+  "wild": "wild",
+
+  "symbols": [
+    { "id": "wild",    "name": "Wild",          "weight": 2 },
+    { "id": "dragon",  "name": "Dragon Medal",  "weight": 2 },
+    { "id": "egg",     "name": "Dragon Egg",    "weight": 3 },
+    { "id": "chest",   "name": "Treasure Chest","weight": 3 },
+    { "id": "gold",    "name": "Gold Hoard",    "weight": 3 },
+    { "id": "crystal", "name": "Crystal",       "weight": 4 },
+    { "id": "goblet",  "name": "Goblet",        "weight": 4 },
+    { "id": "A",       "name": "Ace",           "weight": 5 },
+    { "id": "K",       "name": "King",          "weight": 5 },
+    { "id": "Q",       "name": "Queen",         "weight": 5 },
+    { "id": "J",       "name": "Jack",          "weight": 6 },
+    { "id": "10",      "name": "Ten",           "weight": 6 },
+    { "id": "9",       "name": "Nine",          "weight": 6 }
+  ],
+
+  "paytable": {
+    "dragon":  { "3": 100, "4": 1000 },
+    "egg":     { "3": 60,  "4": 400 },
+    "chest":   { "3": 50,  "4": 250 },
+    "gold":    { "3": 40,  "4": 150 },
+    "crystal": { "3": 30,  "4": 100 },
+    "goblet":  { "3": 25,  "4": 80 },
+    "A":       { "3": 15,  "4": 50 },
+    "K":       { "3": 12,  "4": 40 },
+    "Q":       { "3": 10,  "4": 35 },
+    "J":       { "3": 8,   "4": 25 },
+    "10":      { "3": 6,   "4": 20 },
+    "9":       { "3": 5,   "4": 15 }
+  },
+
+  "paylines": [
+    [2,2,2,2], [1,1,1,1], [3,3,3,3], [0,0,0,0], [4,4,4,4],
+    [1,2,2,1], [3,2,2,3], [0,1,2,3], [4,3,2,1], [2,1,1,2],
+    [2,3,3,2], [1,0,0,1], [3,4,4,3], [0,1,1,0], [4,3,3,4],
+    [1,2,3,4], [3,2,1,0], [2,3,2,3], [1,2,1,2], [3,2,3,2]
+  ],
+
+  "reelStacks": { "wild": 3 },
+
+  "reelComposition": [
+    { "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 7 },
+    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 6, "9": 6 },
+    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 3, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 6, "J": 6, "10": 6, "9": 6 },
+    { "wild": 2, "dragon": 2, "egg": 3, "chest": 3, "gold": 4, "crystal": 4, "goblet": 4, "A": 5, "K": 5, "Q": 5, "J": 6, "10": 7, "9": 9 }
+  ],
+
+  "reels": [
+    ["J","9","goblet","egg","gold","goblet","dragon","A","10","A","dragon","K","chest","K","Q","10","J","gold","goblet","10","K","Q","9","A","Q","egg","9","crystal","chest","crystal","A","Q","10","J","gold","K","gold","9","chest","crystal","9","goblet","Q","J","crystal","J","A","10","J","10","K","9","egg","9"],
+    ["crystal","J","K","9","J","goblet","chest","egg","crystal","9","crystal","A","10","K","J","chest","9","chest","9","A","wild","wild","wild","K","egg","A","gold","J","10","A","Q","A","gold","goblet","wild","wild","wild","J","9","10","Q","dragon","gold","egg","K","dragon","gold","Q","10","Q","10","goblet","J","10","crystal","Q","K","9","goblet"],
+    ["J","egg","crystal","dragon","Q","10","9","crystal","wild","wild","wild","9","goblet","A","goblet","Q","9","Q","K","egg","chest","10","A","9","A","9","gold","chest","Q","goblet","J","K","10","9","K","J","K","gold","J","K","A","wild","wild","wild","chest","gold","Q","dragon","10","crystal","J","egg","crystal","goblet","J","10","A","Q","10"],
+    ["crystal","9","gold","Q","dragon","goblet","10","J","egg","J","Q","K","dragon","K","gold","9","Q","goblet","9","crystal","J","egg","A","10","9","10","Q","wild","wild","wild","crystal","K","9","10","goblet","A","Q","chest","9","egg","chest","A","J","10","goblet","crystal","gold","9","K","9","10","gold","9","10","A","chest","K","wild","wild","wild","J","A","J"]
+  ]
+}
