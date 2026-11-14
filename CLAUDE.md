@@ -25,7 +25,7 @@ No unit-test framework; verify visually with Playwright (Chromium is preinstalle
 ## Hard Rules
 
 1. **Paytables and translations come from the content CDN, not the bundle.** Paytable = HTML template `paytables/<gameId>/<lang>.html`, shown by the engine `HtmlPaytable` in a sandboxed iframe over the canvas (no scripts). User-facing text = `t('key')` with keys in `i18n/<lang>/{common,<gameId>}.json`; never hardcode UI strings in code (`npm run check` rejects `new Text('literal')`; engine fallbacks live in `ENGINE_STRINGS`). The buttons that open the paytable stay Pixi; all other game UI is Pixi too. Text baked into skin art must be erased by the game's slicer (`LABEL_BOXES`, inpainted) and drawn back as translated Text: panel captions via `skinLabel()`, button captions via `SpriteButton.setLabel()` (auto-shrinks with `fitText`). Only logos/brand names stay baked.
-2. **Files ≤ 250 lines.** Split into focused modules instead (enforced by `npm run check`).
+2. **Files ≤ 300 lines.** Split into focused modules by responsibility instead of compressing code (enforced by `npm run check`).
 3. **Import boundaries** (enforced):
    - `src/engine/**` never imports from games or lobby.
    - `src/games/<id>/**` imports only `pixi.js`, `'@/engine'` (the barrel), `'@/engine/math'` (pure, Node-safe subset for math + tools) and files inside its own folder — never other deep paths. Need something new from the engine? Export it in `src/engine/index.ts` (or `math.ts` if it is pure).

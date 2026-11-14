@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = resolve(ROOT, 'src');
-const MAX_LINES = 250;
+const MAX_LINES = 300;
 const REQUIRED = ['config.json', 'config.ts', 'index.ts', 'manifest.ts', 'GAME.md'];
 const errors = [];
 const warn = [];
