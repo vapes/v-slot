@@ -52,6 +52,11 @@ LABEL_BOXES = [(485, 36, 1053, 110, 'box'), (122, 1964, 395, 2023, 'gold'), (712
 
 REEL_FILL = (10, 28, 66)
 
+# Baked buttons removed from the background after their sprites are cut:
+# "i" (moved to the top-right column) and the speaker (replaced by the engine
+# sound toggle at the top-right). (cx, cy, r) incl. drop shadow.
+REMOVED_BUTTONS = [(126, 2440, 96), (1416, 2442, 96)]
+
 
 def erase_box(arr, box, margin=3):
     """Fill a box from its surroundings (Coons patch of the median edge strips), then soften."""
@@ -79,6 +84,10 @@ def text_mask(patch, mode, grow=GLYPH_GROW):
     R, G, B = (patch[..., i].astype(int) for i in range(3))
     if mode == 'box':
         return np.ones(R.shape, bool)
+    if mode == 'disc':
+        h, w = R.shape
+        yy, xx = np.mgrid[:h, :w]
+        return (xx - w / 2 + 0.5) ** 2 / (w / 2) ** 2 + (yy - h / 2 + 0.5) ** 2 / (h / 2) ** 2 <= 1
     if mode == 'gold':
         m = (R > 140) & (G > 95) & (B < 130) & (R - B > 55)
     else:  # white text
@@ -128,6 +137,9 @@ def main():
         ImageDraw.Draw(mask).ellipse((pad, pad, pad + 2 * r, pad + 2 * r), fill=255)
         crop.putalpha(mask.filter(ImageFilter.GaussianBlur(1.5)))
         crop.save(OUT / 'ui' / f'{name}.png', optimize=True)
+
+    for cx, cy, r in REMOVED_BUTTONS:
+        inpaint(arr, (cx - r, cy - r, cx + r, cy + r), 'disc', iterations=1500)
 
     arr[YS[0]:YS[-1], XS[0]:XS[-1]] = REEL_FILL
     Image.fromarray(arr).save(OUT / 'bg.jpg', quality=88, optimize=True, progressive=True)

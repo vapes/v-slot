@@ -17,7 +17,6 @@ export class DragonView implements GameView {
   private readonly auto = make('auto');
   private readonly turbo = make('turbo');
   private readonly trophy = make('trophy');
-  private readonly menu = make('menu', 22);
   private readonly fullscreenZone = new Container();
 
   constructor(actions: GameActions) {
@@ -29,7 +28,6 @@ export class DragonView implements GameView {
     this.trophy.onClick(actions.openPaytable);
     labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
     labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
-    this.menu.onClick(actions.togglePaytable);
 
     // The fullscreen icon is baked into the background; this is its hit zone.
     const z = this.fullscreenZone;
@@ -41,7 +39,7 @@ export class DragonView implements GameView {
   }
 
   private get buttons(): SpriteButton[] {
-    return [this.spinButton, this.minus, this.plus, this.coins, this.auto, this.turbo, this.trophy, this.menu];
+    return [this.spinButton, this.minus, this.plus, this.coins, this.auto, this.turbo, this.trophy];
   }
 
   mountBelowReels(stage: Container): void {

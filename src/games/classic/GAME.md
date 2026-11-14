@@ -19,7 +19,7 @@
 | `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
 
 ## Skin pipeline
-Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. The speaker icon is decorative; the home button sits top-left.
+Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. Home (top-left) and sound (top-right) are engine buttons.
 
 ## Math
 - Symbols (high → low): seven, bar, bell, star, melon, cherry. No wild. Pays 3/4/5 of a kind × line bet (line bet = total bet / 20): seven 50/185/900, bar 25/90/450, bell 14/45/225, star 10/30/140, melon 9/22/95, cherry 5/10/45.
@@ -27,7 +27,7 @@ Same approach as `dragon`: grid lines and button centres measured on `art/source
 - `screens.bin` stores symbols by their index in `config.symbols` — **after changing symbols, their order, paytable, reels, paylines or payoutDistribution, rerun `npm run classic:screens`.**
 
 ## Controls
-SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick reels toggle; the mockup's INFO button with a translated caption), i (paytable), home.
+SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick reels toggle; the mockup's INFO button with a translated caption), i (paytable, top-right under sound), sound on/off (top-right), home (top-left). The mockup's bottom-row "i" and speaker are erased from the background (`REMOVED_BUTTONS` in the slicer).
 
 ## Content CDN
 - Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.

@@ -34,7 +34,6 @@ INSET = 3  # px trimmed from each side to drop the golden separators
 
 # name -> (cx, cy, rx, ry) ellipse in source pixels
 BUTTONS = {
-    'menu': (58, 58, 40, 40),
     'coins': (92, 1465, 62, 62),
     'auto': (243, 1465, 62, 62),
     'spin': (487, 1480, 172, 150),

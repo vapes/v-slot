@@ -15,4 +15,5 @@ export { fitText } from './ui/fitText';
 export { SpriteSpinButton, type SpinButtonStyle } from './ui/SpriteSpinButton';
 export { i18n, t, detectLanguage, ENGINE_STRINGS, FALLBACK_LANG } from './i18n/I18n';
 export { CONTENT_CDN, cdnUrl } from './content/cdn';
+export { soundSettings } from './audio/soundSettings';
 export { formatMoney, assetUrl } from './utils/Money';
