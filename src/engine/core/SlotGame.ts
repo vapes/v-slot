@@ -5,6 +5,7 @@ import type { SpinResult } from '../math/types';
 import { lineBetOf } from '../math/Paytable';
 import { GameInput } from './GameInput';
 import { fitCanvas, goToLobby } from './fitCanvas';
+import { keepScreenAwake } from './wakeLock';
 import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
@@ -118,6 +119,7 @@ export class SlotGame {
       view.update?.(dt);
     });
     fitCanvas(this.app, cfg.canvas.width, cfg.canvas.height);
+    keepScreenAwake(); // a running game must not let the device sleep
 
     view.hud.updateBalanceDisplay(this.balance, this.totalBet);
     view.spinButton.enabled = false;
