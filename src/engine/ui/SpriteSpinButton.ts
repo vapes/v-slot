@@ -1,35 +1,42 @@
-import { Graphics } from 'pixi.js';
-import type { SpinControl } from '@/engine';
-import { uiAnchor } from '../config';
+import { Graphics, type Texture } from 'pixi.js';
+import type { SpinControl } from '../contracts';
 import { SpriteButton } from './SpriteButton';
 
-const anchor = uiAnchor('spin');
+export interface SpinButtonStyle {
+  /** Disc that covers the button face in stop mode. */
+  discColor: number;
+  /** Ring + stop square colour. */
+  accent: number;
+  /** Disc radius as a fraction of the hit radius. */
+  discScale?: number;
+}
 
 /**
- * Big dragon-wing spin button. In stop mode a dark disc with a gold
- * "stop" square covers the arrow. Input is handled by GameInput (hit test).
+ * Sprite spin button. In stop mode a disc with a "stop" square covers the
+ * face. Input comes from GameInput through hitTest (not Pixi events), so
+ * hold-to-turbo works.
  */
-export class SpinButton extends SpriteButton implements SpinControl {
+export class SpriteSpinButton extends SpriteButton implements SpinControl {
   private stopOverlay: Graphics;
   private _isStopMode = false;
   private spinAngle = 0;
 
-  constructor() {
-    super('spin', anchor.r);
-    this.setPosition(anchor.x, anchor.y);
+  constructor(texture: Texture, x: number, y: number, radius: number, scale: number, style: SpinButtonStyle) {
+    super(texture, radius, scale);
+    this.setPosition(x, y);
     // GameInput drives this button from window pointer events (turbo hold detection)
     this.container.eventMode = 'none';
 
     this.stopOverlay = new Graphics();
-    const r = anchor.r * 0.8;
-    this.stopOverlay.beginFill(0x1A0B05, 0.92);
+    const r = radius * (style.discScale ?? 0.8);
+    this.stopOverlay.beginFill(style.discColor, 0.92);
     this.stopOverlay.drawCircle(0, 0, r);
     this.stopOverlay.endFill();
-    this.stopOverlay.lineStyle(3, 0xFFC94A, 0.9);
+    this.stopOverlay.lineStyle(3, style.accent, 0.9);
     this.stopOverlay.drawCircle(0, 0, r);
     const s = r * 0.62;
     this.stopOverlay.lineStyle(0);
-    this.stopOverlay.beginFill(0xFFC94A, 1);
+    this.stopOverlay.beginFill(style.accent, 1);
     this.stopOverlay.drawRoundedRect(-s / 2, -s / 2, s, s, 6);
     this.stopOverlay.endFill();
     this.stopOverlay.visible = false;

@@ -1,18 +1,37 @@
 {
   "id": "classic",
-  "title": "V-Slot Classic",
-  "canvas": { "width": 540, "height": 960 },
-  "backgroundColor": "0x0D0D1A",
-  "currency": { "code": "", "decimals": 0 },
-  "homeButton": { "x": 36, "y": 40 },
+  "title": "777 Casino Classic",
+  "thumbnailY": 300,
+  "canvas": { "width": 540, "height": 968 },
+  "backgroundColor": "0x07183F",
+  "currency": { "code": "USD", "decimals": 2, "symbol": "$", "thousands": "," },
+  "homeButton": { "x": 34, "y": 34 },
   "celebration": { "big": 2, "huge": 5, "epic": 20, "max": 50 },
-  "reelStyle": { "background": "0x1A1A2E" },
+  "reelStyle": { "separators": { "color": "0xD9A441", "alpha": 0.9, "width": 2, "rows": false } },
+  "skin": {
+    "sourceWidth": 1536,
+    "jackpot": { "start": 124530000, "perSecond": 37 },
+    "ui": {
+      "infoI":        { "x": 126,  "y": 2440, "r": 76 },
+      "auto":         { "x": 380,  "y": 2442, "r": 124 },
+      "spin":         { "x": 770,  "y": 2440, "r": 200 },
+      "info":         { "x": 1156, "y": 2440, "r": 124 },
+      "minus":        { "x": 600,  "y": 2104, "r": 54 },
+      "plus":         { "x": 940,  "y": 2104, "r": 54 },
+      "balanceValue": { "x": 256,  "y": 2106 },
+      "betValue":     { "x": 770,  "y": 2106 },
+      "winValue":     { "x": 1281, "y": 2106 },
+      "jackpot":      { "x": 765,  "y": 180 },
+      "message":      { "x": 768,  "y": 1880 }
+    }
+  },
   "grid": { "rows": 3, "cols": 5 },
-  "symbol": { "width": 100, "height": 120, "gap": 4 },
-  "reelOffsetY": 120,
-  "startBalance": 10000,
+  "symbol": { "width": 104, "height": 103, "gap": 0 },
+  "reelOffsetX": 10,
+  "reelOffsetY": 325,
+  "startBalance": 500000,
   "betOptions": [20, 40, 100, 200, 500, 1000, 2000],
-  "defaultBetIndex": 0,
+  "defaultBetIndex": 3,
   "wild": null,
 
   "spin": {
@@ -34,27 +53,29 @@
   "hitRate": 0.27,
 
   "symbols": [
-    { "id": "V", "name": "Victory", "color": "0xE63946", "weight": 3 },
-    { "id": "A", "name": "Ace", "color": "0xF4A261", "weight": 4 },
-    { "id": "P", "name": "Pulse", "color": "0x2A9D8F", "weight": 6 },
-    { "id": "E", "name": "Echo", "color": "0x457B9D", "weight": 8 },
-    { "id": "S", "name": "Spark", "color": "0x6C757D", "weight": 9 }
+    { "id": "seven",  "name": "Lucky Seven", "weight": 3 },
+    { "id": "bar",    "name": "Bar",         "weight": 4 },
+    { "id": "bell",   "name": "Bell",        "weight": 6 },
+    { "id": "star",   "name": "Star",        "weight": 7 },
+    { "id": "melon",  "name": "Watermelon",  "weight": 8 },
+    { "id": "cherry", "name": "Cherry",      "weight": 9 }
   ],
 
   "paytable": {
-    "V": { "3": 50,  "4": 185, "5": 900 },
-    "A": { "3": 25,  "4": 90,  "5": 450 },
-    "P": { "3": 14,  "4": 45,  "5": 225 },
-    "E": { "3": 9,   "4": 22,  "5": 95  },
-    "S": { "3": 5,   "4": 10,  "5": 45  }
+    "seven":  { "3": 50, "4": 185, "5": 900 },
+    "bar":    { "3": 25, "4": 90,  "5": 450 },
+    "bell":   { "3": 14, "4": 45,  "5": 225 },
+    "star":   { "3": 10, "4": 30,  "5": 140 },
+    "melon":  { "3": 9,  "4": 22,  "5": 95 },
+    "cherry": { "3": 5,  "4": 10,  "5": 45 }
   },
 
   "reels": [
-    ["S","E","P","A","V","S","E","P","A","V","S","E","P","S","E","V","S","P","A","E","S","E","P","S","A","E","S","E","P","S"],
-    ["E","S","V","P","A","E","S","P","S","E","A","V","S","E","P","S","E","A","P","V","E","S","P","S","E","A","S","P","E","S"],
-    ["P","S","E","V","A","S","E","P","S","V","A","E","S","P","S","E","A","P","E","S","V","E","S","A","E","S","P","E","S","P"],
-    ["A","S","E","P","S","V","E","S","P","A","E","S","V","P","E","S","A","E","S","P","V","E","S","E","P","A","E","S","P","S"],
-    ["V","S","E","A","P","S","E","P","V","E","S","A","P","S","E","V","P","A","E","S","P","E","S","A","E","S","P","E","S","S"]
+    ["melon","star","bell","cherry","star","bell","melon","cherry","bell","seven","cherry","bar","cherry","melon","cherry","seven","star","melon","cherry","bar","star","melon","bell","cherry","melon","star","bell","melon","cherry","bar"],
+    ["cherry","star","bell","cherry","melon","bell","cherry","seven","star","bell","star","cherry","bar","bell","cherry","melon","bar","cherry","star","melon","seven","melon","cherry","star","melon","star","melon","cherry","melon","bar"],
+    ["melon","cherry","star","melon","star","cherry","bar","bell","cherry","bell","cherry","melon","cherry","bar","star","seven","bell","cherry","bell","seven","cherry","bar","cherry","melon","star","bell","melon","cherry","melon","star"],
+    ["cherry","melon","star","cherry","melon","bell","melon","cherry","melon","star","melon","bell","cherry","seven","melon","star","cherry","seven","star","cherry","bell","cherry","melon","bell","star","bar","cherry","bar","melon","bar"],
+    ["bell","star","melon","bar","star","cherry","melon","cherry","seven","bell","melon","star","cherry","melon","cherry","star","seven","cherry","bar","bell","melon","bell","cherry","melon","cherry","bar","bell","star","cherry","star"]
   ],
 
   "paylines": [

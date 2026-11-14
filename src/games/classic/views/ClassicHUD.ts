@@ -1,118 +1,84 @@
-import { Text, TextStyle, Container } from 'pixi.js';
+import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { formatMoney, type Hud } from '@/engine';
-import { config } from '../config';
+import { config, uiAnchor, type UiAnchorName } from '../config';
+import { JackpotTicker } from './JackpotTicker';
 
-const GAME_WIDTH = config.canvas.width;
-const GAME_HEIGHT = config.canvas.height;
-const STATUS_Y = config.reelOffsetY + config.reelAreaHeight + 50;
+const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
+const VALUE_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 21, fontWeight: 'bold', fill: 0xFFFFFF,
+  dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 1, dropShadowBlur: 2, dropShadowAlpha: 0.7,
+});
+const WIN_STYLE = new TextStyle({ ...VALUE_STYLE, fill: ['#FFF4C2', '#FFD54A', '#F0A020'] });
+const MESSAGE_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3, letterSpacing: 0.5,
+});
 const money = (v: number) => formatMoney(config, v);
 
-const FONT = 'Arial, Helvetica, sans-serif';
-const LABEL_STYLE = new TextStyle({ fontFamily: FONT, fontSize: 20, fill: 0xFFD700 });
-const VALUE_STYLE = new TextStyle({ fontFamily: FONT, fontSize: 20, fill: 0xFFFFFF });
-
-/** Status / WIN line, line info and Balance + Bet row. */
+/** Values in the baked BALANCE / BET / WIN panels, message pill, jackpot meter. */
 export class ClassicHUD implements Hud {
-  readonly statusText: Text;
-  readonly winLabelText: Text;
-  readonly winValueText: Text;
-  readonly lineInfoText: Text;
-  readonly statsRow: Container;
-
-  private balanceLabel: Text;
-  private balanceValue: Text;
-  private betLabel: Text;
-  private betValue: Text;
+  private balance = this.value('balanceValue');
+  private bet = this.value('betValue');
+  private win = this.value('winValue');
+  private message = this.value('message', MESSAGE_STYLE);
+  private messageBg = new Graphics();
+  private jackpot = new JackpotTicker();
 
   constructor() {
-    this.statusText = new Text('', new TextStyle({
-      fontFamily: FONT, fontSize: 28, fontWeight: 'bold', fill: 0xFFFFFF,
-    }));
-    this.statusText.anchor.set(0.5, 0.5);
-    this.statusText.x = GAME_WIDTH / 2;
-    this.statusText.y = STATUS_Y;
+    this.setLastWin(0);
+  }
 
-    this.winLabelText = new Text('WIN:', new TextStyle({
-      fontFamily: FONT, fontSize: 28, fontWeight: 'bold', fill: 0xFFD700,
-    }));
-    this.winLabelText.anchor.set(0, 0.5);
-    this.winLabelText.y = STATUS_Y;
-
-    this.winValueText = new Text('', new TextStyle({
-      fontFamily: FONT, fontSize: 28, fontWeight: 'bold', fill: 0xFFFFFF,
-    }));
-    this.winValueText.anchor.set(0, 0.5);
-    this.winValueText.y = STATUS_Y;
-
-    this.lineInfoText = new Text('', new TextStyle({
-      fontFamily: FONT, fontSize: 20, fill: 0xFFFFFF,
-    }));
-    this.lineInfoText.anchor.set(0.5, 0);
-    this.lineInfoText.x = GAME_WIDTH / 2;
-    this.lineInfoText.y = STATUS_Y + 22;
-    this.lineInfoText.visible = false;
-
-    this.balanceLabel = new Text('Balance:', LABEL_STYLE);
-    this.balanceValue = new Text('', VALUE_STYLE);
-    this.betLabel = new Text('Bet:', LABEL_STYLE);
-    this.betValue = new Text('', VALUE_STYLE);
-
-    this.statsRow = new Container();
-    this.statsRow.addChild(this.balanceLabel, this.balanceValue, this.betLabel, this.betValue);
-    this.statsRow.y = GAME_HEIGHT - 60;
+  private value(name: UiAnchorName, style = VALUE_STYLE): Text {
+    const t = new Text('', style);
+    const a = uiAnchor(name);
+    t.anchor.set(0.5);
+    t.position.set(a.x, a.y);
+    return t;
   }
 
   addToStage(stage: Container): void {
-    stage.addChild(
-      this.statusText, this.winLabelText, this.winValueText,
-      this.lineInfoText, this.statsRow,
-    );
+    stage.addChild(this.jackpot.text, this.balance, this.bet, this.win, this.messageBg, this.message);
+  }
+
+  update(dt: number): void {
+    this.jackpot.update(dt);
+  }
+
+  private setMessage(text: string): void {
+    this.message.text = text;
+    this.messageBg.clear();
+    if (!text) return;
+    const w = this.message.width + 28;
+    const h = 24;
+    this.messageBg.lineStyle(1.5, 0xD9A441, 0.85);
+    this.messageBg.beginFill(0x061331, 0.92);
+    this.messageBg.drawRoundedRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2);
+    this.messageBg.endFill();
+  }
+
+  private setLastWin(amount: number): void {
+    this.win.text = money(amount);
+    this.win.style = amount > 0 ? WIN_STYLE : VALUE_STYLE;
   }
 
   setStatus(msg: string): void {
-    this.statusText.text = msg || 'Place your bets';
-    this.winLabelText.visible = false;
-    this.winValueText.visible = false;
-    this.lineInfoText.visible = false;
-    this.statusText.visible = true;
+    this.setMessage(msg);
   }
 
   setWinStatus(amount: number): void {
-    this.statusText.visible = false;
-    this.winLabelText.text = 'WIN:';
-    this.winValueText.text = ` ${money(amount)}`;
-    const totalW = this.winLabelText.width + this.winValueText.width;
-    this.winLabelText.x = (GAME_WIDTH - totalW) / 2;
-    this.winValueText.x = this.winLabelText.x + this.winLabelText.width;
-    this.winLabelText.visible = true;
-    this.winValueText.visible = true;
+    this.setMessage(`WIN ${money(amount)}`);
+    this.setLastWin(amount);
   }
 
   setLineInfo(text: string): void {
-    this.lineInfoText.text = text;
-    this.lineInfoText.visible = true;
+    this.setMessage(text);
   }
 
   hideLineInfo(): void {
-    this.lineInfoText.visible = false;
+    this.setMessage('');
   }
 
   updateBalanceDisplay(balance: number, totalBet: number): void {
-    this.balanceValue.text = ` ${money(balance)}`;
-    this.betValue.text = ` ${money(totalBet)}`;
-
-    const gap = 24;
-    const balW = this.balanceLabel.width + this.balanceValue.width;
-    const betW = this.betLabel.width + this.betValue.width;
-    const totalW = balW + gap + betW;
-    let x = (GAME_WIDTH - totalW) / 2;
-
-    this.balanceLabel.x = x;
-    x += this.balanceLabel.width;
-    this.balanceValue.x = x;
-    x += this.balanceValue.width + gap;
-    this.betLabel.x = x;
-    x += this.betLabel.width;
-    this.betValue.x = x;
+    this.balance.text = money(balance);
+    this.bet.text = money(totalBet);
   }
 }

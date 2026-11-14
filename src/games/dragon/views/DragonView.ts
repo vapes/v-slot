@@ -1,15 +1,15 @@
 import { Circle, Container, Sprite } from 'pixi.js';
-import type { BetControlsState, GameActions, GameView, PaytableTheme } from '@/engine';
+import {
+  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView, type PaytableTheme,
+} from '@/engine';
 import { config, SKIN_SCALE, uiAnchor } from '../config';
-import { backgroundTexture, type UiSpriteName } from '../assets';
-import { SpinButton } from './SpinButton';
-import { SpriteButton } from './SpriteButton';
+import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
 import { DragonHUD } from './DragonHUD';
 import { buildDragonPaytable, DRAGON_THEME } from './DragonPaytable';
 
 /** Skin background + every button placed exactly over its baked spot. */
 export class DragonView implements GameView {
-  readonly spinButton = new SpinButton();
+  readonly spinButton = makeSpin();
   readonly hud = new DragonHUD();
   readonly paytableTheme: PaytableTheme = DRAGON_THEME;
   private readonly minus = make('minus');
@@ -74,9 +74,14 @@ export class DragonView implements GameView {
   }
 }
 
+function makeSpin(): SpriteSpinButton {
+  const a = uiAnchor('spin');
+  return new SpriteSpinButton(uiTexture('spin'), a.x, a.y, a.r, SKIN_SCALE, { discColor: 0x1A0B05, accent: 0xFFC94A });
+}
+
 function make(name: UiSpriteName & Parameters<typeof uiAnchor>[0], radius?: number): SpriteButton {
   const a = uiAnchor(name);
-  const btn = new SpriteButton(name, radius ?? a.r);
+  const btn = new SpriteButton(uiTexture(name), radius ?? a.r, SKIN_SCALE);
   btn.setPosition(a.x, a.y);
   return btn;
 }

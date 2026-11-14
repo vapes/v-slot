@@ -1,26 +1,31 @@
-# V-Slot Classic (`classic`)
+# 777 Casino Classic (`classic`)
 
-The original V-Slot: 5 reels × 3 rows, 20 lines, flat Graphics art (coloured tiles with letters V/A/P/E/S). Canvas 540×960, credits without decimals.
+5 reels × 3 rows, 20 lines, fruit-machine skin sliced from one mockup ("777 Casino Classic"). Canvas 540×968, USD shown as `$5,420.50` (minor units = cents).
 
 ## Files
 | Path | Role |
 |---|---|
-| `config.json` | Engine config + `reels` (strips used only by the generator) + `payoutDistribution` |
-| `config.ts` | Typed config, `SYMBOL_COLORS`, `PAYOUT_PROBABILITIES` |
-| `math/ClassicMath.ts` | `MathModel`: picks a payout category, then a grid from `screens.bin` |
-| `math/PrecomputedTable.ts` | Parses `public/games/classic/screens.bin` (nibble-packed grids grouped by category) |
-| `views/ClassicView.ts` | `GameView`: spin button, ± bet, HUD, "i" InfoButton (bottom-left) |
-| `views/ClassicSymbols.ts` | `SymbolRenderer`: coloured rounded rect + letter |
-| `views/ClassicHUD.ts` | Status / WIN text, line info, Balance + Bet row |
-| `views/ClassicPaytable.ts` | Paytable body (engine `pt*` blocks) |
+| `art/source.jpg` | 1536×2752 mockup — the single source of all art |
+| `tools/slice-skin.py` | Slices the mockup into `public/games/classic/` (`npm run classic:slice`) |
 | `tools/generate-screens.mjs` | Builds `screens.bin` from `config.json` (`npm run classic:screens`) |
+| `config.json` | Engine config + `skin.ui` anchors (source px) + `skin.jackpot` + `reels` (generator only) + `payoutDistribution` |
+| `config.ts` | Typed config, `SKIN_SCALE`, `uiAnchor()`, `JACKPOT`, `PAYOUT_PROBABILITIES` |
+| `assets.ts` | Loads bg, 6 symbol tiles and 6 button sprites |
+| `math/ClassicMath.ts` | `MathModel`: picks a payout category, then a grid from `screens.bin` |
+| `math/PrecomputedTable.ts` | Parses `screens.bin` (nibble-packed grids grouped by category) |
+| `views/ClassicView.ts` | `GameView`: background, spin / ± / AUTO SPIN / INFO / i buttons over their baked spots |
+| `views/ClassicHUD.ts` | BALANCE / BET / WIN values, message pill under the reels, jackpot meter |
+| `views/JackpotTicker.ts` | Decorative MEGA JACKPOT meter (`skin.jackpot`, not part of the math) |
+| `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
+| `views/ClassicPaytable.ts` | Paytable body: symbol art + payouts for the current bet, lines, RTP |
+
+## Skin pipeline
+Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. The speaker icon is decorative; the home button sits top-left.
 
 ## Math
-- No wild. Pays 3/4/5 of a kind × line bet, line bet = total bet / 20.
-- Outcome category is drawn from `payoutDistribution` (lose 72%, small 20%, …, max 0.02%); `screens.bin` holds 100 000 real grids per category mix, calibrated by the generator to `rtp` 0.98.
-- **After changing paytable, reels, paylines, symbols or payoutDistribution, rerun `npm run classic:screens`** — the table must match the config or wins will look inconsistent.
+- Symbols (high → low): seven, bar, bell, star, melon, cherry. No wild. Pays 3/4/5 of a kind × line bet (line bet = total bet / 20): seven 50/185/900, bar 25/90/450, bell 14/45/225, star 10/30/140, melon 9/22/95, cherry 5/10/45.
+- Outcome category is drawn from `payoutDistribution` (lose 72%, small 20%, medium 5%, big 2%, huge 0.8%, epic 0.18%, max 0.02%); `screens.bin` holds real grids per category, calibrated by the generator: **RTP 97.99%**, hit rate 28%.
+- `screens.bin` stores symbols by their index in `config.symbols` — **after changing symbols, their order, paytable, reels, paylines or payoutDistribution, rerun `npm run classic:screens`.**
 
-## Notes
-- Money: `currency.decimals = 0`, so minor units are credits (start 10 000, bets 20…2000).
-- Celebration thresholds are low (BIG ≥ 2× bet) on purpose — matches the original game.
-- This game is the default template for `npm run new-game`.
+## Controls
+SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), INFO and i (paytable), home.

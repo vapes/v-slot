@@ -10,8 +10,7 @@
 | `config.json` | Engine config + `skin.ui` anchors (source px) + `reelComposition` / `reelStacks` / `reels` |
 | `config.ts` | Typed config, `SKIN_SCALE`, `uiAnchor()`, `REEL_STRIPS` |
 | `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
-| `views/DragonView.ts` | `GameView`: background sprite, every button over its baked spot, fullscreen zone |
-| `views/SpriteButton.ts` / `SpinButton.ts` | Round sprite buttons (tint when disabled, glow when active) |
+| `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
 | `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles |
 | `views/DragonPaytable.ts` | Paytable body with symbol art and payouts for the current bet |

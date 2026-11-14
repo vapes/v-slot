@@ -21,10 +21,13 @@ export interface RawSlotConfig {
     /** Rounded panel drawn behind the reels. */
     background?: string;
     /** Thin grid lines between cells. */
-    separators?: { color: string; alpha: number; width: number };
+    separators?: { color: string; alpha: number; width: number; /** draw horizontal lines too (default true) */ rows?: boolean };
   };
-  /** Money is stored in minor units (cents); `decimals` says how many. */
-  currency: { code: string; decimals: number };
+  /**
+   * Money is stored in minor units (cents); `decimals` says how many.
+   * With `symbol` amounts render as "$5,420.50"; otherwise "5 420.50 PLN".
+   */
+  currency: { code: string; decimals: number; symbol?: string; thousands?: string };
   startBalance: number;
   /** Total-bet options in minor units; each must divide by paylines.length. */
   betOptions: number[];
