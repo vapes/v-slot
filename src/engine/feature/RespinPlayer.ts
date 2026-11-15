@@ -53,10 +53,8 @@ export class RespinPlayer {
     const money = (v: number) => formatMoney(this.cfg, v * lineBet);
     const label = (c: StickyCell) => (c.tag ? t(`feature.jackpot.${c.tag}`)
       : c.value > 0 ? formatMoney(this.cfg, c.value * lineBet, false) : null);
-    // the counter can start high (scatter-dependent) and is reset upwards by new sticky cells
-    const maxRespins = Math.max(f.initialRespins, ...f.steps.map(s => s.respinsLeft));
     this.meter?.container.destroy({ children: true });
-    const meter = (this.meter = new FeatureMeter(this.cfg, maxRespins));
+    const meter = (this.meter = new FeatureMeter(this.cfg));
     this.stage.addChildAt(meter.container, this.stage.getChildIndex(this.fly.container));
 
     gameEvents.emit('featureStart', { feature: f });
@@ -95,7 +93,7 @@ export class RespinPlayer {
       if (step.newSticky.length) await wait(ms(ft.newStickyMs));
       // every new sticky cell fires a comet into the counter; the number ticks up when they land
       if (plan.fly.length) {
-        const to = meter.counterPoint(Math.max(plan.after, 1));
+        const to = meter.counterPoint();
         await Promise.all(plan.fly.map(c => this.fly.fly(this.cellCenter(c), to, ms(ft.flyMs))));
         if (plan.pop) meter.pop();
       }
