@@ -57,7 +57,7 @@ SPIN (hold = turbo loop), − / + (bet), **i** (paytable, bottom-left), AUTO (au
 - Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
 
 ## Landing animations
-Egg and Dragon Medal (the scatters) shimmer as they land: `config.json → symbols[].landing` / `turboLanding` (engine feature, see CLAUDE.md). Egg: 700 ms, 2 light sweeps, full hue pass (360°), pop ×1.14; Dragon (super scatter): 850 ms, 3 golden sweeps, stronger pop. Turbo variants are about half as long.
+Egg and Dragon Medal (the scatters) shimmer as they land: `config.json → symbols[].landing` / `turboLanding` (engine feature, see CLAUDE.md). Egg: 700 ms, 1 light sweep, full hue pass (360°), pop ×1.14; Dragon (super scatter): 850 ms, 1 golden sweep, stronger pop. Turbo variants are about half as long.
 
 ## Anticipation
 `config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 scatters (eggs / dragons) already landed or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈8.6% of real spins (≈5% of those reach the nest), ≈16% in demo (≈24%). QA: `npm run dev`, `?game=dragon&force=anticipation`.
