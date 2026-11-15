@@ -52,7 +52,7 @@ src/
 │   ├── core/SpinLoop.ts     Single spin, hold-to-turbo loop, autoplay; autoplay / quick-spin toggles
 │   ├── core/Wallet.ts       Balance + bet selection (minor units)
 │   ├── core/WinCycle.ts     Line-by-line win display after a spin
-│   ├── core/GameEvents.ts   ★ typed event bus `gameEvents` (spinStart, reelLand, reelsStopped, win, feature*, anticipation*, balance…)
+│   ├── core/GameEvents.ts   ★ typed event bus `gameEvents` (spinStart, reelLand, symbolLanding, reelsStopped, win, feature*, anticipation*, balance…)
 │   ├── core/devFlags.ts     URL switches: ?force=, ?debug=, ?seed=
 │   ├── core/qaHooks.ts      window.__vslot in dev builds (QA / agents)
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
@@ -65,7 +65,8 @@ src/
 │   │                        + AnticipationDirector (extends/boosts teasing reels, drives the FX)
 │   ├── fx/                  AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
 │   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
-│   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool
+│   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool,
+│   │                        LandingFX (symbol landing animation: pop, light sweeps, flash, hue shimmer)
 │   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types
 │   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter,
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
@@ -124,6 +125,8 @@ const game: GameDefinition = {
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 
 **Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro window (`feature.title` header, `feature.intro` "CONGRATULATIONS!", `feature.won` "YOU WON {n} RESPINS") → optional initial sticky cells (values drawn by the game's `SymbolView.setValue`; value 0 = no label) → respins with a meter above the reels (respins added by a new sticky cell fly from it into the counter — `RespinFlyFX` comet + sparks — and the number ticks up on landing, `featureTiming.flyMs`) → cells with a value pay one by one → optional full-grid prize → "TOTAL WIN" window (`feature.total`) → base grid restored. Windows (`ui/FeatureBanner`) close by timer or a tap. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`); a numeric `{n}` param picks plural forms `<key>.one|few|many|other` when present. Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
+
+**Landing animations:** a symbol in `config.symbols[]` may declare `landing` (normal stop) and/or `turboLanding` (turbo / quick spins): `{ ms, sweeps, scale, hue, flash, color }`, missing fields from `LANDING_DEFAULTS` (`engine/config/defaults.ts`). When a reel stops, every visible cell whose symbol has the animation for that kind of stop plays it (`SlotSymbol.playLanding` → `LandingFX`: pop, diagonal light bands, flash, `hue` degrees of colour rotation = iridescent shimmer) and `gameEvents` emits `symbolLanding` (hook sounds there). No entry → no animation (a symbol with only `landing` stays still in turbo). Resolved via `cfg.landing(id, turbo)`.
 
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 

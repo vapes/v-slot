@@ -1,10 +1,12 @@
 import { Container, Graphics } from 'pixi.js';
 import type { SymbolView } from '../contracts';
+import type { LandingConfig } from '../config/SlotConfig';
+import { LandingFX } from './LandingFX';
 
 /**
  * One reel cell. The game-provided SymbolView draws the art; this class adds
- * the win pulse (inner `content` container, isolated from spin positioning)
- * and the gold win frame.
+ * the win pulse (inner `content` container, isolated from spin positioning),
+ * the gold win frame and the optional landing animation (LandingFX).
  */
 export class SlotSymbol extends Container {
   private content: Container;
@@ -13,6 +15,7 @@ export class SlotSymbol extends Container {
   private _winAnimating = false;
   private _winElapsedMs = 0;
   private _winCycleMs = 1500;
+  private landingFx: LandingFX | null = null;
 
   constructor(private view: SymbolView, symbolId: string, private w: number, private h: number) {
     super();
@@ -37,8 +40,23 @@ export class SlotSymbol extends Container {
     this.stopWinAnimation();
   }
 
+  /** Landing animation (config.symbols[].landing) — created on first use. */
+  playLanding(spec: LandingConfig): void {
+    this.landingFx ??= new LandingFX(this.content, this.w, this.h);
+    this.landingFx.play(spec);
+  }
+
+  get landing(): boolean {
+    return this.landingFx?.active ?? false;
+  }
+
+  updateLanding(dt: number): void {
+    this.landingFx?.update(dt);
+  }
+
   /** Pulse once per cycleMs with a gold frame. */
   startWinAnimation(cycleMs = 1500): void {
+    this.landingFx?.stop();
     this._winAnimating = true;
     this._winElapsedMs = 0;
     this._winCycleMs = cycleMs;
@@ -61,6 +79,7 @@ export class SlotSymbol extends Container {
   }
 
   stopWinAnimation(): void {
+    this.landingFx?.stop();
     this._winAnimating = false;
     this._winElapsedMs = 0;
     this.winBorder.clear();

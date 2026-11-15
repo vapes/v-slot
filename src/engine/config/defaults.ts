@@ -52,3 +52,22 @@ export const ANTICIPATION_DEFAULTS = {
   /** null = on for "flame", off for "marquee". */
   sparks: null as boolean | null,
 };
+
+/**
+ * Symbol landing animation (config.symbols[].landing / turboLanding): played on
+ * the visible cells of that symbol when its reel stops. Every field optional.
+ */
+export const LANDING_DEFAULTS = {
+  /** Whole animation length. */
+  ms: 650,
+  /** Diagonal light bands sweeping across the cell, one after another. */
+  sweeps: 2,
+  /** Peak of the pop scale (1 = no pop). */
+  scale: 1.12,
+  /** Total hue rotation in degrees during the animation (0 = none; 360 = full iridescent pass). */
+  hue: 0,
+  /** Peak brightness flash over the cell, 0..1. */
+  flash: 0.45,
+  /** Colour of the light bands / flash, "0xRRGGBB". */
+  color: '0xFFF6C8',
+};

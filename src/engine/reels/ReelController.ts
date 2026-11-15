@@ -8,6 +8,7 @@ import { SymbolFactory } from '../symbols/SymbolFactory';
 import type { SpinResult, WinResult } from '../math/types';
 import type { SymbolRenderer } from '../contracts';
 import { createSymbolPicker } from '../utils/Random';
+import type { SlotSymbol } from '../symbols/SlotSymbol';
 
 export class ReelController {
   readonly container: Container;
@@ -28,6 +29,10 @@ export class ReelController {
   private readonly reelCount: number;
   private readonly rowCount: number;
   private readonly reelWidth: number;
+  /** Current spin uses the turbo landing animations (turbo / quick spins). */
+  private turbo = false;
+  /** Cells playing a landing animation. */
+  private landing = new Set<SlotSymbol>();
 
   constructor(private cfg: SlotConfig, renderer: SymbolRenderer) {
     this.reelCount = cfg.grid.cols;
@@ -105,6 +110,7 @@ export class ReelController {
   /** Normal spin; `anticipate[i]` makes reel i tease (see AnticipationDirector). */
   startSpin(result: SpinResult, onComplete: () => void, anticipate: boolean[] | null = null, suppressed?: () => boolean): void {
     if (!this.beginSpin(onComplete)) return;
+    this.turbo = false;
     const { reelStartInterval, scrollScreens } = this.cfg.spin;
     const extra = this.anticipation.plan(anticipate, suppressed);
     for (let i = 0; i < this.reelCount; i++) {
@@ -118,6 +124,7 @@ export class ReelController {
 
   startTurboSpin(result: SpinResult, onComplete: () => void): void {
     if (!this.beginSpin(onComplete)) return;
+    this.turbo = true;
     this.anticipation.plan(null);
     for (let i = 0; i < this.reelCount; i++) {
       this.reels[i].startSpin(result.grid[i], 1, () => this.onReelStopped(), true);
@@ -147,6 +154,7 @@ export class ReelController {
     this.reelsStopped = 0;
     this.onAllStoppedCallback = onComplete;
     this.wins.demote();
+    this.landing.clear();
     this.wins.forEachVisible((sym) => {
       sym.stopWinAnimation();
       sym.alpha = 1;
@@ -165,11 +173,29 @@ export class ReelController {
   update(dt: number): void {
     this.reels.forEach((reel, i) => {
       reel.update(dt);
-      if (this.wasSpinning[i] && !reel.isSpinning) gameEvents.emit('reelLand', { reel: i });
+      if (this.wasSpinning[i] && !reel.isSpinning) {
+        gameEvents.emit('reelLand', { reel: i });
+        this.playLandings(i, reel.getVisibleSymbols());
+      }
       this.wasSpinning[i] = reel.isSpinning;
     });
+    for (const sym of this.landing) {
+      sym.updateLanding(dt);
+      if (!sym.landing) this.landing.delete(sym);
+    }
     this.anticipation.update(dt);
     this.wins.update(dt);
+  }
+
+  /** Symbols with a landing animation (config.symbols[].landing / turboLanding) play it as their reel stops. */
+  private playLandings(reel: number, cells: SlotSymbol[]): void {
+    cells.forEach((sym, row) => {
+      const spec = this.cfg.landing(sym.symbolId, this.turbo);
+      if (!spec) return;
+      sym.playLanding(spec);
+      this.landing.add(sym);
+      gameEvents.emit('symbolLanding', { reel, row, symbol: sym.symbolId, turbo: this.turbo });
+    });
   }
 
   /** Highlight every winning position with a pulse; dim the rest. */

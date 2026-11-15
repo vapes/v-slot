@@ -66,8 +66,20 @@
   "wild": "wild",
   "symbols": [
     { "id": "wild", "name": "Wild", "weight": 2 },
-    { "id": "dragon", "name": "Dragon Medal", "weight": 2 },
-    { "id": "egg", "name": "Dragon Egg", "weight": 3 },
+    {
+      "id": "dragon",
+      "name": "Dragon Medal",
+      "weight": 2,
+      "landing": { "ms": 850, "sweeps": 3, "hue": 360, "scale": 1.18, "flash": 0.6, "color": "0xFFE08A" },
+      "turboLanding": { "ms": 420, "sweeps": 2, "hue": 360, "scale": 1.1, "flash": 0.4, "color": "0xFFE08A" }
+    },
+    {
+      "id": "egg",
+      "name": "Dragon Egg",
+      "weight": 3,
+      "landing": { "ms": 700, "sweeps": 2, "hue": 360, "scale": 1.14, "flash": 0.5 },
+      "turboLanding": { "ms": 380, "sweeps": 1, "hue": 360, "scale": 1.08, "flash": 0.35 }
+    },
     { "id": "chest", "name": "Treasure Chest", "weight": 3 },
     { "id": "gold", "name": "Gold Hoard", "weight": 3 },
     { "id": "crystal", "name": "Crystal", "weight": 4 },

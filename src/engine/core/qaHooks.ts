@@ -18,7 +18,7 @@ export function installQaHooks(api: Omit<QaApi, 'events'>): void {
   if (!import.meta.env.DEV) return;
   const events: QaApi['events'] = [];
   const names: (keyof GameEventMap)[] = [
-    'spinStart', 'reelLand', 'reelsStopped', 'anticipationStart', 'anticipationEnd',
+    'spinStart', 'reelLand', 'symbolLanding', 'reelsStopped', 'anticipationStart', 'anticipationEnd',
     'featureStart', 'featureStep', 'featureEnd', 'win', 'balance', 'betChange', 'autoplay', 'quickSpin',
   ];
   names.forEach(name => gameEvents.on(name, () => events.push({ name, at: performance.now() })));
