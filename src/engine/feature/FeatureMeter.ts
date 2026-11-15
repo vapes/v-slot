@@ -18,6 +18,7 @@ export class FeatureMeter {
   private total = new Text('', STYLE);
   private dots = new Graphics();
   private readonly w: number;
+  private popAge = -1;
 
   constructor(cfg: SlotConfig, private maxRespins: number) {
     this.w = cfg.reelAreaWidth * 0.86;
@@ -41,12 +42,46 @@ export class FeatureMeter {
     this.setTotal(total);
   }
 
+  private get asNumber(): boolean {
+    return this.maxRespins > MAX_DOTS;
+  }
+
+  /** Where respins "fly in" for a counter value `n` (the dot that lights up, or the number), stage px. */
+  counterPoint(n: number): { x: number; y: number } {
+    const { x, y } = this.container.position;
+    if (this.asNumber) return { x: x + this.respins.x + this.respins.width - 10, y };
+    return { x: x + this.dotX(Math.max(n - 1, 0)), y };
+  }
+
+  /** Bounce of the counter after respins were added. */
+  pop(): void {
+    this.popAge = 0;
+  }
+
+  update(dt: number): void {
+    if (this.popAge < 0) return;
+    this.popAge += dt;
+    const t = Math.min(this.popAge / 20, 1);
+    const s = 1 + Math.sin(t * Math.PI) * 0.35;
+    this.respins.scale.set(this.respinsScale * s);
+    this.dots.scale.set(1, s);
+    if (t >= 1) this.popAge = -1;
+  }
+
+  private respinsScale = 1;
+
+  private dotX(i: number): number {
+    return this.respins.x + this.respins.width + 12 + i * 16;
+  }
+
   /** Dots for up to MAX_DOTS respins, a number beyond that (big scatter triggers). */
   setRespins(n: number): void {
-    const asNumber = this.maxRespins > MAX_DOTS;
+    const asNumber = this.asNumber;
     this.respins.text = asNumber ? `${t('feature.respins')} ${n}` : t('feature.respins');
+    this.respins.scale.set(1);
     fitText(this.respins, this.w * 0.42);
-    const x0 = this.respins.x + this.respins.width + 12;
+    this.respinsScale = this.respins.scale.x;
+    const x0 = this.dotX(0);
     this.dots.clear();
     for (let i = 0; i < (asNumber ? 0 : this.maxRespins); i++) {
       this.dots.lineStyle(1.5, 0xFFC94A, 1);

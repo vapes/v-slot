@@ -23,6 +23,8 @@ export const FEATURE_TIMING_DEFAULTS = {
   stickMs: 600,
   /** Pause after a respin that landed new sticky cells. */
   newStickyMs: 450,
+  /** Respins added by a new sticky cell fly from it into the counter this long. */
+  flyMs: 800,
   /** Line wins of a respin are shown this long. */
   stepWinMs: 900,
   stepPauseMs: 300,

@@ -70,6 +70,8 @@ export interface RawSlotConfig {
     triggerMs?: number;
     stickMs?: number;
     newStickyMs?: number;
+    /** Flight of the added respins from a new sticky cell into the counter. */
+    flyMs?: number;
     stepWinMs?: number;
     grandMs?: number;
     /** Multiplier for every feature timing in turbo / quick spins. */

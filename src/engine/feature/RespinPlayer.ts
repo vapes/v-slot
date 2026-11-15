@@ -8,6 +8,7 @@ import { formatMoney } from '../utils/Money';
 import { FeatureBanner } from '../ui/FeatureBanner';
 import { FeatureMeter } from './FeatureMeter';
 import { StickyLayer } from './StickyLayer';
+import { RespinFlyFX } from './RespinFlyFX';
 import { gameEvents } from '../core/GameEvents';
 
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
@@ -23,6 +24,7 @@ export class RespinPlayer {
   private sticky: StickyLayer;
   private meter: FeatureMeter | null = null;
   private banner: FeatureBanner;
+  private fly = new RespinFlyFX();
 
   constructor(private cfg: SlotConfig, private reels: ReelController, renderer: SymbolRenderer, private stage: Container) {
     this.sticky = new StickyLayer(cfg, renderer, reels.overlay);
@@ -31,12 +33,14 @@ export class RespinPlayer {
 
   /** Banner/meter layers; call once after the game view is mounted. */
   mount(): void {
-    this.stage.addChild(this.banner.container);
+    this.stage.addChild(this.fly.container, this.banner.container);
   }
 
   update(dt: number): void {
     this.sticky.update(dt);
     this.banner.update(dt);
+    this.fly.update(dt);
+    this.meter?.update(dt);
   }
 
   async play(f: FeatureRound, baseGrid: string[][], lineBet: number, fast: boolean, view: GameView): Promise<void> {
@@ -49,7 +53,7 @@ export class RespinPlayer {
     const maxRespins = Math.max(f.initialRespins, ...f.steps.map(s => s.respinsLeft));
     this.meter?.container.destroy({ children: true });
     const meter = (this.meter = new FeatureMeter(this.cfg, maxRespins));
-    this.stage.addChild(meter.container);
+    this.stage.addChildAt(meter.container, this.stage.getChildIndex(this.fly.container));
 
     gameEvents.emit('featureStart', { feature: f });
     // 1. trigger: scatters pulse, then the intro banner
@@ -84,13 +88,19 @@ export class RespinPlayer {
       running += step.lineWin;
       meter.setTotal(money(running));
       if (step.newSticky.length) await wait(ms(ft.newStickyMs));
+      // respins added by new sticky cells fly from the cells into the counter, then it ticks up
+      if (step.newSticky.length && step.respinsLeft > respins - 1) {
+        const to = meter.counterPoint(step.respinsLeft);
+        await Promise.all(step.newSticky.map(c => this.fly.fly(this.cellCenter(c), to, ms(ft.flyMs))));
+        meter.pop();
+      }
+      respins = step.respinsLeft;
+      meter.setRespins(respins);
       if (step.wins.length) {
         this.reels.showWins({ grid: step.grid, wins: step.wins, totalWin: step.lineWin }, 700);
         await wait(ms(ft.stepWinMs));
         this.reels.clearWins();
       }
-      respins = step.respinsLeft;
-      meter.setRespins(respins);
       gameEvents.emit('featureStep', { index: f.steps.indexOf(step), newSticky: step.newSticky.length, respinsLeft: respins });
       await wait(ms(ft.stepPauseMs));
     }
@@ -111,11 +121,18 @@ export class RespinPlayer {
     // 5. outro, back to the base game
     await this.banner.show(t('feature.title'), t('feature.total'), money(f.totalWin), ms(ft.outroMs));
     this.sticky.clear();
+    this.fly.clear();
     meter.hide();
     this.reels.setBlurPool(null);
     this.reels.snapTo(baseGrid);
     view.setFeatureMode?.(false);
     gameEvents.emit('featureEnd', { totalWin: f.totalWin * lineBet });
+  }
+
+  /** Centre of a grid cell in stage px. */
+  private cellCenter(c: StickyCell): { x: number; y: number } {
+    const { reelOffsetX, reelOffsetY, reelWidth, cellHeight, symbol } = this.cfg;
+    return { x: reelOffsetX + c.reel * reelWidth + symbol.width / 2, y: reelOffsetY + c.row * cellHeight + symbol.height / 2 };
   }
 
   private spin(grid: string[][], fast: boolean): Promise<void> {
