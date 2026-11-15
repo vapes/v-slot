@@ -22,6 +22,9 @@ export interface GameEventMap {
   featureEnd: { totalWin: number };
   /** Spin finished with a win (base + feature). */
   win: { amount: number; totalBet: number; category: string | null };
+  /** Win box: the counter passed a tier threshold (BIG → HUGE → …) / finished counting. */
+  winTier: { category: string };
+  winCountEnd: { amount: number };
   balance: { balance: number };
   betChange: { totalBet: number };
   autoplay: { on: boolean };

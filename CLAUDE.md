@@ -64,7 +64,7 @@ src/
 │   ├── reels/               Reel (state machine, symbol recycling, boost), ReelController (spin control, layers),
 │   │                        WinPresenter (promote / dim / pulse winners)
 │   │                        + AnticipationDirector (extends/boosts teasing reels, drives the FX)
-│   ├── fx/                  AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
+│   ├── fx/                  CoinShower (pooled win coins + glints), AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
 │   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool,
 │   │                        LandingFX (symbol landing animation: pop, light sweeps, flash, hue shimmer)
@@ -73,7 +73,7 @@ src/
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
-│   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
+│   ├── ui/                  WinCelebration, WinBox (+ WinTitle, winTicks plan), HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
 │   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions)
 │   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
@@ -131,6 +131,8 @@ const game: GameDefinition = {
 
 **Landing animations:** a symbol in `config.symbols[]` may declare `landing` (normal stop) and/or `turboLanding` (turbo / quick spins): `{ ms, sweeps, scale, hue, flash, color }`, missing fields from `LANDING_DEFAULTS` (`engine/config/defaults.ts`). When a reel stops, every visible cell whose symbol has the animation for that kind of stop plays it (`SlotSymbol.playLanding` → `LandingFX`: pop, diagonal light bands, flash, `hue` degrees of colour rotation = iridescent shimmer) and `gameEvents` emits `symbolLanding` (hook sounds there). No entry → no animation (a symbol with only `landing` stays still in turbo). Resolved via `cfg.landing(id, turbo)`.
 
+**Win box:** a view may expose `GameView.winBox = new WinBox(config, { x, y, w, h }, styles?)` (engine; the engine mounts and updates it) and route `Hud.setStatus / setWinStatus / setLineInfo / hideLineInfo` to `setStatus / showWin / setCaption`. Outside turbo / quick spins a win counts up in the box (`tickMs`); a BIG+ win (`config.celebration`) climbs to the BIG threshold, rides onto the reels over a dimmed screen and keeps counting tier by tier (`planWinTicks`, pure + tested): the title switches BIG → HUGE → EPIC → MAX with a pop, and coins (`fx/CoinShower`) grow per tier (`coinRate` / `rainRate` / `burst`); then it holds (`holdMs`) and returns. The pipeline awaits it; SPIN / spacebar / a tap jumps to the final amount, the next one closes. Turbo / quick keep the instant amount + old celebration. Settings: `config.winBox` over `WINBOX_DEFAULTS`. Events: `winTier`, `winCountEnd`. QA: `__vslot.showWin(x)` previews x × bet (no money).
+
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
 **Tests:** pure logic gets a vitest test in `tests/` (engine → `tests/engine`, game math → `tests/games/<id>.test.ts`, seed with `createRng`). New game math must at least test its invariants (symbols per reel set, totals add up, reproducible with a seed).
@@ -145,7 +147,7 @@ const game: GameDefinition = {
 
 1. **pre** — validate balance (≥ stake) → stop previous wins → deduct stake (bet, or the feature price) → stop-mode/disable bets → status "Good luck!"
 2. **server** — `math.spin({ buyFeature: ctx.buy })` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast; otherwise with anticipation from `computeAnticipation`) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
+3. **post** — reel animation (quick/turbo = fast; otherwise with anticipation from `computeAnticipation`) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`; with a `GameView.winBox` outside turbo/quick: the awaited win box show instead) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -160,6 +162,7 @@ Stage
 │   ├── AnticipationFX (veil, flame meshes, sparks)
 │   └── winLayer (unmasked; winning symbols promoted here)
 ├── GameView.mountAboveReels   (buttons, HUD)
+├── GameView.winBox            (optional; shade + coins + title + box, rides onto the reels on BIG+ wins)
 ├── HomeButton                 (config.homeButton — top-left corner in every game)
 ├── SoundButton                (config.soundButton — top-right corner; toggles soundSettings.muted)
 ├── FeatureBanner / FeatureMeter (feature intro/outro, respins + running total)

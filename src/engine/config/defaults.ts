@@ -71,3 +71,35 @@ export const LANDING_DEFAULTS = {
   /** Colour of the light bands / flash, "0xRRGGBB". */
   color: '0xFFF6C8',
 };
+
+/**
+ * Win box (GameView.winBox): animated win counter in the HUD; BIG+ wins ride
+ * onto the reels and count up tier by tier (config.winBox overrides any field).
+ * Not used in turbo / quick spins.
+ */
+export const WINBOX_DEFAULTS = {
+  /** Small win (under BIG): count-up length. */
+  tickMs: 700,
+  /** BIG+ win: count-up to the BIG threshold before the box leaves its place. */
+  climbMs: 600,
+  /** BIG+ win: count-up through one tier (BIG → HUGE → EPIC → MAX). */
+  stageMs: 2200,
+  /** Shortest last partial tier, share of stageMs. */
+  minStage: 0.35,
+  /** Box flight between its place and the reels (each way). */
+  rideMs: 450,
+  /** Final amount held on the reels before the box returns (a tap skips). */
+  holdMs: 1800,
+  /** Box scale while on the reels. */
+  bigScale: 1.9,
+  /** Screen dim behind the box on the reels. */
+  shade: 0.55,
+  /** Win counter text refresh (text re-rasterises on change; ≈ 30 per second is plenty). */
+  refreshMs: 33,
+  /** Per tier BIG / HUGE / EPIC / MAX: coins per second from the box … */
+  coinRate: [14, 30, 55, 90],
+  /** … coins per second raining from the top … */
+  rainRate: [0, 8, 24, 45],
+  /** … and the coin burst when the tier title appears. */
+  burst: [20, 35, 55, 80],
+};

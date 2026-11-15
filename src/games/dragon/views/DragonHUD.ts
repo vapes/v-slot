@@ -1,5 +1,5 @@
-import { Text, TextStyle, Container, Graphics } from 'pixi.js';
-import { shadow, vGradient, formatMoney as fmt, t, type Hud } from '@/engine';
+import { Text, TextStyle, Container } from 'pixi.js';
+import { shadow, vGradient, formatMoney as fmt, WinBox, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 
 const formatMoney = (minor: number) => fmt(config, minor);
@@ -10,89 +10,70 @@ const VALUE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 17, fontWeight: 'bold', fill: 0xFFFFFF,
   dropShadow: shadow(1, 0.8, 2),
 });
-const WIN_VALUE_STYLE = Object.assign(VALUE_STYLE.clone(), {
-  fill: vGradient(['#FFF6C8', '#FFC93C', '#FF9A1F'], [0, 0.5, 1]),
-});
-/** Gold captions over the panels (replace the erased baked BALANCE / LAST WIN / BET). */
+/** Gold captions over the panels (replace the erased baked BALANCE / BET). */
 export const DRAGON_LABEL_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 13, fontWeight: 'bold', fill: vGradient(['#FFE9A6', '#F2B84B']),
   dropShadow: shadow(1, 0.8, 1),
 });
-const MESSAGE_STYLE = new TextStyle({
-  fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3,
+const STATUS_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 17, fontWeight: 'bold', fill: 0xFFE7A3,
   stroke: { color: 0x2A0A00, width: 4 }, letterSpacing: 0.5,
+});
+const WIN_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 21, fontWeight: 'bold',
+  fill: vGradient(['#FFF6C8', '#FFC93C', '#FF9A1F'], [0, 0.5, 1]), dropShadow: shadow(1, 0.8, 2),
 });
 
 /**
- * Texts drawn over the skin's baked panels:
- * BALANCE / LAST WIN / BET values plus a one-line message strip under the reels.
+ * Texts drawn over the skin's baked panels: BALANCE / BET values. The middle
+ * panel is the engine WinBox (status line + counting win; BIG+ wins ride onto
+ * the reels) — it replaces the old LAST WIN block and message strip.
  */
 export class DragonHUD implements Hud {
+  readonly winBox: WinBox;
   private balanceValue: Text;
-  private lastWinValue: Text;
   private betValue: Text;
-  private message: Text;
-  private messageBg = new Graphics();
-  private lastWin = 0;
 
   constructor() {
-    this.balanceValue = this.makeValue('balanceValue', VALUE_STYLE);
-    this.lastWinValue = this.makeValue('lastWinValue', VALUE_STYLE);
-    this.betValue = this.makeValue('betValue', VALUE_STYLE);
-    this.message = this.makeValue('message', MESSAGE_STYLE);
-    this.setLastWin(0);
+    this.balanceValue = this.makeValue('balanceValue');
+    this.betValue = this.makeValue('betValue');
+    const a = uiAnchor('winBox');
+    this.winBox = new WinBox(config, { x: a.x, y: a.y, w: a.w, h: a.h },
+      { status: STATUS_STYLE, caption: DRAGON_LABEL_STYLE, amount: WIN_STYLE });
   }
 
-  private makeValue(anchorName: UiAnchorName, style: TextStyle): Text {
-    const t = new Text({ text: '', style: style });
+  private makeValue(anchorName: UiAnchorName): Text {
+    const t = new Text({ text: '', style: VALUE_STYLE });
     const a = uiAnchor(anchorName);
     t.anchor.set(0.5, 0.5);
     t.position.set(a.x, a.y);
     return t;
   }
 
+  /** The win box itself is mounted by the engine (above the HUD, below the corner buttons). */
   addToStage(stage: Container): void {
     stage.addChild(
       skin.label('balanceLabel', 'label.balance', DRAGON_LABEL_STYLE),
-      skin.label('lastWinLabel', 'label.lastWin', DRAGON_LABEL_STYLE),
       skin.label('betLabel', 'label.bet', DRAGON_LABEL_STYLE),
-      this.balanceValue, this.lastWinValue, this.betValue, this.messageBg, this.message,
+      this.balanceValue, this.betValue,
     );
-  }
-
-  private setMessage(text: string): void {
-    this.message.text = text;
-    this.messageBg.clear();
-    if (!text) return;
-    const w = this.message.width + 28;
-    const h = 24;
-    this.messageBg.roundRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2)
-      .fill({ color: 0x160912, alpha: 0.9 }).stroke({ width: 1.5, color: 0xC8962E, alpha: 0.8 });
   }
 
   /** Neutral status line (e.g. "Good luck!"). */
   setStatus(msg: string): void {
-    this.setMessage(msg);
+    this.winBox.setStatus(msg);
   }
 
-  /** Show the win of the latest spin in the message strip and LAST WIN panel. */
   setWinStatus(amount: number): void {
-    this.setMessage(t('hud.win', { amount: formatMoney(amount) }));
-    this.setLastWin(amount);
+    this.winBox.showWin(amount);
   }
 
   setLineInfo(text: string): void {
-    this.setMessage(text);
+    this.winBox.setCaption(text);
   }
 
   hideLineInfo(): void {
-    if (this.lastWin > 0) this.setMessage(t('hud.win', { amount: formatMoney(this.lastWin) }));
-  }
-
-  setLastWin(amount: number): void {
-    this.lastWin = amount;
-    this.lastWinValue.text = formatMoney(amount);
-    this.lastWinValue.style = amount > 0 ? WIN_VALUE_STYLE : VALUE_STYLE;
+    this.winBox.setCaption(null);
   }
 
   updateBalanceDisplay(balance: number, totalBet: number): void {

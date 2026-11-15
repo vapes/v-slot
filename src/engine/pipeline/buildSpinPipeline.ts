@@ -9,12 +9,15 @@ import type { SpinResult } from '../math/types';
 import type { Hud, MathModel } from '../contracts';
 import type { ReelController } from '../reels/ReelController';
 import type { WinCelebration } from '../ui/WinCelebration';
+import type { WinBox } from '../ui/WinBox';
 
 export interface PipelineDeps {
   cfg: SlotConfig;
   slotMath: MathModel;
   reelController: ReelController;
   winCelebration: WinCelebration;
+  /** The view's win box, if it has one (see GameView.winBox). */
+  winBox?: WinBox;
   hud: Hud;
   isButtonHeld(): boolean;
   setBalance(b: number): void;
@@ -29,7 +32,9 @@ export interface PipelineDeps {
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
-  const { cfg, slotMath, reelController, winCelebration, hud } = deps;
+  const { cfg, slotMath, reelController, winCelebration, winBox, hud } = deps;
+  /** Win box animations run outside turbo / quick spins only. */
+  const animated = (ctx: SpinContext) => !!winBox && !ctx.turbo && !ctx.quick;
   const spinConfig = cfg.spin;
   const pipeline = new SpinPipeline();
 
@@ -46,6 +51,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     execute: () => {
       deps.stopWinCycle();
       winCelebration.stop();
+      winBox?.finish();
     },
   });
 
@@ -142,7 +148,9 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'updateWinUI',
     execute: (ctx) => {
       if (ctx.winAmount > 0) {
-        hud.setWinStatus(ctx.winAmount);
+        if (!animated(ctx)) hud.setWinStatus(ctx.winAmount);
+        // small win: quick count-up in place (BIG+ counts in playCelebration)
+        else if (!getWinCategory(cfg, ctx.winAmount, ctx.totalBet)) void winBox!.countUp(ctx.winAmount, ctx.totalBet);
       } else if (!ctx.turbo) {
         hud.setStatus(t('status.idle'));
       }
@@ -165,12 +173,14 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
 
   pipeline.add('post', {
     name: 'playCelebration',
-    execute: (ctx) => {
+    execute: async (ctx) => {
       if (ctx.winAmount <= 0) return;
       const category = getWinCategory(cfg, ctx.winAmount, ctx.totalBet);
       gameEvents.emit('win', { amount: ctx.winAmount, totalBet: ctx.totalBet, category });
       if (!category) return;
-      if (ctx.turbo) {
+      if (animated(ctx)) {
+        await winBox!.countUp(ctx.winAmount, ctx.totalBet);
+      } else if (ctx.turbo) {
         winCelebration.playStatic(category, cfg.timing.turboBannerMs);
       } else {
         winCelebration.play(category);

@@ -12,6 +12,7 @@ const NIGHT_TINT = 0x8C7BC8;
 export class DragonView implements GameView {
   readonly spinButton = makeSpin();
   readonly hud = new DragonHUD();
+  readonly winBox = this.hud.winBox;
   private readonly minus = make('minus');
   private readonly plus = make('plus');
   private readonly info = make('info');
