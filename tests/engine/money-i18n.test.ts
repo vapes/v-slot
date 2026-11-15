@@ -25,4 +25,17 @@ describe('I18n.t', () => {
     expect(i18n.t('unknown.key', {}, 'Fallback {x}')).toBe('Fallback {x}');
     expect(i18n.t('totally.unknown')).toBe('totally.unknown');
   });
+
+  it('picks plural forms for a numeric n', () => {
+    const i18n = new I18n();
+    expect(i18n.t('feature.won', { n: 1 })).toBe('YOU WON 1 RESPIN');
+    expect(i18n.t('feature.won', { n: 5 })).toBe('YOU WON 5 RESPINS');
+    const ru = i18n as unknown as { lang: string; dict: Record<string, string> };
+    ru.lang = 'ru';
+    ru.dict = { 'feature.won.one': '{n} РЕСПИН', 'feature.won.few': '{n} РЕСПИНА', 'feature.won.many': '{n} РЕСПИНОВ' };
+    expect(i18n.t('feature.won', { n: 1 })).toBe('1 РЕСПИН');
+    expect(i18n.t('feature.won', { n: 3 })).toBe('3 РЕСПИНА');
+    expect(i18n.t('feature.won', { n: 5 })).toBe('5 РЕСПИНОВ');
+    expect(i18n.t('feature.won', { n: 21 })).toBe('21 РЕСПИН');
+  });
 });

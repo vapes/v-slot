@@ -17,7 +17,8 @@ export const TIMING_DEFAULTS = {
 export const FEATURE_TIMING_DEFAULTS = {
   /** Trigger scatters pulse before the intro banner. */
   triggerMs: 1200,
-  introMs: 2000,
+  /** "CONGRATULATIONS! YOU WON N RESPINS" window (a tap closes it earlier). */
+  introMs: 3200,
   /** Pause after the triggering cells became sticky. */
   stickMs: 600,
   /** Pause after a respin that landed new sticky cells. */
@@ -28,7 +29,8 @@ export const FEATURE_TIMING_DEFAULTS = {
   /** Per sticky cell during the final collect. */
   collectMs: 130,
   grandMs: 2600,
-  outroMs: 2200,
+  /** "TOTAL WIN" window (a tap closes it earlier). */
+  outroMs: 3200,
   /** Every feature timing is multiplied by this in turbo / quick spins. */
   fastFactor: 0.4,
 };

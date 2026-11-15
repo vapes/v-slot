@@ -11,15 +11,15 @@ type Rng = () => number;
  * Pure (no Pixi/DOM) so tools/simulate.ts can run it in Node.
  *
  * 3+ scatters anywhere (eggs and/or dragons, rc.scatters) start the nest;
- * respins = Σ per-scatter grants (egg 1, dragon 3). Every triggering scatter
- * becomes a sticky WILD (rc.sticky) with a cash value. Respins run on the
- * nest strips (wild + treasures only); each new wild sticks, tops the counter
- * up to rc.respins and substitutes on lines. A full nest adds the GRAND prize.
+ * respins = Σ per-scatter grants (egg 1, dragon 3). The scatters only start
+ * the feature (they do not stay). Respins run on the nest strips (wild +
+ * treasures, no scatters); each WILD (rc.sticky) that lands sticks, tops the
+ * counter up to rc.respins and substitutes on lines. Wilds pay nothing on
+ * their own — the feature pays its line wins only.
  * The whole round is decided here, the engine only replays it.
  */
 export class DragonMath implements MathModel {
   private base: ReelStripMath;
-  private readonly lines: number;
   private readonly rc: RespinConfig;
   private readonly nest: string[][];
 
@@ -28,7 +28,6 @@ export class DragonMath implements MathModel {
     this.base = new ReelStripMath(cfg, profile.reels, rng);
     this.rc = profile.respin;
     this.nest = profile.nest;
-    this.lines = cfg.paylines.length;
   }
 
   spin(): SpinResult {
@@ -50,20 +49,15 @@ export class DragonMath implements MathModel {
     return out;
   }
 
-  /** Random sticky value (× line bet) or jackpot tag, from rc.values weights; the cell shows rc.sticky. */
+  /** A sticky wild: no cash value of its own. */
   private stick(reel: number, row: number): StickyCell {
-    const total = this.rc.values.reduce((s, v) => s + v.w, 0);
-    let roll = this.rng() * total;
-    const pick = this.rc.values.find(v => (roll -= v.w) < 0) ?? this.rc.values[0];
-    return { reel, row, symbol: this.rc.sticky, value: pick.x * this.lines, tag: pick.tag };
+    return { reel, row, symbol: this.rc.sticky, value: 0 };
   }
 
   private playRespins(trigger: [number, number][], initialRespins: number): FeatureRound {
     const { cols, rows } = this.cfg.grid;
     const cells = cols * rows;
     const sticky = new Map<string, StickyCell>();
-    const initialSticky = trigger.map(([r, row]) => this.stick(r, row));
-    initialSticky.forEach(c => sticky.set(`${c.reel},${c.row}`, c));
 
     const steps: FeatureStep[] = [];
     let respins = initialRespins;
@@ -88,12 +82,10 @@ export class DragonMath implements MathModel {
       steps.push({ grid, wins, lineWin, newSticky, respinsLeft: sticky.size < cells ? respins : 0 });
     }
 
-    const collect = [...sticky.values()].reduce((s, c) => s + c.value, 0);
-    const fullBonus = sticky.size >= cells ? this.rc.grand * this.lines : 0;
     return {
-      kind: 'respins', trigger, initialSticky, initialRespins, steps,
+      kind: 'respins', trigger, initialSticky: [], initialRespins, steps,
       reelSymbols: [...new Set(this.nest.flat())],
-      collect, fullBonus, totalWin: collect + fullBonus + lineWins,
+      collect: 0, fullBonus: 0, totalWin: lineWins,
     };
   }
 }

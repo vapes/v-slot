@@ -21,10 +21,12 @@ export const ENGINE_STRINGS: Dict = {
   'celebration.max': 'MAX',
   'celebration.win': 'WIN',
   'feature.title': 'BONUS',
-  'feature.subtitle': '{n} RESPINS',
+  'feature.intro': 'CONGRATULATIONS!',
+  'feature.won': 'YOU WON {n} RESPINS',
+  'feature.won.one': 'YOU WON {n} RESPIN',
   'feature.respins': 'RESPINS',
   'feature.collected': 'TOTAL {amount}',
-  'feature.total': 'BONUS WIN',
+  'feature.total': 'TOTAL WIN',
   'feature.grand': 'GRAND',
   'feature.jackpot.mini': 'MINI',
   'feature.jackpot.major': 'MAJOR',
@@ -39,7 +41,9 @@ export const ENGINE_STRINGS: Dict = {
 /**
  * Translations loaded from the content CDN. Lookup order:
  * current language → English → caller fallback → ENGINE_STRINGS → key.
- * `{name}` placeholders are replaced from params.
+ * `{name}` placeholders are replaced from params. A numeric `n` param picks a
+ * plural form first when the dictionary has one: `<key>.<one|few|many|other>`
+ * (Intl.PluralRules of the current language), e.g. "feature.won.few".
  */
 export class I18n {
   private lang = FALLBACK_LANG;
@@ -67,9 +71,21 @@ export class I18n {
   }
 
   t(key: string, params: Record<string, string | number> = {}, fallback?: string): string {
+    if (typeof params.n === 'number') {
+      const form = `${key}.${new Intl.PluralRules(this.lang).select(params.n)}`;
+      // the first dictionary that knows the key (or the form) decides
+      for (const d of [this.dict, this.fallback, ENGINE_STRINGS]) {
+        if (form in d) return fill(d[form], params);
+        if (key in d) break;
+      }
+    }
     const raw = this.dict[key] ?? this.fallback[key] ?? fallback ?? ENGINE_STRINGS[key] ?? key;
-    return raw.replace(/\{(\w+)\}/g, (m, name: string) => (name in params ? String(params[name]) : m));
+    return fill(raw, params);
   }
+}
+
+function fill(raw: string, params: Record<string, string | number>): string {
+  return raw.replace(/\{(\w+)\}/g, (m, name: string) => (name in params ? String(params[name]) : m));
 }
 
 async function loadAll(lang: string, namespaces: string[]): Promise<Dict> {
