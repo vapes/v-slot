@@ -8,6 +8,7 @@
   "homeButton": { "x": 32.3, "y": 32.3, "r": 22 },
   "soundButton": { "x": 453.8, "y": 32.3, "r": 22 },
   "celebration": { "big": 10, "huge": 25, "epic": 50, "max": 100 },
+  "lineInfo": { "y": 702 },
   "anticipation": {
     "startReel": 2,
     "minCategory": "huge",

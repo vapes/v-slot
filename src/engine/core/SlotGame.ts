@@ -12,6 +12,7 @@ import { installQaHooks } from './qaHooks';
 import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
 import { WinBox } from '../ui/WinBox';
+import { LineInfo } from '../ui/LineInfo';
 import { RespinPlayer } from '../feature/RespinPlayer';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
@@ -43,6 +44,7 @@ export class SlotGame {
   private winCycle: WinCycle;
   private celebration: WinCelebration;
   private winBox: WinBox;
+  private lineInfo: LineInfo;
   private respins: RespinPlayer;
   private paytable!: HtmlPaytable;
   private buyDialog: BuyFeatureDialog;
@@ -68,7 +70,8 @@ export class SlotGame {
     });
     const { view, reels } = this;
     const winBox = (this.winBox = new WinBox(cfg, view.winBox));
-    this.winCycle = new WinCycle(cfg, reels, winBox);
+    this.lineInfo = new LineInfo(cfg);
+    this.winCycle = new WinCycle(cfg, reels, this.lineInfo);
     this.loop = new SpinLoop(cfg, this.wallet, view, winBox, reels, () => this.pipeline,
       () => this.input.buttonHeld, (on) => this.updateBetControls(on));
 
@@ -112,7 +115,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reels.container);
     view.mountAboveReels(stage);
-    stage.addChild(winBox.container);
+    stage.addChild(this.lineInfo.container, winBox.container);
     this.respins.mount(stage);
     stage.addChild(new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r).container);
     if (cfg.soundButton) {

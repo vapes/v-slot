@@ -1,4 +1,4 @@
-import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, LANDING_DEFAULTS, TIMING_DEFAULTS, WINBOX_DEFAULTS } from './defaults';
+import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, LANDING_DEFAULTS, TIMING_DEFAULTS, WINBOX_DEFAULTS, LINE_INFO_DEFAULTS } from './defaults';
 
 /**
  * Slot configuration contract shared by every game.
@@ -109,6 +109,8 @@ export interface RawSlotConfig {
   };
   /** Win box timings / particle rates (see WINBOX_DEFAULTS); used when the view has a `winBox`. */
   winBox?: Partial<typeof WINBOX_DEFAULTS>;
+  /** Info line under the reels (see LINE_INFO_DEFAULTS). */
+  lineInfo?: Partial<typeof LINE_INFO_DEFAULTS>;
   /** Feature buy: price = `cost` × total bet; the math must trigger the feature (SpinOptions.buyFeature). */
   buyFeature?: { cost: number };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
@@ -140,6 +142,8 @@ export interface SlotConfig extends RawSlotConfig {
   featureTiming: typeof FEATURE_TIMING_DEFAULTS;
   /** Win box settings with defaults applied. */
   winBox: typeof WINBOX_DEFAULTS;
+  /** Info line settings with defaults applied. */
+  lineInfo: typeof LINE_INFO_DEFAULTS;
   /** Resolved anticipation settings, or null when the game has none / disabled it. */
   tease: TeaseConfig | null;
   reelOffsetX: number;
@@ -176,6 +180,7 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
     },
     featureTiming: { ...FEATURE_TIMING_DEFAULTS, ...raw.feature },
     winBox: { ...WINBOX_DEFAULTS, ...raw.winBox },
+    lineInfo: { ...LINE_INFO_DEFAULTS, ...raw.lineInfo },
     tease,
     reelOffsetX: raw.reelOffsetX ?? (raw.canvas.width - reelAreaWidth) / 2,
     reelWidth,

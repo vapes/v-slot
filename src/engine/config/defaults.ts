@@ -103,3 +103,11 @@ export const WINBOX_DEFAULTS = {
   /** … and the coin burst when the tier title appears. */
   burst: [20, 35, 55, 80],
 };
+
+/** Info line under the reels ("LINE 3: 4× … — amount", engine `ui/LineInfo`); config.lineInfo overrides. */
+export const LINE_INFO_DEFAULTS = {
+  /** Centre y in game px; null = just below the reels. */
+  y: null as number | null,
+  /** Gap between the reels' bottom edge and the pill when `y` is null. */
+  gap: 6,
+};
