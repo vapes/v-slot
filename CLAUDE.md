@@ -53,7 +53,7 @@ src/
 │   ├── core/SlotGame.ts     Composition root: builds and wires every part below to the game's view + math
 │   ├── core/SpinLoop.ts     Single spin, hold-to-turbo loop, autoplay; autoplay / quick-spin toggles
 │   ├── core/Wallet.ts       Balance + bet selection (minor units)
-│   ├── core/WinCycle.ts     Line-by-line win display after a spin
+│   ├── core/WinCycle.ts     Line-by-line win display after a spin (texts → ui/LineInfo under the reels)
 │   ├── core/GameEvents.ts   ★ typed event bus `gameEvents` (spinStart, reelLand, symbolLanding, reelsStopped, win, feature*, anticipation*, balance…)
 │   ├── core/devFlags.ts     URL switches: ?force=, ?debug=, ?seed=
 │   ├── core/qaHooks.ts      window.__vslot in dev builds (QA / agents)
@@ -76,7 +76,7 @@ src/
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
-│   ├── ui/                  WinCelebration, WinBox (+ WinTitle, winTicks plan), HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
+│   ├── ui/                  WinCelebration, WinBox (+ WinTitle, winTicks plan), LineInfo (info line under the reels), HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
 │   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions)
 │   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
@@ -134,7 +134,9 @@ const game: GameDefinition = {
 
 **Landing animations:** a symbol in `config.symbols[]` may declare `landing` (normal stop) and/or `turboLanding` (turbo / quick spins): `{ ms, sweeps, scale, hue, flash, color }`, missing fields from `LANDING_DEFAULTS` (`engine/config/defaults.ts`). When a reel stops, every visible cell whose symbol has the animation for that kind of stop plays it (`SlotSymbol.playLanding` → `LandingFX`: pop, diagonal light bands, flash, `hue` degrees of colour rotation = iridescent shimmer) and `gameEvents` emits `symbolLanding` (hook sounds there). No entry → no animation (a symbol with only `landing` stays still in turbo). Resolved via `cfg.landing(id, turbo)`.
 
-**Win box (every game, engine-owned):** the engine `ui/WinBox` is the one place for the status line, the win amount and line info. A game only places it: `GameView.winBox: WinBoxLayout = { x, y, w, h, styles? }` (game px, usually exactly over a baked middle HUD panel; `styles` = status / caption / amount `TextStyle`s + `panel` colours / radius, see `ui/winBoxStyle.ts`); `Hud` is just `updateBalanceDisplay`. Outside turbo / quick spins a win counts up in the box (`tickMs`); a BIG+ win (`config.celebration`) climbs to the BIG threshold, rides onto the reels over a dimmed screen and keeps counting tier by tier (`planWinTicks`, pure + tested): the title switches BIG → HUGE → EPIC → MAX with a pop, and coins (`fx/CoinShower`) grow per tier (`coinRate` / `rainRate` / `burst`); then it holds (`holdMs`) and returns. The pipeline awaits it; SPIN / spacebar / a tap jumps to the final amount, the next one closes. Turbo / quick keep the instant amount + old celebration. Settings: `config.winBox` over `WINBOX_DEFAULTS`. Events: `winTier`, `winCountEnd`. QA: `__vslot.showWin(x)` previews x × bet (no money).
+**Win box (every game, engine-owned):** the engine `ui/WinBox` is the one place for the status line and the win amount (line info is the separate info line below). A game only places it: `GameView.winBox: WinBoxLayout = { x, y, w, h, styles? }` (game px, usually exactly over a baked middle HUD panel; `styles` = status / caption / amount `TextStyle`s + `panel` colours / radius, see `ui/winBoxStyle.ts`); `Hud` is just `updateBalanceDisplay`. Outside turbo / quick spins a win counts up in the box (`tickMs`); a BIG+ win (`config.celebration`) climbs to the BIG threshold, rides onto the reels over a dimmed screen and keeps counting tier by tier (`planWinTicks`, pure + tested): the title switches BIG → HUGE → EPIC → MAX with a pop, and coins (`fx/CoinShower`) grow per tier (`coinRate` / `rainRate` / `burst`); then it holds (`holdMs`) and returns. The pipeline awaits it; SPIN / spacebar / a tap jumps to the final amount, the next one closes. Turbo / quick keep the instant amount + old celebration. Settings: `config.winBox` over `WINBOX_DEFAULTS`. Events: `winTier`, `winCountEnd`. QA: `__vslot.showWin(x)` previews x × bet (no money).
+
+**Info line (every game, engine-owned):** `ui/LineInfo` — the pill under the reels with "LINE 3: 3× ACE — 6.00" while `WinCycle` walks through the winning lines (hidden otherwise). Not part of the win box. Position: `config.lineInfo` (`y` = centre in game px, or `gap` below the reels; `LINE_INFO_DEFAULTS`). Text: `win.line` i18n key.
 
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
@@ -165,6 +167,7 @@ Stage
 │   ├── AnticipationFX (veil, flame meshes, sparks)
 │   └── winLayer (unmasked; winning symbols promoted here)
 ├── GameView.mountAboveReels   (buttons, HUD)
+├── LineInfo                   (engine; win-line text under the reels, config.lineInfo)
 ├── WinBox                    (engine, placed by GameView.winBox: socket + shade + coins + title + box, rides onto the reels on BIG+ wins)
 ├── HomeButton                 (config.homeButton — top-left corner in every game)
 ├── SoundButton                (config.soundButton — top-right corner; toggles soundSettings.muted)

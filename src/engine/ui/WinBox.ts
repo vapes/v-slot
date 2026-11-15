@@ -18,8 +18,8 @@ const SKIP_DEBOUNCE_MS = 300;
 const smooth = (x: number) => x * x * (3 - 2 * x);
 
 /**
- * Win box (engine-owned, every game): the HUD panel for the status line,
- * the win amount and line info; the game only places it (GameView.winBox). A win counts up
+ * Win box (engine-owned, every game): the HUD panel for the status line
+ * and the win amount (line info is ui/LineInfo under the reels); the game only places it (GameView.winBox). A win counts up
  * (small wins quickly, in place). A BIG+ win keeps counting while the box rides
  * onto the reels (dimmed screen), the title switches BIG → HUGE → EPIC → MAX as
  * the counter passes each threshold, and coins / glints grow with every tier;
@@ -109,13 +109,6 @@ export class WinBox {
     this.value = this.target = amount;
     this.winLayout();
     this.drawAmount(true);
-  }
-
-  /** Caption row over the amount (e.g. line info during the win cycle); null = "WIN". Ignored on the reels. */
-  setCaption(text: string | null): void {
-    if (this.big || !this.amount.visible) return;
-    this.caption.text = text ?? t('label.win');
-    fitText(this.caption, this.rect.w - 28);
   }
 
   /** Count the win up; BIG+ wins ride onto the reels. Resolves when the box is back. */
