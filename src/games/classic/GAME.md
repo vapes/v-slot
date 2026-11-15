@@ -19,7 +19,7 @@
 | `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
 
 ## Skin pipeline
-Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. Home (top-left) and sound (top-right) are engine buttons.
+Same approach as `dragon`: grid lines and button centres measured on `art/source.jpg`; anchors in **source pixels** (`skin.ui`), `uiAnchor()` × `SKIN_SCALE` (540/1536) puts each sprite exactly over its baked picture. Value texts and the jackpot amount are erased from the background and drawn live. Panel order differs from the mockup: **BALANCE · WIN · BET** — the bet block (value + − / +) sits in the right panel; the slicer wipes the baked − / + discs from the middle panel (`BET_DISCS_AREA`, rows refilled with the panel colour shaped by the right panel's profile) and the button sprites are placed at `skin.ui.minus` / `plus` in the right panel. Only vertical reel separators (`reelStyle.separators.rows: false`), as in the mockup. Home (top-left) and sound (top-right) are engine buttons.
 
 ## Math
 - Symbols (high → low): seven, bar, bell, star, melon, cherry. No wild. Pays 3/4/5 of a kind × line bet (line bet = total bet / 20): seven 50/185/900, bar 25/90/450, bell 14/45/225, star 10/30/140, melon 9/22/95, cherry 5/10/45.
