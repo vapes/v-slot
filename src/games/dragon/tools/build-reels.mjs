@@ -124,7 +124,10 @@ function lineWin(cols, line) {
   return sym === null ? 0 : pay(sym, n);
 }
 
-const buckets = [[0, 0], [0.0001, 1], [1, 2], [2, 5], [5, 20], [20, 50], [50, Infinity]];
+/** Win buckets in total bets; from BIG up they follow the celebration tiers (config.celebration). */
+const T = cfg.celebration;
+const buckets = [[0, 0], [0.0001, 1], [1, T.big], [T.big, T.huge], [T.huge, T.epic], [T.epic, T.max], [T.max, Infinity]];
+const tierName = { [T.big]: 'BIG', [T.huge]: 'HUGE', [T.epic]: 'EPIC', [T.max]: 'MAX' };
 
 /** Exact base-game report: every stop combination of the 4 base strips. */
 function report(mode, reels) {
@@ -159,7 +162,9 @@ function report(mode, reels) {
   console.log(`Max win      : ${maxWin.toFixed(2)} × bet`);
   buckets.forEach(([lo, hi], i) => {
     const label = lo === 0 && hi === 0 ? 'no win' : `${lo === 0.0001 ? '>0' : lo}–${hi === Infinity ? '∞' : hi}`;
-    console.log(`  ${label.padEnd(8)} ${(counts[i] / N * 100).toFixed(4)}%`);
+    const tier = tierName[lo] ?? '';
+    const odds = counts[i] ? `1 in ${(N / counts[i]).toFixed(0)}` : 'never';
+    console.log(`  ${label.padEnd(8)} ${tier.padEnd(5)} ${(counts[i] / N * 100).toFixed(4)}%  (${odds})`);
   });
 }
 
