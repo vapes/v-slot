@@ -23,6 +23,7 @@
 1. Grid lines / button centres are measured on `art/source.png`; constants live in `slice-skin.py` and `config.json → skin.ui` (both in **source pixels**).
 2. `uiAnchor(name)` × `SKIN_SCALE` (540/971) places sprites exactly over the baked art, so a button sprite covers its own picture.
 3. Baked value texts are erased in the background (vertical interpolation); buttons are cut from the erased image (the spin wings overlap the LAST WIN panel).
+   The mockup's coins and trophy buttons are not used: the trophy disc is erased from the background (`REMOVED_BUTTONS`, harmonic fill + rock detail from `ROCK_DONOR`), the coins disc becomes `ui/info.png` (icon inpainted, gold "i" drawn by `draw_info_icon`).
 4. Engine buttons cover the baked top icons: home (`homeButton`) over the hamburger at top-left, sound toggle (`soundButton`) over the speaker at top-right.
 
 ## Math — two profiles
@@ -48,7 +49,7 @@
 Night falls over the castle; the mother dragon guards her clutch. Eggs and the rare dragon medals on the reels wake her: each egg buys one respin, each dragon three. In the nest burning WILDs land and stay (sticky), every new one keeps the night going for three more respins, and together they light up the lines. At dawn the nest pays its total win. `setFeatureMode` tints the scene to moonlight while the nest is active.
 
 ## Controls
-SPIN (hold = turbo loop), − / +, coins (cycle bet), AUTO (autoplay toggle), TURBO (quick reels toggle), trophy (paytable), fullscreen, sound on/off (top-right), home (top-left).
+SPIN (hold = turbo loop), − / + (bet), **i** (paytable, bottom-left), AUTO (autoplay toggle), TURBO (quick reels toggle), fullscreen, sound on/off (top-right), home (top-left).
 
 ## Content CDN
 - Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.

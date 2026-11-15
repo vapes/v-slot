@@ -14,19 +14,17 @@ export class DragonView implements GameView {
   readonly hud = new DragonHUD();
   private readonly minus = make('minus');
   private readonly plus = make('plus');
-  private readonly coins = make('coins');
+  private readonly info = make('info');
   private readonly auto = make('auto');
   private readonly turbo = make('turbo');
-  private readonly trophy = make('trophy');
   private readonly fullscreenZone = new Container();
 
   constructor(actions: GameActions) {
     this.minus.onClick(() => actions.changeBet(-1));
     this.plus.onClick(() => actions.changeBet(1));
-    this.coins.onClick(() => actions.changeBet(1, true));
+    this.info.onClick(actions.openPaytable);
     this.auto.onClick(actions.toggleAutoplay);
     this.turbo.onClick(actions.toggleQuickSpin);
-    this.trophy.onClick(actions.openPaytable);
     skin.labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
     skin.labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
 
@@ -40,7 +38,7 @@ export class DragonView implements GameView {
   }
 
   private get buttons(): SpriteButton[] {
-    return [this.spinButton, this.minus, this.plus, this.coins, this.auto, this.turbo, this.trophy];
+    return [this.spinButton, this.minus, this.plus, this.info, this.auto, this.turbo];
   }
 
   private bg: Sprite | null = null;
@@ -61,7 +59,6 @@ export class DragonView implements GameView {
   setBetControls({ enabled, canDecrease, canIncrease }: BetControlsState): void {
     this.minus.enabled = enabled && canDecrease;
     this.plus.enabled = enabled && canIncrease;
-    this.coins.enabled = enabled;
   }
 
   setAutoplay(on: boolean): void { this.auto.active = on; }
