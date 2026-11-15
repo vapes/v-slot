@@ -16,8 +16,8 @@ export interface PipelineDeps {
   slotMath: MathModel;
   reelController: ReelController;
   winCelebration: WinCelebration;
-  /** The view's win box, if it has one (see GameView.winBox). */
-  winBox?: WinBox;
+  /** Status line + win amount (engine win box, placed by GameView.winBox). */
+  winBox: WinBox;
   hud: Hud;
   isButtonHeld(): boolean;
   setBalance(b: number): void;
@@ -33,8 +33,8 @@ export interface PipelineDeps {
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   const { cfg, slotMath, reelController, winCelebration, winBox, hud } = deps;
-  /** Win box animations run outside turbo / quick spins only. */
-  const animated = (ctx: SpinContext) => !!winBox && !ctx.turbo && !ctx.quick;
+  /** Win box count-up / ride run outside turbo / quick spins only. */
+  const animated = (ctx: SpinContext) => !ctx.turbo && !ctx.quick;
   const spinConfig = cfg.spin;
   const pipeline = new SpinPipeline();
 
@@ -51,7 +51,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     execute: () => {
       deps.stopWinCycle();
       winCelebration.stop();
-      winBox?.finish();
+      winBox.finish();
     },
   });
 
@@ -74,7 +74,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'showPreSpinUI',
     execute: (ctx) => {
-      hud.setStatus(t('status.spin'));
+      winBox.setStatus(t('status.spin'));
       gameEvents.emit('spinStart', { totalBet: ctx.totalBet, turbo: ctx.turbo, quick: ctx.quick, buy: ctx.buy, stake: ctx.stake });
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
@@ -148,11 +148,11 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'updateWinUI',
     execute: (ctx) => {
       if (ctx.winAmount > 0) {
-        if (!animated(ctx)) hud.setWinStatus(ctx.winAmount);
+        if (!animated(ctx)) winBox.showWin(ctx.winAmount);
         // small win: quick count-up in place (BIG+ counts in playCelebration)
-        else if (!getWinCategory(cfg, ctx.winAmount, ctx.totalBet)) void winBox!.countUp(ctx.winAmount, ctx.totalBet);
+        else if (!getWinCategory(cfg, ctx.winAmount, ctx.totalBet)) void winBox.countUp(ctx.winAmount, ctx.totalBet);
       } else if (!ctx.turbo) {
-        hud.setStatus(t('status.idle'));
+        winBox.setStatus(t('status.idle'));
       }
     },
   });
@@ -179,7 +179,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       gameEvents.emit('win', { amount: ctx.winAmount, totalBet: ctx.totalBet, category });
       if (!category) return;
       if (animated(ctx)) {
-        await winBox!.countUp(ctx.winAmount, ctx.totalBet);
+        await winBox.countUp(ctx.winAmount, ctx.totalBet);
       } else if (ctx.turbo) {
         winCelebration.playStatic(category, cfg.timing.turboBannerMs);
       } else {

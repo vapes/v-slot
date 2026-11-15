@@ -14,7 +14,7 @@
 | `math/ClassicMath.ts` | `MathModel`: picks a payout category, then a grid from `screens.bin` |
 | `math/PrecomputedTable.ts` | Parses `screens.bin` (nibble-packed grids grouped by category) |
 | `views/ClassicView.ts` | `GameView`: background, spin / ± / AUTO SPIN / TURBO / i buttons over their baked spots |
-| `views/ClassicHUD.ts` | BALANCE / BET / WIN values, message pill under the reels, jackpot meter |
+| `views/ClassicHUD.ts` | BALANCE / BET values, jackpot meter; `classicWinBox()` places the engine win box over the WIN panel (`skin.ui.winBox`; status line + counting win, BIG+ rides onto the reels at `config.winBox.bigScale` 1.5) |
 | `views/JackpotTicker.ts` | Decorative MEGA JACKPOT meter (`skin.jackpot`: start, perSecond, refreshMs — text redrawn ~4×/s, not every frame; not part of the math) |
 | `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
 

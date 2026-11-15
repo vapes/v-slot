@@ -8,6 +8,7 @@
   "homeButton": { "x": 34, "y": 34 },
   "soundButton": { "x": 506, "y": 34 },
   "celebration": { "big": 2, "huge": 5, "epic": 20, "max": 50 },
+  "winBox": { "bigScale": 1.5 },
   "anticipation": { "startReel": 2, "minCategory": "huge", "extraMs": 1400, "speedBoost": 1.7, "colors": ["0xFFF4C0", "0xFFB020"], "style": "marquee", "veil": 0.12 },
   "reelStyle": { "separators": { "color": "0xD9A441", "alpha": 0.9, "width": 2, "rows": false } },
   "skin": {
@@ -22,13 +23,11 @@
       "plus":         { "x": 1443, "y": 2104, "r": 54 },
       "balanceValue": { "x": 256,  "y": 2106 },
       "betValue":     { "x": 1280, "y": 2106 },
-      "winValue":     { "x": 770,  "y": 2106 },
       "jackpot":      { "x": 765,  "y": 180 },
-      "message":      { "x": 768,  "y": 1880 },
+      "winBox":       { "x": 769,  "y": 2051, "w": 494, "h": 237 },
       "jackpotLabel": { "x": 769,  "y": 73,   "w": 540 },
       "balanceLabel": { "x": 258,  "y": 1994, "w": 300 },
       "betLabel":     { "x": 1278, "y": 1994, "w": 300 },
-      "winLabel":     { "x": 770,  "y": 1994, "w": 300 },
       "autoLabel":    { "x": 381,  "y": 2437, "w": 190 },
       "turboLabel":   { "x": 1159, "y": 2438, "w": 190 },
       "spinLabel":    { "x": 768,  "y": 2440, "w": 236 }

@@ -5,7 +5,7 @@ import { formatMoney } from '../utils/Money';
 import { gameEvents } from '../core/GameEvents';
 import { t } from '../i18n/I18n';
 import { fitText } from './fitText';
-import { DEFAULT_STYLES, drawPanel, type WinBoxStyles } from './winBoxStyle';
+import { DEFAULT_STYLES, drawGlow, drawPanel, type WinBoxLayout } from './winBoxStyle';
 import { WinTitle } from './WinTitle';
 import { planWinTicks, WIN_TIERS, type TickSegment } from './winTicks';
 import type { WinCategory } from './WinCelebration';
@@ -14,13 +14,12 @@ const FRAME_MS = 1000 / 60;
 /** Taps closer than this count as one (pointer + spin input may both report it). */
 const SKIP_DEBOUNCE_MS = 300;
 
-export interface WinBoxRect { x: number; y: number; w: number; h: number }
-export type { WinBoxStyles };
 
 const smooth = (x: number) => x * x * (3 - 2 * x);
 
 /**
- * Win box: the HUD strip for status text and the win amount. A win counts up
+ * Win box (engine-owned, every game): the HUD panel for the status line,
+ * the win amount and line info; the game only places it (GameView.winBox). A win counts up
  * (small wins quickly, in place). A BIG+ win keeps counting while the box rides
  * onto the reels (dimmed screen), the title switches BIG → HUGE → EPIC → MAX as
  * the counter passes each threshold, and coins / glints grow with every tier;
@@ -59,9 +58,9 @@ export class WinBox {
   private lastSkip = 0;
   private done: (() => void) | null = null;
 
-  constructor(private cfg: SlotConfig, private rect: WinBoxRect, styles: Partial<WinBoxStyles> = {}) {
+  constructor(private cfg: SlotConfig, private rect: WinBoxLayout) {
     this.s = cfg.winBox;
-    const st = { ...DEFAULT_STYLES, ...styles };
+    const st = { ...DEFAULT_STYLES, ...rect.styles };
     const { width: W, height: H } = cfg.canvas;
     const { w, h } = rect;
     this.home = { x: rect.x, y: rect.y };
@@ -75,12 +74,12 @@ export class WinBox {
     this.title.container.position.set(this.stage.x, this.stage.y - (h * this.s.bigScale) / 2 - 92);
     this.title.container.visible = false;
 
-    this.glow.roundRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 8, h / 2 + 4).stroke({ width: 6, color: 0xFFC94A });
+    drawGlow(this.glow, w, h, st.panel);
     this.glow.blendMode = 'add';
     this.glow.alpha = 0;
-    const panel = drawPanel(new Graphics(), w, h);
+    const panel = drawPanel(new Graphics(), w, h, st.panel);
     // empty socket left in the HUD while the box is on the reels
-    const socket = drawPanel(new Graphics(), w, h);
+    const socket = drawPanel(new Graphics(), w, h, st.panel);
     socket.position.set(rect.x, rect.y);
     this.status = new Text({ text: '', style: st.status });
     this.caption = new Text({ text: '', style: st.caption });
@@ -95,11 +94,6 @@ export class WinBox {
     this.pose();
   }
 
-  /** True while a BIG+ win is on show (the pipeline awaits it). */
-  get presenting(): boolean {
-    return this.big;
-  }
-
   /** Neutral status line ("Good luck!"); ends any count-up. */
   setStatus(text: string): void {
     this.finish();
@@ -109,7 +103,7 @@ export class WinBox {
     this.caption.visible = this.amount.visible = false;
   }
 
-  /** Win amount at once (turbo, restored after line info). */
+  /** Win amount at once (turbo / quick spins). */
   showWin(amount: number): void {
     this.finish();
     this.value = this.target = amount;

@@ -21,7 +21,7 @@ describe('I18n.t', () => {
   it('falls back to engine strings and interpolates params', () => {
     const i18n = new I18n();
     expect(i18n.t('status.idle')).toBe('Place your bets');
-    expect(i18n.t('hud.win', { amount: '5.00' })).toBe('WIN 5.00');
+    expect(i18n.t('feature.collected', { amount: '5.00' })).toBe('TOTAL 5.00');
     expect(i18n.t('unknown.key', {}, 'Fallback {x}')).toBe('Fallback {x}');
     expect(i18n.t('totally.unknown')).toBe('totally.unknown');
   });

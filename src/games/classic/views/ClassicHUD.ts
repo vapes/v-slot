@@ -1,5 +1,5 @@
-import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { shadow, vGradient, formatMoney, t, type Hud } from '@/engine';
+import { Container, Text, TextStyle } from 'pixi.js';
+import { shadow, vGradient, formatMoney, type Hud, type WinBoxLayout } from '@/engine';
 import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 import { JackpotTicker } from './JackpotTicker';
 
@@ -9,8 +9,9 @@ const VALUE_STYLE = new TextStyle({
   dropShadow: shadow(1, 0.7, 2),
 });
 const WIN_STYLE = Object.assign(VALUE_STYLE.clone(), { fill: vGradient(['#FFF4C2', '#FFD54A', '#F0A020']) });
-const MESSAGE_STYLE = new TextStyle({
-  fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3, letterSpacing: 0.5,
+const STATUS_STYLE = new TextStyle({
+  fontFamily: FONT, fontSize: 17, fontWeight: 'bold', fill: 0xFFE7A3, letterSpacing: 0.5,
+  stroke: { color: 0x061331, width: 3 },
 });
 /** Captions replacing the erased baked texts. */
 export const CLASSIC_LABEL_STYLE = new TextStyle({
@@ -31,18 +32,23 @@ const JACKPOT_LABEL_STYLE = new TextStyle({
 });
 const money = (v: number) => formatMoney(config, v);
 
-/** Values in the baked BALANCE / BET / WIN panels, message pill, jackpot meter. */
+/** Engine win box over the middle (WIN) panel: place + navy / gold look. */
+export function classicWinBox(): WinBoxLayout {
+  const a = uiAnchor('winBox');
+  return {
+    x: a.x, y: a.y, w: a.w, h: a.h,
+    styles: {
+      status: STATUS_STYLE, caption: CLASSIC_LABEL_STYLE, amount: WIN_STYLE,
+      panel: { fill: 0x071A45, alpha: 1, stroke: 0x3A6BC0, inner: 0x8FB4FF, radius: 7 },
+    },
+  };
+}
+
+/** Values in the baked BALANCE / BET panels and the jackpot meter (the WIN panel is the engine win box). */
 export class ClassicHUD implements Hud {
   private balance = this.value('balanceValue');
   private bet = this.value('betValue');
-  private win = this.value('winValue');
-  private message = this.value('message', MESSAGE_STYLE);
-  private messageBg = new Graphics();
   private jackpot = new JackpotTicker();
-
-  constructor() {
-    this.setLastWin(0);
-  }
 
   private value(name: UiAnchorName, style = VALUE_STYLE): Text {
     const t = new Text({ text: '', style: style });
@@ -57,45 +63,12 @@ export class ClassicHUD implements Hud {
       skin.label('jackpotLabel', 'label.megaJackpot', JACKPOT_LABEL_STYLE),
       skin.label('balanceLabel', 'label.balance', CLASSIC_LABEL_STYLE),
       skin.label('betLabel', 'label.bet', CLASSIC_LABEL_STYLE),
-      skin.label('winLabel', 'label.win', CLASSIC_LABEL_STYLE),
-      this.jackpot.text, this.balance, this.bet, this.win, this.messageBg, this.message,
+      this.jackpot.text, this.balance, this.bet,
     );
   }
 
   update(dt: number): void {
     this.jackpot.update(dt);
-  }
-
-  private setMessage(text: string): void {
-    this.message.text = text;
-    this.messageBg.clear();
-    if (!text) return;
-    const w = this.message.width + 28;
-    const h = 24;
-    this.messageBg.roundRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2)
-      .fill({ color: 0x061331, alpha: 0.92 }).stroke({ width: 1.5, color: 0xD9A441, alpha: 0.85 });
-  }
-
-  private setLastWin(amount: number): void {
-    this.win.text = money(amount);
-    this.win.style = amount > 0 ? WIN_STYLE : VALUE_STYLE;
-  }
-
-  setStatus(msg: string): void {
-    this.setMessage(msg);
-  }
-
-  setWinStatus(amount: number): void {
-    this.setMessage(t('hud.win', { amount: money(amount) }));
-    this.setLastWin(amount);
-  }
-
-  setLineInfo(text: string): void {
-    this.setMessage(text);
-  }
-
-  hideLineInfo(): void {
-    this.setMessage('');
   }
 
   updateBalanceDisplay(balance: number, totalBet: number): void {

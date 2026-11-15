@@ -13,7 +13,7 @@ export const ENGINE_STRINGS: Dict = {
   'status.spin': 'Good luck!',
   'status.noBalance': 'Not enough balance',
   'status.loadFailed': 'Failed to load the game',
-  'hud.win': 'WIN {amount}',
+  'label.win': 'WIN',
   'win.line': 'LINE {line}: {count}× {symbol} — {amount}',
   'celebration.big': 'BIG',
   'celebration.huge': 'HUGE',

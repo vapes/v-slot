@@ -1,4 +1,4 @@
-import type { WinBox } from './ui/WinBox';
+import type { WinBoxLayout } from './ui/winBoxStyle';
 /**
  * Contracts between the engine and a game. A game is a folder in
  * src/games/<id>/ whose index.ts default-exports a GameDefinition.
@@ -41,12 +41,12 @@ export interface SpinControl {
   hitTest(x: number, y: number): boolean;
 }
 
-/** All money values are integer minor units (see SlotConfig.currency). */
+/**
+ * Game-drawn HUD values. Status line, win amount and line info are not here:
+ * the engine shows them in its win box (GameView.winBox).
+ * All money values are integer minor units (see SlotConfig.currency).
+ */
 export interface Hud {
-  setStatus(msg: string): void;
-  setWinStatus(amount: number): void;
-  setLineInfo(text: string): void;
-  hideLineInfo(): void;
   updateBalanceDisplay(balance: number, totalBet: number): void;
 }
 
@@ -78,11 +78,11 @@ export interface GameView {
   readonly spinButton: SpinControl;
   readonly hud: Hud;
   /**
-   * Optional animated win box (engine `WinBox`, mounted by the view). When set,
-   * wins count up in it and BIG+ wins ride onto the reels tier by tier instead
-   * of the flying celebration words (not in turbo / quick spins).
+   * Where the engine win box sits (centre + size in game px, usually over a
+   * baked HUD panel) and its look. The engine owns it: status line, counting
+   * win, line info; BIG+ wins ride onto the reels tier by tier.
    */
-  readonly winBox?: WinBox;
+  readonly winBox: WinBoxLayout;
   /** Layers under the reels (background art, reel frame). */
   mountBelowReels(stage: Container): void;
   /** Buttons and HUD above the reels. */
