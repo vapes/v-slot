@@ -10,4 +10,5 @@ export { linePayout, lineBetOf } from './math/Paytable';
 export { random, createRng, setSeed } from './math/rng';
 export { ReelStripMath } from './math/ReelStripMath';
 export { computeAnticipation } from './math/anticipation';
+export { paytableCombos, missingCombosInGrids, missingCombosOnStrips } from './math/combos';
 export type { MathModel, SpinOptions } from './contracts';

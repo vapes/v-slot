@@ -17,7 +17,7 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run new-game -- <id> [--from classic] [--title "T"]` | Scaffold + register a new game by cloning one |
 | `npm run thumbnails [-- <id>]` | Lobby card images → `public/games/<id>/thumb.jpg` (needs dev server + Playwright) |
 | `npm run classic:screens` | Regenerate classic `screens.bin` after classic math changes |
-| `npm run classic:rtp` | Exact RTP of classic real + demo profiles from `screens.bin` |
+| `npm run classic:rtp` | Exact RTP of classic real + demo profiles from `screens.bin`; checks every paytable combination can land |
 | `npm run classic:slice` | Re-slice classic art from `src/games/classic/art/source.jpg` (Pillow + numpy) |
 | `npm run dragon:reels` | Rebuild dragon base + nest strips for both profiles into `strips.json`; exact base-game RTP per profile |
 | `npm run dragon:sim [-- real\|demo spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (real TS math via tsx) + exact trigger rate |
@@ -38,7 +38,8 @@ Verification: `npm run check` + `npm test` always; `npm run qa` for anything vis
 6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels` → `strips.json`, never edited by hand) and updating `rtp` in the config and `GAME.md`.
 7. **Play modes:** the platform runs in `demo` unless `?mode=real`. A game may ship a separate demo math profile (`config.json → demo`: dragon RTP ≈411%, classic ≈400%); the paytable shows the active profile's RTP. Real-mode math must stay ≈96%.
 8. **Randomness & numbers:** game outcomes use `random()` from `@/engine/math` (seedable), never `Math.random` (visual effects may). Engine fallback timings / feel values live only in `engine/config/defaults.ts` and are resolved into `cfg.timing`, `cfg.featureTiming`, `cfg.tease`.
-9. **Observe, don't couple:** audio, analytics, tutorials and tests subscribe to `gameEvents` (`engine/core/GameEvents.ts`) instead of hooking into engine classes.
+9. **Every paytable combination must be able to land — in every play profile.** Whatever the math draws from (precomputed screens / "seeds", reel strips, nest / bonus strips, demo and real alike), each paytable entry — every symbol × 3, × 4, × 5 (as many counts as the paytable lists) — must occur with probability > 0. A paytable that advertises a win the game can never produce is cheating. Generators enforce it and refuse to write data that breaks it (`classic:screens` → `screens.bin`, `dragon:reels` → `strips.json`); tests re-check every profile with the engine helpers `missingCombosInGrids` (screen pools) / `missingCombosOnStrips` (strips) from `@/engine/math` (`engine/math/combos.ts`). New games must add the same test; a profile may reweight outcomes, but never down to zero for a paytable combination.
+10. **Observe, don't couple:** audio, analytics, tutorials and tests subscribe to `gameEvents` (`engine/core/GameEvents.ts`) instead of hooking into engine classes.
 
 ## Layout
 
@@ -69,7 +70,8 @@ src/
 │   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool,
 │   │                        LandingFX (symbol landing animation: pop, light sweeps, flash, hue shimmer)
-│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types
+│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types,
+│   │                        combos (paytable completeness: missingCombosInGrids / missingCombosOnStrips)
 │   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter,
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
@@ -136,7 +138,7 @@ const game: GameDefinition = {
 
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
-**Tests:** pure logic gets a vitest test in `tests/` (engine → `tests/engine`, game math → `tests/games/<id>.test.ts`, seed with `createRng`). New game math must at least test its invariants (symbols per reel set, totals add up, reproducible with a seed).
+**Tests:** pure logic gets a vitest test in `tests/` (engine → `tests/engine`, game math → `tests/games/<id>.test.ts`, seed with `createRng`). New game math must at least test its invariants (symbols per reel set, totals add up, reproducible with a seed) and that every paytable combination can land in every profile (Hard Rule 9).
 
 **Sound / analytics:** subscribe to `gameEvents` and respect `soundSettings.muted`; nothing in the engine needs to change.
 

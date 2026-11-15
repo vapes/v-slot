@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import raw from '../../src/games/dragon/config.json';
 import strips from '../../src/games/dragon/strips.json';
-import { createRng, resolveConfig, type RawSlotConfig } from '../../src/engine/math';
+import { createRng, missingCombosOnStrips, resolveConfig, type RawSlotConfig } from '../../src/engine/math';
 import { DragonMath } from '../../src/games/dragon/math/DragonMath';
 import { buildProfile, type MathMode } from '../../src/games/dragon/math/respinConfig';
 
@@ -20,6 +20,11 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
       expect(profile.reels.flat()).toContain(s);
       expect(profile.nest.flat()).not.toContain(s);
     }
+  });
+
+  it('base and nest strips can land every paytable combination (3×, 4× of each symbol)', () => {
+    expect(missingCombosOnStrips(cfg, profile.reels)).toEqual([]);
+    expect(missingCombosOnStrips(cfg, profile.nest)).toEqual([]);
   });
 
   describe('forced features', () => {

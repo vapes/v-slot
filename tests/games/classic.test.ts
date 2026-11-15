@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import raw from '../../src/games/classic/config.json';
-import { evaluateLines, resolveConfig, setSeed, type RawSlotConfig } from '../../src/engine/math';
+import { evaluateLines, missingCombosInGrids, resolveConfig, setSeed, type RawSlotConfig } from '../../src/engine/math';
 import { PrecomputedTable } from '../../src/games/classic/math/PrecomputedTable';
 
 const cfg = resolveConfig(raw as unknown as RawSlotConfig);
@@ -43,5 +43,12 @@ describe('Classic precomputed math (screens.bin)', () => {
     expect(demo.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6);
     expect(demo[0]).toBeLessThan(probabilities[0]);
     expect(raw.demo.rtp).toBeGreaterThan(raw.rtp);
+  });
+
+  it.each([
+    ['real', probabilities],
+    ['demo', raw.demo.payoutProbabilities],
+  ])('%s profile can land every paytable combination (3×, 4×, 5× of each symbol)', (_name, probs) => {
+    expect(missingCombosInGrids(cfg, table.reachableGrids(probs))).toEqual([]);
   });
 });

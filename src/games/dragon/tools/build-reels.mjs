@@ -69,6 +69,20 @@ const PROFILES = {
   demo: { base: cfg.demo?.reelComposition ?? cfg.reelComposition, nest: cfg.demo?.respin?.composition ?? cfg.respin.composition },
 };
 
+/**
+ * Project rule: every paytable combination (symbol × 3, × 4, …) must be able
+ * to land, else the paytable lies. Same logic as engine missingCombosOnStrips
+ * (math/combos.ts; the tests run that one): symbol on reels 0..n-1 and a
+ * breaker (not the symbol, not wild) on reel n for a shorter combo.
+ */
+function assertAllCombos(label, strips) {
+  const missing = Object.entries(cfg.paytable).flatMap(([sym, pays]) => Object.keys(pays).map(Number)
+    .filter(n => strips.slice(0, n).some(r => !r.includes(sym))
+      || (n < cfg.grid.cols && !strips[n].some(x => x !== sym && x !== cfg.wild)))
+    .map(n => `${sym}×${n}`));
+  if (missing.length) throw new Error(`${label}: paytable combinations that cannot land: ${missing.join(', ')}`);
+}
+
 let strips;
 if (reportOnly) {
   strips = JSON.parse(readFileSync(STRIPS_PATH, 'utf8'));
@@ -80,6 +94,8 @@ if (reportOnly) {
       reels: p.base.map((comp, i) => buildStrip(comp, 1000 + seed + i)),
       nest: p.nest.map((comp, i) => buildStrip(comp, 2000 + seed + i)),
     };
+    assertAllCombos(`${mode} base`, strips[mode].reels);
+    assertAllCombos(`${mode} nest`, strips[mode].nest);
     console.log(`${mode}: base ${strips[mode].reels.map(r => r.length).join('/')}  nest ${strips[mode].nest.map(r => r.length).join('/')}`);
   }
   const rows = (arr) => arr.map(r => '      ' + JSON.stringify(r)).join(',\n');

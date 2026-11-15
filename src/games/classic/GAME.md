@@ -26,6 +26,7 @@ Same approach as `dragon`: grid lines and button centres measured on `art/source
 - Symbols (high → low): seven, bar, bell, star, melon, cherry. No wild. Pays 3/4/5 of a kind × line bet (line bet = total bet / 20): seven 50/185/900, bar 25/90/450, bell 14/45/225, star 10/30/140, melon 9/22/95, cherry 5/10/45.
 - Outcome category is drawn from `payoutDistribution` (lose 72%, small 20%, medium 5%, big 2%, huge 0.8%, epic 0.18%, max 0.02%); `screens.bin` holds real grids per category, calibrated by the generator: **RTP 97.99%**, hit rate 28%.
 - **Play modes:** real (`?mode=real`) uses `payoutDistribution` above (≈98%). Demo (default) shares `screens.bin` and only reweights the categories with `config.demo.payoutProbabilities` → **RTP ≈400%** (`demo.rtp` 4.0): lose 55%, small 22%, medium 12%, big 7%, huge 3%, epic 0.8%, max 0.14% (1 in 707); hit rate 45%. `npm run classic:rtp` prints the exact RTP of both profiles from `screens.bin` (category means × probabilities) — rerun after changing either distribution or regenerating screens.
+- **Every paytable combination must be in the pool** (CLAUDE.md Hard Rule 9): all 18 (6 symbols × 3/4/5) are present in categories with p > 0 in both profiles. `classic:screens` refuses to write a `screens.bin` that misses one, `classic:rtp` reports it, `tests/games/classic.test.ts` checks both profiles.
 - `screens.bin` stores symbols by their index in `config.symbols` — **after changing symbols, their order, paytable, reels, paylines or payoutDistribution, rerun `npm run classic:screens`.**
 
 ## Controls
