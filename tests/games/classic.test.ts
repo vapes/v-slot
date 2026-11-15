@@ -36,4 +36,12 @@ describe('Classic precomputed math (screens.bin)', () => {
     for (let i = 0; i < n; i++) if (evaluateLines(cfg, table.pickGrid()!).length === 0) losses++;
     expect(Math.abs(losses / n - probabilities[0])).toBeLessThan(0.02);
   });
+
+  it('demo profile: one probability per category, summing to 1, more wins than real', () => {
+    const demo = raw.demo.payoutProbabilities;
+    expect(demo).toHaveLength(probabilities.length);
+    expect(demo.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6);
+    expect(demo[0]).toBeLessThan(probabilities[0]);
+    expect(raw.demo.rtp).toBeGreaterThan(raw.rtp);
+  });
 });
