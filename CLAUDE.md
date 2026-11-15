@@ -35,7 +35,7 @@ Verification: `npm run check` + `npm test` always; `npm run qa` for anything vis
 4. **Config-driven.** Game design numbers live in `src/games/<id>/config.json`; no magic numbers for math/timing in code.
 5. **Money is integer minor units** everywhere (`currency.decimals` says how many). Format only via `formatMoney(cfg, value)`.
 6. Changing math inputs requires regenerating derived data (`classic:screens`, `dragon:reels` → `strips.json`, never edited by hand) and updating `rtp` in the config and `GAME.md`.
-7. **Play modes:** the platform runs in `demo` unless `?mode=real`. A game may ship a separate demo math profile (dragon: `config.json → demo`, RTP ≈421%); the paytable shows the active profile's RTP. Real-mode math must stay ≈96%.
+7. **Play modes:** the platform runs in `demo` unless `?mode=real`. A game may ship a separate demo math profile (dragon: `config.json → demo`, RTP ≈411%); the paytable shows the active profile's RTP. Real-mode math must stay ≈96%.
 8. **Randomness & numbers:** game outcomes use `random()` from `@/engine/math` (seedable), never `Math.random` (visual effects may). Engine fallback timings / feel values live only in `engine/config/defaults.ts` and are resolved into `cfg.timing`, `cfg.featureTiming`, `cfg.tease`.
 9. **Observe, don't couple:** audio, analytics, tutorials and tests subscribe to `gameEvents` (`engine/core/GameEvents.ts`) instead of hooking into engine classes.
 

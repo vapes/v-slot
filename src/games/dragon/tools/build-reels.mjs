@@ -10,6 +10,7 @@
  *
  * Usage:  npm run dragon:reels                (build strips + report)
  *         npm run dragon:reels -- --report    (report only, keep strips)
+ *         npm run dragon:reels -- --strips-only (build strips, skip the slow exact base report)
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
@@ -20,6 +21,7 @@ const CONFIG_PATH = resolve(DIR, '../config.json');
 const STRIPS_PATH = resolve(DIR, '../strips.json');
 const cfg = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const reportOnly = process.argv.includes('--report');
+const stripsOnly = process.argv.includes('--strips-only');
 
 // ── Strip building ────────────────────────────────────────────────────────────
 function mulberry32(seed) {
@@ -86,6 +88,8 @@ if (reportOnly) {
   writeFileSync(STRIPS_PATH, `{\n${body}\n}\n`);
   console.log('Written', STRIPS_PATH);
 }
+
+if (stripsOnly) process.exit(0);
 
 // ── Exact evaluation ──────────────────────────────────────────────────────────
 const WILD = cfg.wild;

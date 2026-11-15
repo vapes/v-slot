@@ -13,9 +13,10 @@ type Rng = () => number;
  * 3+ scatters anywhere (eggs and/or dragons, rc.scatters) start the nest;
  * respins = Σ per-scatter grants (egg 1, dragon 3). The scatters only start
  * the feature (they do not stay). Respins run on the nest strips (wild +
- * treasures, no scatters); each WILD (rc.sticky) that lands sticks, tops the
- * counter up to rc.respins and substitutes on lines. Wilds pay nothing on
- * their own — the feature pays its line wins only.
+ * pay symbols, no scatters); every WILD (rc.sticky) that lands sticks and
+ * adds rc.perWild respins (+1); sticky wilds substitute on lines and line
+ * wins pay on every respin. Wilds pay nothing on their own. The round ends
+ * when the respins run out or every cell holds a wild.
  * The whole round is decided here, the engine only replays it.
  */
 export class DragonMath implements MathModel {
@@ -76,7 +77,7 @@ export class DragonMath implements MathModel {
         if (s === this.rc.sticky && !sticky.has(`${reel},${row}`)) newSticky.push(this.stick(reel, row));
       }));
       newSticky.forEach(c => sticky.set(`${c.reel},${c.row}`, c));
-      respins = newSticky.length > 0 ? Math.max(respins - 1, this.rc.respins) : respins - 1;
+      respins = respins - 1 + newSticky.length * this.rc.perWild;
 
       const wins = evaluateLines(this.cfg, grid);
       const lineWin = wins.reduce((s, w) => s + w.multiplier, 0);

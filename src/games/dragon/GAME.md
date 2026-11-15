@@ -31,21 +31,22 @@
 
 | | real | demo |
 |---|---|---|
-| Base-game RTP (exact) | 63.55% | 62.24% |
-| Eggs / Dragons per base reel | 1·1·2·1 / 1·1·1·1 | 2·2·2·2 / 1·1·1·1 |
-| Nest trigger (exact) | 1 in 230.0 | 1 in 50.0 |
-| Nest reels (per reel) | 2 wilds + all pay symbols | 5 wilds + goblet / low cards |
-| Sticky wilds / respins per feature | ≈3.9 / ≈9.8 | ≈11.7 / ≈15.1 |
-| Mean feature win (line wins only) | 75.0× bet | 179.3× bet |
-| Feature RTP | ≈32.6% | ≈358% |
-| **Total RTP** (`rtp` / `demo.rtp`) | **≈96.1%** | **≈421%** |
+| Base-game RTP (exact) | 62.95% | 59.28% |
+| Eggs / Dragons per base reel | 1·2·2·1 / 1·1·1·1 | 2·3·3·2 / 2·2·2·2 |
+| Nest trigger (exact) | 1 in 80.7 | 1 in 18.2 |
+| Nest reels (per reel) | 3 wilds in ~190 (mostly low cards) | 3 wilds in ~130 (richer) |
+| Sticky wilds / respins per feature | ≈2.8 / ≈8.7 | ≈4.3 / ≈10.5 |
+| Feature win (× bet): median / mean | 9.5 / 26.7 | 23.5 / 63.9 |
+| Features with a MAX banner (≥100× bet) | ≈6% | ≈20% |
+| Feature RTP | ≈33.1% | ≈352% |
+| **Total RTP** (`rtp` / `demo.rtp`) | **≈96.0%** | **≈411%** |
 
 - Base game: 4×5, 20 lines, **no WILD on the base reels**. **Egg = scatter (1 respin)**, **Dragon Medal = super scatter (3 respins)**; neither pays on lines. Line pays (× line bet) 3/4: chest 300/1500, gold 180/700, crystal 120/400, goblet 80/300, A 24/80, K 20/60, Q 16/50, J 12/40, 10 10/30, 9 8/24 (steep on purpose: wilds pile up in the nest).
-- **Dragon's Nest** (`respin`, `math/DragonMath.ts`): 3+ scatters anywhere, any mix (`respin.trigger`). Respins = Σ `respin.scatters[symbol]` (egg 1, dragon 3; e.g. 2 eggs + 1 dragon = 5). The scatters only trigger — **they do not stay and do not turn into wilds**; the nest starts empty. Respins run on the nest strips (`respin.composition`: 2 wilds per reel + pay symbols; demo `demo.respin.composition`: 5 wilds per reel among goblet / low cards so wilds pile up — **no eggs, no dragons**). A WILD that lands (`respin.sticky`) sticks to the end, tops the counter up to `respin.respins` (3) — `max(left − 1, 3)`, never lowers it — and substitutes on lines. **Wilds pay nothing on their own** (no cash values, no jackpots): the feature pays its line wins only.
-- Playback (engine `RespinPlayer`): trigger pulse → window "CONGRATULATIONS! / YOU WON N RESPINS" (`feature.intro`, `feature.won` with plural forms) → respins (a new WILD that adds respins shoots a comet of sparks into the counter, which ticks up when it lands) → window "TOTAL WIN" + amount (`feature.total`). Windows close by timer (`featureTiming.introMs` / `outroMs`) or a tap.
-- **Feature buy** (`buyFeature.cost`, demo: `demo.buyFeature`): **78× bet** in both profiles. `DragonMath.spin({ buyFeature: true })` redraws base spins until 3+ scatters land (natural egg/dragon mix), so a bought round = trigger spin (≈0.5× bet) + nest (≈74.7×) ≈ 75.2× bet → **buy RTP ≈96.4%** real, ≈230% demo (`npm run dragon:sim` prints the "Feature buy" line).
+- **Dragon's Nest** (`respin`, `math/DragonMath.ts`): 3+ scatters anywhere, any mix (`respin.trigger`). Respins = Σ `respin.scatters[symbol]` (egg 1, dragon 3; e.g. 2 eggs + 1 dragon = 5). The scatters only trigger — **they do not stay and do not turn into wilds**; the nest starts empty. Respins run on the nest strips (`respin.composition` / `demo.respin.composition`: 3 wilds per reel among pay symbols, mostly low cards — **no eggs, no dragons**). Every WILD that lands (`respin.sticky`) sticks to the end and adds `respin.perWild` (**+1**) respins — always, whatever the counter shows — and substitutes on lines. The round ends when the respins run out or all 20 cells hold wilds. Line wins pay on every respin, so the nest is tuned with few wilds per reel: long wild chains (and MAX wins) stay rare. **Wilds pay nothing on their own** (no cash values, no jackpots): the feature pays its line wins only.
+- Playback (engine `RespinPlayer`): trigger pulse → window "CONGRATULATIONS! / YOU WON N RESPINS" (`feature.intro`, `feature.won` with plural forms) → respins (every new WILD shoots a comet of sparks into the counter, which ticks up when it lands) → window "TOTAL WIN" + amount (`feature.total`). Windows close by timer (`featureTiming.introMs` / `outroMs`) or a tap.
+- **Feature buy** (`buyFeature.cost`, demo: `demo.buyFeature`): **28× bet** in both profiles. `DragonMath.spin({ buyFeature: true })` redraws base spins until 3+ scatters land (natural egg/dragon mix), so a bought round = trigger spin (≈0.4× bet) + nest (≈26.7×) ≈ 27.1× bet → **buy RTP ≈96.7%** real, ≈229% demo (`npm run dragon:sim` prints the "Feature buy" line).
 - `build-reels.mjs` enforces: wild never on base strips, scatters never on nest strips, wild present in the nest. Strips are drawn constructively (seeded, no identical neighbours).
-- Retune: edit compositions / values → `npm run dragon:reels` → `npm run dragon:sim -- real` and `-- demo` (use the "Exact trigger" line + exact base RTP) → update `rtp` / `demo.rtp` and this table.
+- Retune: edit compositions → `npm run dragon:reels` (`-- --strips-only` skips the slow exact base report while only the nest changes) → `npm run dragon:sim -- real` and `-- demo` ("Exact trigger" line + exact base RTP; "Feature win dist" / "Feature banners" show how often features hit BIG…MAX) → update `rtp` / `demo.rtp`, the buy price and this table. `tests/games/dragon.test.ts` fails if MAX banners stop being rare.
 - QA: `npm run dev`, `?game=dragon&force=feature` — every spin triggers the nest (dev builds only).
 
 ## Story
@@ -63,7 +64,7 @@ SPIN (hold = turbo loop), − / + (bet), **i** (paytable, bottom-left), AUTO (au
 Egg and Dragon Medal (the scatters) shimmer as they land: `config.json → symbols[].landing` / `turboLanding` (engine feature, see CLAUDE.md). Egg: 700 ms, 1 light sweep, full hue pass (360°), pop ×1.14; Dragon (super scatter): 850 ms, 1 golden sweep, stronger pop. Turbo variants are about half as long.
 
 ## Anticipation
-`config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 scatters (eggs / dragons) already landed or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈8.6% of real spins (≈5% of those reach the nest), ≈12% in demo (≈16%). QA: `npm run dev`, `?game=dragon&force=anticipation`.
+`config.json → anticipation` (engine feature, see CLAUDE.md). Fires on 2 scatters (eggs / dragons) already landed or a HUGE+ line win one symbol away, from reel 3; fire colours. ≈11% of real spins (≈11% of those reach the nest), ≈19% in demo (≈28%). QA: `npm run dev`, `?game=dragon&force=anticipation`.
 
 ## Tests
-`tests/games/dragon.test.ts` (both profiles, seeded): a bought spin always triggers the nest; wild only in the nest, eggs / dragons only on base strips, grant egg = 1 / dragon = 3, the nest starts empty (scatters do not stay), no scatters in nest steps, sticky wilds stay, top-up rule, wilds carry no value and totalWin = Σ line wins, same seed → same round.
+`tests/games/dragon.test.ts` (both profiles, seeded): a bought spin always triggers the nest; wild only in the nest, eggs / dragons only on base strips, grant egg = 1 / dragon = 3, the nest starts empty (scatters do not stay), no scatters in nest steps, sticky wilds stay, +1 respin per new wild, wilds carry no value and totalWin = Σ line wins, same seed → same round; **distribution guard**: MAX-banner features < 10% (real) / < 30% (demo), median feature < 25× / < 50× bet. Engine: `tests/engine/respinStep.test.ts` — every new sticky wild fires a comet and the counter follows.

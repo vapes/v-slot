@@ -6,8 +6,8 @@ export interface RespinConfig {
   sticky: string;
   /** Scatters (any mix) needed anywhere on screen. */
   trigger: number;
-  /** A new sticky symbol tops the respin counter up to at least this value. */
-  respins: number;
+  /** Respins added by every new sticky wild (+1). */
+  perWild: number;
   /** Symbol counts per nest reel (input of tools/build-reels.mjs). */
   composition: Record<string, number | undefined>[];
 }
