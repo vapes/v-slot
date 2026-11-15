@@ -148,19 +148,19 @@
     { "egg": 1, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 }
   ],
   "demo": {
-    "rtp": 4.18,
+    "rtp": 4.21,
     "reelComposition": [
-      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
-      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
-      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
-      { "egg": 2, "dragon": 2, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 }
+      { "egg": 2, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 },
+      { "egg": 2, "dragon": 1, "chest": 6, "gold": 9, "crystal": 10, "goblet": 12, "A": 12, "K": 12, "Q": 12, "J": 12, "10": 9, "9": 9 }
     ],
     "respin": {
       "composition": [
-        { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 },
-        { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 },
-        { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 },
-        { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 }
+        { "wild": 5, "goblet": 1, "A": 4, "K": 6, "Q": 10, "J": 14, "10": 18, "9": 22 },
+        { "wild": 5, "goblet": 1, "A": 4, "K": 6, "Q": 10, "J": 14, "10": 18, "9": 22 },
+        { "wild": 5, "goblet": 1, "A": 4, "K": 6, "Q": 10, "J": 14, "10": 18, "9": 22 },
+        { "wild": 5, "goblet": 1, "A": 4, "K": 6, "Q": 10, "J": 14, "10": 18, "9": 22 }
       ]
     },
     "buyFeature": { "cost": 78 }
