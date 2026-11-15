@@ -27,13 +27,16 @@ export class RespinPlayer {
   private banner: FeatureBanner;
   private fly = new RespinFlyFX();
 
-  constructor(private cfg: SlotConfig, private reels: ReelController, renderer: SymbolRenderer, private stage: Container) {
+  private stage!: Container;
+
+  constructor(private cfg: SlotConfig, private reels: ReelController, renderer: SymbolRenderer) {
     this.sticky = new StickyLayer(cfg, renderer, reels.overlay);
     this.banner = new FeatureBanner(cfg);
   }
 
   /** Banner/meter layers; call once after the game view is mounted. */
-  mount(): void {
+  mount(stage: Container): void {
+    this.stage = stage;
     this.stage.addChild(this.fly.container, this.banner.container);
   }
 

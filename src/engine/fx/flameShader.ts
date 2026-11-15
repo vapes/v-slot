@@ -1,21 +1,22 @@
-import { BLEND_MODES, Geometry, Mesh, Shader } from 'pixi.js';
+import { Geometry, Mesh, Shader } from 'pixi.js';
 
+// Pixi v8 GLSL (version / precision are added by Pixi; it maps in/out for WebGL1 and 2)
 const VERTEX = `
-precision mediump float;
-attribute vec2 aVertexPosition;
-attribute vec2 aUvs;
-uniform mat3 translationMatrix;
-uniform mat3 projectionMatrix;
-varying vec2 vUv;
+in vec2 aPosition;
+in vec2 aUV;
+out vec2 vUv;
+uniform mat3 uProjectionMatrix;
+uniform mat3 uWorldTransformMatrix;
+uniform mat3 uTransformMatrix;
 void main() {
-  vUv = aUvs;
-  gl_Position = vec4((projectionMatrix * translationMatrix * vec3(aVertexPosition, 1.0)).xy, 0.0, 1.0);
+  mat3 mvp = uProjectionMatrix * uWorldTransformMatrix * uTransformMatrix;
+  gl_Position = vec4((mvp * vec3(aPosition, 1.0)).xy, 0.0, 1.0);
+  vUv = aUV;
 }`;
 
 /** Animated flame border around a rectangle + a light sweep inside it (premultiplied, additive). */
 const FRAGMENT = `
-precision mediump float;
-varying vec2 vUv;
+in vec2 vUv;
 uniform float uTime;
 uniform float uAlpha;
 uniform float uPad;
@@ -55,18 +56,44 @@ void main() {
 
 const rgb = (c: number) => [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
 
+/** Uniforms of the flame shader (`mesh.shader.resources.flame.uniforms`). */
+export interface FlameUniforms {
+  uTime: number;
+  uAlpha: number;
+}
+
+export type FlameMesh = Mesh<Geometry, Shader>;
+
 /** Quad mesh (w × h plus `pad` flame margin on every side) rendering the flame shader. */
-export function createFlameMesh(w: number, h: number, pad: number, core: number, glow: number): Mesh<Shader> {
+export function createFlameMesh(w: number, h: number, pad: number, core: number, glow: number): FlameMesh {
   const W = w + pad * 2;
   const H = h + pad * 2;
-  const geometry = new Geometry()
-    .addAttribute('aVertexPosition', [-pad, -pad, w + pad, -pad, w + pad, h + pad, -pad, h + pad], 2)
-    .addAttribute('aUvs', [0, 0, 1, 0, 1, 1, 0, 1], 2)
-    .addIndex([0, 1, 2, 0, 2, 3]);
-  const shader = Shader.from(VERTEX, FRAGMENT, {
-    uTime: 0, uAlpha: 0, uPad: pad, uSize: [W, H], uCore: rgb(core), uGlow: rgb(glow),
+  const geometry = new Geometry({
+    attributes: {
+      aPosition: [-pad, -pad, w + pad, -pad, w + pad, h + pad, -pad, h + pad],
+      aUV: [0, 0, 1, 0, 1, 1, 0, 1],
+    },
+    indexBuffer: [0, 1, 2, 0, 2, 3],
   });
-  const mesh = new Mesh(geometry, shader);
-  mesh.blendMode = BLEND_MODES.ADD;
+  const shader = Shader.from({
+    gl: { vertex: VERTEX, fragment: FRAGMENT },
+    resources: {
+      flame: {
+        uTime: { value: 0, type: 'f32' },
+        uAlpha: { value: 0, type: 'f32' },
+        uPad: { value: pad, type: 'f32' },
+        uSize: { value: [W, H], type: 'vec2<f32>' },
+        uCore: { value: rgb(core), type: 'vec3<f32>' },
+        uGlow: { value: rgb(glow), type: 'vec3<f32>' },
+      },
+    },
+  });
+  const mesh = new Mesh({ geometry, shader });
+  mesh.blendMode = 'add';
   return mesh;
+}
+
+/** Live uniforms of a flame mesh (set uTime / uAlpha every frame). */
+export function flameUniforms(mesh: FlameMesh): FlameUniforms {
+  return (mesh.shader!.resources.flame as { uniforms: FlameUniforms }).uniforms;
 }

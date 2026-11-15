@@ -3,13 +3,13 @@
  * src/games/<id>/ whose index.ts default-exports a GameDefinition.
  * The engine never imports from games; games import only from '@/engine'.
  */
-import type { Container, DisplayObject } from 'pixi.js';
+import type { Container } from 'pixi.js';
 import type { SlotConfig } from './config/SlotConfig';
 import type { SpinResult } from './math/types';
 
 /** Visual of one reel cell; recycled while reels spin. */
 export interface SymbolView {
-  readonly display: DisplayObject;
+  readonly display: Container;
   setSymbol(id: string): void;
   /** Optional caption on the symbol (sticky cash value / jackpot name); null hides it. */
   setValue?(label: string | null): void;

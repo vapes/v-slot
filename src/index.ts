@@ -19,7 +19,7 @@ async function boot(): Promise<void> {
       const next = new URLSearchParams(params);
       next.set('game', pick);
       window.location.search = `?${next}`;
-    }).mount();
+    }).mount().catch(console.error);
     return;
   }
 

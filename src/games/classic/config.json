@@ -12,7 +12,7 @@
   "reelStyle": { "separators": { "color": "0xD9A441", "alpha": 0.9, "width": 2, "rows": false } },
   "skin": {
     "sourceWidth": 1536,
-    "jackpot": { "start": 124530000, "perSecond": 37 },
+    "jackpot": { "start": 124530000, "perSecond": 37, "refreshMs": 250 },
     "ui": {
       "infoI":        { "x": 126,  "y": 2440, "r": 78, "s": 1 },
       "auto":         { "x": 380,  "y": 2442, "r": 124 },

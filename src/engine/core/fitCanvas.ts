@@ -2,7 +2,7 @@ import type { Application } from 'pixi.js';
 
 /** Scale the canvas to fit the window (letterboxed, centred). Portrait-first. */
 export function fitCanvas(app: Application, width: number, height: number): void {
-  const canvas = app.view as HTMLCanvasElement;
+  const canvas = app.canvas;
   const apply = () => {
     const w = window.innerWidth;
     const h = window.innerHeight;

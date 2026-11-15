@@ -1,5 +1,6 @@
 import { Application } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
+import { createApp } from './createApp';
 import type { GameDefinition, GameView, MathModel } from '../contracts';
 import { GameInput } from './GameInput';
 import { fitCanvas, goToLobby } from './fitCanvas';
@@ -30,7 +31,8 @@ import { buildSpinPipeline } from '../pipeline/buildSpinPipeline';
  */
 export class SlotGame {
   private readonly cfg: SlotConfig;
-  private app: Application;
+  /** Created in init() (Pixi v8 renderers initialise asynchronously). */
+  private app!: Application;
   private reels: ReelController;
   private math: MathModel;
   private view: GameView;
@@ -46,20 +48,12 @@ export class SlotGame {
 
   constructor(def: GameDefinition) {
     const cfg = (this.cfg = def.config);
-    this.app = new Application({
-      width: cfg.canvas.width,
-      height: cfg.canvas.height,
-      backgroundColor: color(cfg.backgroundColor),
-      antialias: true,
-      resolution: Math.min(window.devicePixelRatio || 1, 2),
-      autoDensity: true,
-    });
 
     this.wallet = new Wallet(cfg);
     this.math = def.createMath();
     const renderer = def.createSymbolRenderer();
     this.reels = new ReelController(cfg, renderer);
-    this.respins = new RespinPlayer(cfg, this.reels, renderer, this.app.stage);
+    this.respins = new RespinPlayer(cfg, this.reels, renderer);
     this.celebration = new WinCelebration(cfg);
     this.buyDialog = new BuyFeatureDialog(cfg);
     this.view = def.createView({
@@ -98,9 +92,10 @@ export class SlotGame {
   }
 
   async init(): Promise<void> {
-    const canvas = this.app.view as HTMLCanvasElement;
-    document.body.appendChild(canvas);
     const { view, cfg } = this;
+    this.app = await createApp(cfg.canvas.width, cfg.canvas.height, color(cfg.backgroundColor));
+    const canvas = this.app.canvas;
+    document.body.appendChild(canvas);
     this.paytable = new HtmlPaytable(cfg, canvas);
     this.input = new GameInput(canvas, cfg.canvas.width, view.spinButton, {
       onSpin: () => this.loop.onSpinPressed(),
@@ -112,7 +107,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reels.container);
     view.mountAboveReels(stage);
-    this.respins.mount();
+    this.respins.mount(stage);
     stage.addChild(new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r).container);
     if (cfg.soundButton) {
       const { x, y, r } = cfg.soundButton;
@@ -120,7 +115,8 @@ export class SlotGame {
     }
     stage.addChild(this.celebration.container, this.buyDialog.container);
 
-    this.app.ticker.add((dt) => {
+    this.app.ticker.add((ticker) => {
+      const dt = ticker.deltaTime; // 1 = one 60 fps frame, as every update() expects
       this.reels.update(dt);
       this.celebration.update(dt);
       this.respins.update(dt);

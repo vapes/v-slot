@@ -16,10 +16,7 @@ export class SoundButton {
     c.cursor = 'pointer';
 
     const bg = new Graphics();
-    bg.lineStyle(2, GOLD, 0.9);
-    bg.beginFill(BG, 0.95);
-    bg.drawCircle(0, 0, radius);
-    bg.endFill();
+    bg.circle(0, 0, radius).fill({ color: BG, alpha: 0.95 }).stroke({ width: 2, color: GOLD, alpha: 0.9 });
     c.addChild(bg, this.icon);
 
     c.on('pointertap', () => soundSettings.toggle());
@@ -32,18 +29,17 @@ export class SoundButton {
     const s = this.radius / 21;
     g.clear();
     // speaker body
-    g.beginFill(GOLD, 1);
-    g.drawPolygon([-9 * s, -4 * s, -4 * s, -4 * s, 2 * s, -9 * s, 2 * s, 9 * s, -4 * s, 4 * s, -9 * s, 4 * s]);
-    g.endFill();
+    g.poly([-9 * s, -4 * s, -4 * s, -4 * s, 2 * s, -9 * s, 2 * s, 9 * s, -4 * s, 4 * s, -9 * s, 4 * s]).fill(GOLD);
     if (soundSettings.muted) {
-      g.lineStyle(2.4 * s, GOLD, 1);
       g.moveTo(5 * s, -5 * s).lineTo(12 * s, 5 * s);
       g.moveTo(12 * s, -5 * s).lineTo(5 * s, 5 * s);
+      g.stroke({ width: 2.4 * s, color: GOLD });
     } else {
-      g.lineStyle(2.2 * s, GOLD, 1);
-      g.arc(1 * s, 0, 6 * s, -Math.PI / 4, Math.PI / 4);
-      g.moveTo(1 * s + 10.5 * s * Math.cos(-Math.PI / 3.2), 10.5 * s * Math.sin(-Math.PI / 3.2));
-      g.arc(1 * s, 0, 10.5 * s, -Math.PI / 3.2, Math.PI / 3.2);
+      const arcFrom = (r: number, a0: number, a1: number) =>
+        g.moveTo(1 * s + r * Math.cos(a0), r * Math.sin(a0)).arc(1 * s, 0, r, a0, a1);
+      arcFrom(6 * s, -Math.PI / 4, Math.PI / 4);
+      arcFrom(10.5 * s, -Math.PI / 3.2, Math.PI / 3.2);
+      g.stroke({ width: 2.2 * s, color: GOLD });
     }
   }
 }

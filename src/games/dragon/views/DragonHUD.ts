@@ -1,5 +1,5 @@
 import { Text, TextStyle, Container, Graphics } from 'pixi.js';
-import { formatMoney as fmt, t, type Hud } from '@/engine';
+import { shadow, vGradient, formatMoney as fmt, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 
 const formatMoney = (minor: number) => fmt(config, minor);
@@ -8,19 +8,19 @@ const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
 
 const VALUE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 17, fontWeight: 'bold', fill: 0xFFFFFF,
-  dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 1, dropShadowBlur: 2, dropShadowAlpha: 0.8,
+  dropShadow: shadow(1, 0.8, 2),
 });
-const WIN_VALUE_STYLE = new TextStyle({
-  ...VALUE_STYLE, fill: ['#FFF6C8', '#FFC93C', '#FF9A1F'], fillGradientStops: [0, 0.5, 1],
+const WIN_VALUE_STYLE = Object.assign(VALUE_STYLE.clone(), {
+  fill: vGradient(['#FFF6C8', '#FFC93C', '#FF9A1F'], [0, 0.5, 1]),
 });
 /** Gold captions over the panels (replace the erased baked BALANCE / LAST WIN / BET). */
 export const DRAGON_LABEL_STYLE = new TextStyle({
-  fontFamily: FONT, fontSize: 13, fontWeight: 'bold', fill: ['#FFE9A6', '#F2B84B'],
-  dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 1, dropShadowBlur: 1, dropShadowAlpha: 0.8,
+  fontFamily: FONT, fontSize: 13, fontWeight: 'bold', fill: vGradient(['#FFE9A6', '#F2B84B']),
+  dropShadow: shadow(1, 0.8, 1),
 });
 const MESSAGE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3,
-  stroke: 0x2A0A00, strokeThickness: 4, letterSpacing: 0.5,
+  stroke: { color: 0x2A0A00, width: 4 }, letterSpacing: 0.5,
 });
 
 /**
@@ -44,7 +44,7 @@ export class DragonHUD implements Hud {
   }
 
   private makeValue(anchorName: UiAnchorName, style: TextStyle): Text {
-    const t = new Text('', style);
+    const t = new Text({ text: '', style: style });
     const a = uiAnchor(anchorName);
     t.anchor.set(0.5, 0.5);
     t.position.set(a.x, a.y);
@@ -66,10 +66,8 @@ export class DragonHUD implements Hud {
     if (!text) return;
     const w = this.message.width + 28;
     const h = 24;
-    this.messageBg.lineStyle(1.5, 0xC8962E, 0.8);
-    this.messageBg.beginFill(0x160912, 0.9);
-    this.messageBg.drawRoundedRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2);
-    this.messageBg.endFill();
+    this.messageBg.roundRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2)
+      .fill({ color: 0x160912, alpha: 0.9 }).stroke({ width: 1.5, color: 0xC8962E, alpha: 0.8 });
   }
 
   /** Neutral status line (e.g. "Good luck!"). */

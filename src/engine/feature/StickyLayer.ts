@@ -30,7 +30,10 @@ export class StickyLayer {
     const view = this.renderer.createView(cell.symbol);
     view.setValue?.(label);
     view.display.position.set(-w / 2, -h / 2);
-    const glow = new Graphics();
+    // glow frame drawn once; update() only pulses its alpha
+    const glow = new Graphics()
+      .roundRect(-w / 2 + 1, -h / 2 + 1, w - 2, h - 2, 8).stroke({ width: 6, color: 0xFF8A00, alpha: 0.45 })
+      .roundRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 8).stroke({ width: 2.5, color: 0xFFE082 });
     root.addChild(view.display, glow);
     root.scale.set(0.2);
     this.parent.addChild(root);
@@ -54,19 +57,14 @@ export class StickyLayer {
 
   update(dt: number): void {
     this.pulse += dt * 0.08;
-    const { width: w, height: h } = this.cfg.symbol;
+    const a = 0.65 + Math.sin(this.pulse) * 0.3;
     for (const it of this.items) {
       it.age += dt;
       // pop-in with a little overshoot
       const t = Math.min(it.age / POP_FRAMES, 1);
       const s = t < 1 ? 0.2 + 0.8 * t + Math.sin(t * Math.PI) * 0.25 : 1;
       it.root.scale.set(s);
-      const a = 0.65 + Math.sin(this.pulse) * 0.3;
-      it.glow.clear();
-      it.glow.lineStyle(6, 0xFF8A00, a * 0.45);
-      it.glow.drawRoundedRect(-w / 2 + 1, -h / 2 + 1, w - 2, h - 2, 8);
-      it.glow.lineStyle(2.5, 0xFFE082, a);
-      it.glow.drawRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, 8);
+      it.glow.alpha = a;
     }
   }
 }

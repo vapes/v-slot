@@ -37,7 +37,7 @@ export function createSkin<K extends string>(
     anchor,
     label(name, key, style) {
       const a = anchor(name);
-      const text = new Text(t(key), style);
+      const text = new Text({ text: t(key), style: style });
       text.anchor.set(0.5);
       text.position.set(a.x, a.y);
       return fitText(text, a.w);
@@ -45,7 +45,7 @@ export function createSkin<K extends string>(
     labelButton(button, name, key, style) {
       const a = anchor(name);
       const c = button.container.position;
-      button.setLabel(new Text(t(key), style), a.x - c.x, a.y - c.y, a.w);
+      button.setLabel(new Text({ text: t(key), style: style }), a.x - c.x, a.y - c.y, a.w);
     },
   };
 }

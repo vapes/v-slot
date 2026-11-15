@@ -36,7 +36,8 @@ for (const file of tsFiles) {
   if (lines > MAX_LINES) err(file, `${lines} lines (max ${MAX_LINES}) — split into focused modules`);
 
   // user-facing strings must go through t() (translations come from the content CDN)
-  for (const m of src.matchAll(/new Text\(\s*(['"`])([^'"`]*)\1|\.text\s*=\s*(['"`])([^'"`]*)\3/g)) {
+  // v7 `new Text('…')`, v8 `new Text({ text: '…' })`, and `x.text = '…'`
+  for (const m of src.matchAll(/new Text\(\s*(?:\{\s*text:\s*)?(['"`])([^'"`]*)\1|\.text\s*=\s*(['"`])([^'"`]*)\3/g)) {
     const literal = m[2] ?? m[4] ?? '';
     if (/\p{L}{2,}/u.test(literal.replace(/\$\{[^}]*\}/g, ''))) err(file, `hardcoded UI text "${literal}" — use t('key') + i18n/<lang>/*.json`);
   }

@@ -27,18 +27,11 @@ export class SpriteSpinButton extends SpriteButton implements SpinControl {
     // GameInput drives this button from window pointer events (turbo hold detection)
     this.container.eventMode = 'none';
 
-    this.stopOverlay = new Graphics();
     const r = radius * (style.discScale ?? 0.8);
-    this.stopOverlay.beginFill(style.discColor, 0.92);
-    this.stopOverlay.drawCircle(0, 0, r);
-    this.stopOverlay.endFill();
-    this.stopOverlay.lineStyle(3, style.accent, 0.9);
-    this.stopOverlay.drawCircle(0, 0, r);
     const s = r * 0.62;
-    this.stopOverlay.lineStyle(0);
-    this.stopOverlay.beginFill(style.accent, 1);
-    this.stopOverlay.drawRoundedRect(-s / 2, -s / 2, s, s, 6);
-    this.stopOverlay.endFill();
+    this.stopOverlay = new Graphics()
+      .circle(0, 0, r).fill({ color: style.discColor, alpha: 0.92 }).stroke({ width: 3, color: style.accent, alpha: 0.9 })
+      .roundRect(-s / 2, -s / 2, s, s, 6).fill(style.accent);
     this.stopOverlay.visible = false;
     this.container.addChild(this.stopOverlay);
   }
