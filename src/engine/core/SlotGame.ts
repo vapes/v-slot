@@ -11,6 +11,7 @@ import { SpinLoop } from './SpinLoop';
 import { installQaHooks } from './qaHooks';
 import { ReelController } from '../reels/ReelController';
 import { WinCelebration } from '../ui/WinCelebration';
+import { WinBox } from '../ui/WinBox';
 import { RespinPlayer } from '../feature/RespinPlayer';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
@@ -41,6 +42,7 @@ export class SlotGame {
   private loop: SpinLoop;
   private winCycle: WinCycle;
   private celebration: WinCelebration;
+  private winBox: WinBox;
   private respins: RespinPlayer;
   private paytable!: HtmlPaytable;
   private buyDialog: BuyFeatureDialog;
@@ -65,8 +67,9 @@ export class SlotGame {
       buyFeature: () => void this.buyFeature(),
     });
     const { view, reels } = this;
-    this.winCycle = new WinCycle(cfg, reels, view.hud);
-    this.loop = new SpinLoop(cfg, this.wallet, view, reels, () => this.pipeline,
+    const winBox = (this.winBox = new WinBox(cfg, view.winBox));
+    this.winCycle = new WinCycle(cfg, reels, winBox);
+    this.loop = new SpinLoop(cfg, this.wallet, view, winBox, reels, () => this.pipeline,
       () => this.input.buttonHeld, (on) => this.updateBetControls(on));
 
     this.pipeline = buildSpinPipeline({
@@ -74,7 +77,7 @@ export class SlotGame {
       slotMath: this.math,
       reelController: reels,
       winCelebration: this.celebration,
-      winBox: view.winBox,
+      winBox,
       hud: view.hud,
       isButtonHeld: () => this.input.buttonHeld,
       setBalance: (b) => { this.wallet.balance = b; },
@@ -93,15 +96,15 @@ export class SlotGame {
   }
 
   async init(): Promise<void> {
-    const { view, cfg } = this;
+    const { view, cfg, winBox } = this;
     this.app = await createApp(cfg.canvas.width, cfg.canvas.height, color(cfg.backgroundColor));
     const canvas = this.app.canvas;
     document.body.appendChild(canvas);
     this.paytable = new HtmlPaytable(cfg, canvas);
     this.input = new GameInput(canvas, cfg.canvas.width, view.spinButton, {
       // SPIN during a BIG+ win box show skips it instead
-      onSpin: () => { if (!view.winBox?.skip()) this.loop.onSpinPressed(); },
-      onStop: () => { if (!view.winBox?.skip()) this.reels.forceStop(); },
+      onSpin: () => { if (!winBox.skip()) this.loop.onSpinPressed(); },
+      onStop: () => { if (!winBox.skip()) this.reels.forceStop(); },
       canInteract: () => !this.paytable.isOpen && !this.buyDialog.isOpen,
     });
 
@@ -109,7 +112,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reels.container);
     view.mountAboveReels(stage);
-    if (view.winBox) stage.addChild(view.winBox.container);
+    stage.addChild(winBox.container);
     this.respins.mount(stage);
     stage.addChild(new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r).container);
     if (cfg.soundButton) {
@@ -122,7 +125,7 @@ export class SlotGame {
       const dt = ticker.deltaTime; // 1 = one 60 fps frame, as every update() expects
       this.reels.update(dt);
       this.celebration.update(dt);
-      view.winBox?.update(dt);
+      winBox.update(dt);
       this.respins.update(dt);
       view.update?.(dt);
     });
@@ -133,7 +136,7 @@ export class SlotGame {
       openPaytable: () => void this.paytable.show(this.wallet.totalBet),
       closePaytable: () => this.paytable.hide(),
       buyFeature: () => void this.buyFeature(true),
-      showWin: async (x) => { await view.winBox?.countUp(Math.round(x * this.wallet.totalBet), this.wallet.totalBet); },
+      showWin: async (x) => { await winBox.countUp(Math.round(x * this.wallet.totalBet), this.wallet.totalBet); },
       state: () => ({ balance: this.wallet.balance, totalBet: this.wallet.totalBet, spinning: this.loop.active }),
     });
 
@@ -142,11 +145,11 @@ export class SlotGame {
     this.updateBetControls(false);
     try {
       await this.math.load?.();
-      view.hud.setStatus(t('status.idle'));
+      winBox.setStatus(t('status.idle'));
       view.spinButton.enabled = true;
       this.updateBetControls(true);
     } catch (err) {
-      view.hud.setStatus(t('status.loadFailed'));
+      winBox.setStatus(t('status.loadFailed'));
       console.error('[SlotGame] math load failed:', err);
     }
   }
@@ -162,7 +165,7 @@ export class SlotGame {
     const price = this.loop.buyPrice;
     if (price === null || this.loop.active || this.loop.autoplay || this.buyDialog.isOpen) return;
     if (this.wallet.balance < price) {
-      this.view.hud.setStatus(t('status.noBalance'));
+      this.winBox.setStatus(t('status.noBalance'));
       return;
     }
     if (skipConfirm || await this.buyDialog.ask(formatMoney(this.cfg, price))) this.loop.buyFeature();

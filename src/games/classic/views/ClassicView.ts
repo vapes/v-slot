@@ -4,12 +4,13 @@ import {
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor, type UiAnchorName, skin } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
-import { ClassicHUD, CLASSIC_BUTTON_STYLE, CLASSIC_SPIN_STYLE } from './ClassicHUD';
+import { ClassicHUD, CLASSIC_BUTTON_STYLE, CLASSIC_SPIN_STYLE, classicWinBox } from './ClassicHUD';
 
 /** "777 Casino Classic" skin: background art + every button over its baked spot. */
 export class ClassicView implements GameView {
   readonly spinButton = makeSpin();
   readonly hud = new ClassicHUD();
+  readonly winBox = classicWinBox();
   private readonly minus = make('minus', 'minus');
   private readonly plus = make('plus', 'plus');
   private readonly auto = make('auto', 'auto');

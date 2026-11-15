@@ -4,7 +4,7 @@ import {
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor, skin } from '../config';
 import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
-import { DragonHUD, DRAGON_LABEL_STYLE } from './DragonHUD';
+import { DragonHUD, DRAGON_LABEL_STYLE, dragonWinBox } from './DragonHUD';
 
 const NIGHT_TINT = 0x8C7BC8;
 
@@ -12,7 +12,7 @@ const NIGHT_TINT = 0x8C7BC8;
 export class DragonView implements GameView {
   readonly spinButton = makeSpin();
   readonly hud = new DragonHUD();
-  readonly winBox = this.hud.winBox;
+  readonly winBox = dragonWinBox();
   private readonly minus = make('minus');
   private readonly plus = make('plus');
   private readonly info = make('info');

@@ -5,6 +5,7 @@ import type { ReelController } from '../reels/ReelController';
 import { t } from '../i18n/I18n';
 import { gameEvents } from './GameEvents';
 import type { Wallet } from './Wallet';
+import type { WinBox } from '../ui/WinBox';
 
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -22,6 +23,7 @@ export class SpinLoop {
     private cfg: SlotConfig,
     private wallet: Wallet,
     private view: GameView,
+    private winBox: WinBox,
     private reels: ReelController,
     private pipeline: () => SpinPipeline,
     private isButtonHeld: () => boolean,
@@ -80,7 +82,7 @@ export class SpinLoop {
       lastWon = ctx.winAmount > 0;
 
       if (ctx.cancelled) {
-        view.hud.setStatus(t('status.noBalance'));
+        this.winBox.setStatus(t('status.noBalance'));
         break;
       }
       if (buy) break;
@@ -92,7 +94,7 @@ export class SpinLoop {
 
     if (!wallet.canAffordSpin) this.setAutoplay(false);
     // turbo spins skip the idle text; restore it once the loop is over (a win keeps its WIN line)
-    if (!lastWon && wallet.canAffordSpin) view.hud.setStatus(t('status.idle'));
+    if (!lastWon && wallet.canAffordSpin) this.winBox.setStatus(t('status.idle'));
     this.running = false;
     view.spinButton.setStopMode(false);
     view.spinButton.enabled = true;

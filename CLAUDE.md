@@ -111,7 +111,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud: balance / bet values), `winBox` (WinBoxLayout: where the engine win box goes), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
 
 ## Recipes
 
@@ -131,7 +131,7 @@ const game: GameDefinition = {
 
 **Landing animations:** a symbol in `config.symbols[]` may declare `landing` (normal stop) and/or `turboLanding` (turbo / quick spins): `{ ms, sweeps, scale, hue, flash, color }`, missing fields from `LANDING_DEFAULTS` (`engine/config/defaults.ts`). When a reel stops, every visible cell whose symbol has the animation for that kind of stop plays it (`SlotSymbol.playLanding` → `LandingFX`: pop, diagonal light bands, flash, `hue` degrees of colour rotation = iridescent shimmer) and `gameEvents` emits `symbolLanding` (hook sounds there). No entry → no animation (a symbol with only `landing` stays still in turbo). Resolved via `cfg.landing(id, turbo)`.
 
-**Win box:** a view may expose `GameView.winBox = new WinBox(config, { x, y, w, h }, styles?)` (engine; the engine mounts and updates it) and route `Hud.setStatus / setWinStatus / setLineInfo / hideLineInfo` to `setStatus / showWin / setCaption`. Outside turbo / quick spins a win counts up in the box (`tickMs`); a BIG+ win (`config.celebration`) climbs to the BIG threshold, rides onto the reels over a dimmed screen and keeps counting tier by tier (`planWinTicks`, pure + tested): the title switches BIG → HUGE → EPIC → MAX with a pop, and coins (`fx/CoinShower`) grow per tier (`coinRate` / `rainRate` / `burst`); then it holds (`holdMs`) and returns. The pipeline awaits it; SPIN / spacebar / a tap jumps to the final amount, the next one closes. Turbo / quick keep the instant amount + old celebration. Settings: `config.winBox` over `WINBOX_DEFAULTS`. Events: `winTier`, `winCountEnd`. QA: `__vslot.showWin(x)` previews x × bet (no money).
+**Win box (every game, engine-owned):** the engine `ui/WinBox` is the one place for the status line, the win amount and line info. A game only places it: `GameView.winBox: WinBoxLayout = { x, y, w, h, styles? }` (game px, usually exactly over a baked middle HUD panel; `styles` = status / caption / amount `TextStyle`s + `panel` colours / radius, see `ui/winBoxStyle.ts`); `Hud` is just `updateBalanceDisplay`. Outside turbo / quick spins a win counts up in the box (`tickMs`); a BIG+ win (`config.celebration`) climbs to the BIG threshold, rides onto the reels over a dimmed screen and keeps counting tier by tier (`planWinTicks`, pure + tested): the title switches BIG → HUGE → EPIC → MAX with a pop, and coins (`fx/CoinShower`) grow per tier (`coinRate` / `rainRate` / `burst`); then it holds (`holdMs`) and returns. The pipeline awaits it; SPIN / spacebar / a tap jumps to the final amount, the next one closes. Turbo / quick keep the instant amount + old celebration. Settings: `config.winBox` over `WINBOX_DEFAULTS`. Events: `winTier`, `winCountEnd`. QA: `__vslot.showWin(x)` previews x × bet (no money).
 
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
@@ -147,7 +147,7 @@ const game: GameDefinition = {
 
 1. **pre** — validate balance (≥ stake) → stop previous wins → deduct stake (bet, or the feature price) → stop-mode/disable bets → status "Good luck!"
 2. **server** — `math.spin({ buyFeature: ctx.buy })` → `ctx.result`
-3. **post** — reel animation (quick/turbo = fast; otherwise with anticipation from `computeAnticipation`) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`; with a `GameView.winBox` outside turbo/quick: the awaited win box show instead) → turbo delay → refresh balance → re-enable controls
+3. **post** — reel animation (quick/turbo = fast; otherwise with anticipation from `computeAnticipation`) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → win box (count-up / instant amount, or "Place your bets" when nothing won) → win highlight + win cycle → BIG+ show (thresholds `config.celebration`): the awaited win box ride outside turbo / quick, the static / flying `WinCelebration` words in turbo / quick → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order
 
@@ -162,7 +162,7 @@ Stage
 │   ├── AnticipationFX (veil, flame meshes, sparks)
 │   └── winLayer (unmasked; winning symbols promoted here)
 ├── GameView.mountAboveReels   (buttons, HUD)
-├── GameView.winBox            (optional; shade + coins + title + box, rides onto the reels on BIG+ wins)
+├── WinBox                    (engine, placed by GameView.winBox: socket + shade + coins + title + box, rides onto the reels on BIG+ wins)
 ├── HomeButton                 (config.homeButton — top-left corner in every game)
 ├── SoundButton                (config.soundButton — top-right corner; toggles soundSettings.muted)
 ├── FeatureBanner / FeatureMeter (feature intro/outro, respins + running total)
@@ -176,7 +176,7 @@ Stage
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
-- **Status line (all games):** engine-driven via `Hud.setStatus` — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
+- **Status line (all games):** engine-driven in the win box (`WinBox.setStatus`) — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
 - **Two-colour text:** use two `Text` objects positioned from measured widths (keeps each string a cached texture).
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.
 
