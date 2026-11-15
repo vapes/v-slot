@@ -6,7 +6,6 @@ import { DragonMath } from '../../src/games/dragon/math/DragonMath';
 import { buildProfile, type MathMode } from '../../src/games/dragon/math/respinConfig';
 
 const cfg = resolveConfig(raw as unknown as RawSlotConfig);
-const LINES = cfg.paylines.length;
 
 describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => {
   const profile = buildProfile(raw, strips, mode);
@@ -38,18 +37,14 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
       }
     });
 
-    it('turns every triggering scatter into a sticky wild', () => {
-      for (const r of rounds) {
-        const f = r.feature!;
-        expect(f.initialSticky.map(c => [c.reel, c.row])).toEqual(f.trigger);
-        expect(f.initialSticky.every(c => c.symbol === sticky)).toBe(true);
-      }
+    it('starts the nest empty: scatters do not stay or turn into wilds', () => {
+      for (const r of rounds) expect(r.feature!.initialSticky).toEqual([]);
     });
 
     it('never shows a scatter during respins and keeps sticky wilds in place', () => {
       for (const r of rounds) {
         const f = r.feature!;
-        const stuck = new Set(f.initialSticky.map(c => `${c.reel},${c.row}`));
+        const stuck = new Set<string>();
         for (const step of f.steps) {
           scatterIds.forEach(s => expect(step.grid.flat()).not.toContain(s));
           stuck.forEach(k => { const [re, ro] = k.split(',').map(Number); expect(step.grid[re][ro]).toBe(sticky); });
@@ -70,15 +65,14 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
       }
     });
 
-    it('adds up: totalWin = collect + full-nest bonus + line wins', () => {
+    it('pays line wins only: wilds carry no value, totalWin = Σ step line wins', () => {
       for (const r of rounds) {
         const f = r.feature!;
-        const cells = [...f.initialSticky, ...f.steps.flatMap(s => s.newSticky)];
-        const lines = f.steps.reduce((s, st) => s + st.lineWin, 0);
-        expect(f.collect).toBe(cells.reduce((s, c) => s + c.value, 0));
-        expect(f.totalWin).toBe(f.collect + f.fullBonus + lines);
-        const allowed = profile.respin.values.map(v => v.x * LINES);
-        expect(cells.every(c => allowed.includes(c.value))).toBe(true);
+        const cells = f.steps.flatMap(s => s.newSticky);
+        expect(cells.every(c => c.value === 0 && !c.tag)).toBe(true);
+        expect(f.collect).toBe(0);
+        expect(f.fullBonus).toBe(0);
+        expect(f.totalWin).toBe(f.steps.reduce((s, st) => s + st.lineWin, 0));
       }
     });
   });

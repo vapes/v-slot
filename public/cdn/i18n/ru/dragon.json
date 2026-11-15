@@ -14,11 +14,12 @@
   "symbol.10": "Десять",
   "symbol.9": "Девять",
   "feature.title": "ГНЕЗДО ДРАКОНА",
-  "feature.subtitle": "РЕСПИНОВ: {n} · ВАЙЛДЫ ЛИПКИЕ",
   "feature.respins": "РЕСПИНЫ",
   "feature.collected": "ГНЕЗДО {amount}",
-  "feature.total": "ГНЕЗДО ПЛАТИТ",
-  "feature.grand": "ВЕЛИКИЙ КЛАД",
-  "feature.jackpot.mini": "МИНИ",
-  "feature.jackpot.major": "МАЖОР"
+  "feature.total": "ОБЩИЙ ВЫИГРЫШ",
+  "feature.intro": "ПОЗДРАВЛЯЕМ!",
+  "feature.won": "ВЫ ВЫИГРАЛИ {n} РЕСПИНОВ",
+  "feature.won.one": "ВЫ ВЫИГРАЛИ {n} РЕСПИН",
+  "feature.won.few": "ВЫ ВЫИГРАЛИ {n} РЕСПИНА",
+  "feature.won.many": "ВЫ ВЫИГРАЛИ {n} РЕСПИНОВ"
 }

@@ -1,17 +1,13 @@
-/** Shape of config.json → "respin" (Dragon's Nest feature). Values are × TOTAL bet. */
+/** Shape of config.json → "respin" (Dragon's Nest feature).  */
 export interface RespinConfig {
   /** Base-game scatters → respins each one grants (egg 1, dragon "super scatter" 3). */
   scatters: Record<string, number>;
-  /** Symbol that sticks during the respins, carries a cash value and substitutes on lines (the wild). */
+  /** Symbol that sticks during the respins and substitutes on lines (the wild); no cash value of its own. */
   sticky: string;
   /** Scatters (any mix) needed anywhere on screen. */
   trigger: number;
   /** A new sticky symbol tops the respin counter up to at least this value. */
   respins: number;
-  /** Sticky value table: x = × total bet, w = weight, tag = jackpot name (i18n `feature.jackpot.<tag>`). */
-  values: { x: number; w: number; tag?: string }[];
-  /** Prize for filling every cell, × total bet. */
-  grand: number;
   /** Symbol counts per nest reel (input of tools/build-reels.mjs). */
   composition: Record<string, number | undefined>[];
 }

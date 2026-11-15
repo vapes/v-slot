@@ -14,11 +14,10 @@
   "symbol.10": "Ten",
   "symbol.9": "Nine",
   "feature.title": "DRAGON'S NEST",
-  "feature.subtitle": "{n} RESPINS · WILDS STICK",
   "feature.respins": "RESPINS",
   "feature.collected": "NEST {amount}",
-  "feature.total": "THE NEST PAYS",
-  "feature.grand": "GRAND HOARD",
-  "feature.jackpot.mini": "MINI",
-  "feature.jackpot.major": "MAJOR"
+  "feature.total": "TOTAL WIN",
+  "feature.intro": "CONGRATULATIONS!",
+  "feature.won": "YOU WON {n} RESPINS",
+  "feature.won.one": "YOU WON {n} RESPIN"
 }
