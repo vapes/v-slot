@@ -74,6 +74,7 @@ export class SlotGame {
       slotMath: this.math,
       reelController: reels,
       winCelebration: this.celebration,
+      winBox: view.winBox,
       hud: view.hud,
       isButtonHeld: () => this.input.buttonHeld,
       setBalance: (b) => { this.wallet.balance = b; },
@@ -98,8 +99,9 @@ export class SlotGame {
     document.body.appendChild(canvas);
     this.paytable = new HtmlPaytable(cfg, canvas);
     this.input = new GameInput(canvas, cfg.canvas.width, view.spinButton, {
-      onSpin: () => this.loop.onSpinPressed(),
-      onStop: () => this.reels.forceStop(),
+      // SPIN during a BIG+ win box show skips it instead
+      onSpin: () => { if (!view.winBox?.skip()) this.loop.onSpinPressed(); },
+      onStop: () => { if (!view.winBox?.skip()) this.reels.forceStop(); },
       canInteract: () => !this.paytable.isOpen && !this.buyDialog.isOpen,
     });
 
@@ -107,6 +109,7 @@ export class SlotGame {
     view.mountBelowReels(stage);
     stage.addChild(this.reels.container);
     view.mountAboveReels(stage);
+    if (view.winBox) stage.addChild(view.winBox.container);
     this.respins.mount(stage);
     stage.addChild(new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r).container);
     if (cfg.soundButton) {
@@ -119,6 +122,7 @@ export class SlotGame {
       const dt = ticker.deltaTime; // 1 = one 60 fps frame, as every update() expects
       this.reels.update(dt);
       this.celebration.update(dt);
+      view.winBox?.update(dt);
       this.respins.update(dt);
       view.update?.(dt);
     });
@@ -129,6 +133,7 @@ export class SlotGame {
       openPaytable: () => void this.paytable.show(this.wallet.totalBet),
       closePaytable: () => this.paytable.hide(),
       buyFeature: () => void this.buyFeature(true),
+      showWin: async (x) => { await view.winBox?.countUp(Math.round(x * this.wallet.totalBet), this.wallet.totalBet); },
       state: () => ({ balance: this.wallet.balance, totalBet: this.wallet.totalBet, spinning: this.loop.active }),
     });
 

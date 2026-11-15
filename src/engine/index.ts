@@ -12,6 +12,7 @@ export { forced, debugging, applySeed } from './core/devFlags';
 export { gameEvents, type GameEventMap } from './core/GameEvents';
 export { SpriteButton } from './ui/SpriteButton';
 export { fitText } from './ui/fitText';
+export { WinBox, type WinBoxRect, type WinBoxStyles } from './ui/WinBox';
 export { vGradient, shadow } from './ui/textStyle';
 export { createSkin, type Skin, type SkinAnchor, type SkinAnchorRaw } from './ui/skin';
 export { SpriteSpinButton, type SpinButtonStyle } from './ui/SpriteSpinButton';

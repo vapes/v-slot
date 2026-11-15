@@ -4,10 +4,10 @@ import { fitText } from './fitText';
 import type { SpriteButton } from './SpriteButton';
 
 /** Anchor as stored in config.json → skin.ui, in SOURCE-mockup pixels. */
-export interface SkinAnchorRaw { x: number; y: number; r?: number; w?: number; s?: number }
+export interface SkinAnchorRaw { x: number; y: number; r?: number; w?: number; h?: number; s?: number }
 
-/** Anchor in game pixels: centre, hit radius r, max label width w, extra sprite scale s. */
-export interface SkinAnchor { x: number; y: number; r: number; w: number; s: number }
+/** Anchor in game pixels: centre, hit radius r, max label width w (box width), box height h, extra sprite scale s. */
+export interface SkinAnchor { x: number; y: number; r: number; w: number; h: number; s: number }
 
 export interface Skin<K extends string> {
   /** Source-mockup pixels → game pixels. */
@@ -30,7 +30,7 @@ export function createSkin<K extends string>(
   const scale = canvasWidth / raw.sourceWidth;
   const anchor = (name: K): SkinAnchor => {
     const a = raw.ui[name];
-    return { x: a.x * scale, y: a.y * scale, r: (a.r ?? 0) * scale, w: (a.w ?? 0) * scale, s: a.s ?? 1 };
+    return { x: a.x * scale, y: a.y * scale, r: (a.r ?? 0) * scale, w: (a.w ?? 0) * scale, h: (a.h ?? 0) * scale, s: a.s ?? 1 };
   };
   return {
     scale,

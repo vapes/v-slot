@@ -11,7 +11,7 @@
 | `config.ts` | Typed config, `skin` (engine `createSkin`: `SKIN_SCALE`, `uiAnchor()`, captions), `REEL_STRIPS` |
 | `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
-| `views/DragonHUD.ts` | Values in the baked BALANCE / LAST WIN / BET panels + message pill |
+| `views/DragonHUD.ts` | Values in the baked BALANCE / BET panels; the middle panel is the engine `WinBox` (status line + counting win, BIG+ wins ride onto the reels) at `skin.ui.winBox` |
 | `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky cell's cash value (unused now: wilds carry none) |
 | `tools/build-reels.mjs` | Builds base + nest strips for real/demo into `strips.json`, exact base RTP per profile (`npm run dragon:reels`) |
 | `tools/simulate.ts` | Monte-Carlo of base + feature with the real math (`npm run dragon:sim`) |
@@ -58,7 +58,7 @@ SPIN (hold = turbo loop), − / + (bet), **i** (paytable, bottom-left), AUTO (au
 ## Content CDN
 - Paytable: `public/cdn/paytables/dragon/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
 - Translations: `public/cdn/i18n/<lang>/dragon.json` (`game.title`, `symbol.<id>`); lobby title/subtitle in `common.json` (`game.dragon.*`).
-- Translated art text: BALANCE / LAST WIN / BET captions and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
+- Translated art text: BALANCE / BET captions (the LAST WIN caption is erased too; that panel now holds the win box) and AUTO / TURBO button captions are inpainted out of the art (`tools/slice-skin.py → LABEL_BOXES`) and drawn from i18n keys `label.*` / `button.*` at `skin.ui.*Label` anchors (engine `createSkin` → `skin.label()` / `skin.labelButton()`; `w` = max width, text shrinks to fit).
 
 ## Landing animations
 Egg and Dragon Medal (the scatters) shimmer as they land: `config.json → symbols[].landing` / `turboLanding` (engine feature, see CLAUDE.md). Egg: 700 ms, 1 light sweep, full hue pass (360°), pop ×1.14; Dragon (super scatter): 850 ms, 1 golden sweep, stronger pop. Turbo variants are about half as long.

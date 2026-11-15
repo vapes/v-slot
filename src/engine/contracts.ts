@@ -1,3 +1,4 @@
+import type { WinBox } from './ui/WinBox';
 /**
  * Contracts between the engine and a game. A game is a folder in
  * src/games/<id>/ whose index.ts default-exports a GameDefinition.
@@ -76,6 +77,12 @@ export interface GameActions {
 export interface GameView {
   readonly spinButton: SpinControl;
   readonly hud: Hud;
+  /**
+   * Optional animated win box (engine `WinBox`, mounted by the view). When set,
+   * wins count up in it and BIG+ wins ride onto the reels tier by tier instead
+   * of the flying celebration words (not in turbo / quick spins).
+   */
+  readonly winBox?: WinBox;
   /** Layers under the reels (background art, reel frame). */
   mountBelowReels(stage: Container): void;
   /** Buttons and HUD above the reels. */

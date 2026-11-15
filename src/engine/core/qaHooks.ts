@@ -7,6 +7,8 @@ export interface QaApi {
   closePaytable(): void;
   /** Buy the feature without the confirmation window (no-op when the game has none). */
   buyFeature(): void;
+  /** Play the win box count-up for `x` × total bet (games with a win box; preview only, no money). */
+  showWin(x: number): Promise<void>;
   state(): { balance: number; totalBet: number; spinning: boolean };
   /** Every game event since load, oldest first. */
   events: { name: keyof GameEventMap; at: number }[];
@@ -21,7 +23,7 @@ export function installQaHooks(api: Omit<QaApi, 'events'>): void {
   const events: QaApi['events'] = [];
   const names: (keyof GameEventMap)[] = [
     'spinStart', 'reelLand', 'symbolLanding', 'reelsStopped', 'anticipationStart', 'anticipationEnd',
-    'featureStart', 'featureStep', 'featureEnd', 'win', 'balance', 'betChange', 'autoplay', 'quickSpin',
+    'featureStart', 'featureStep', 'featureEnd', 'win', 'winTier', 'winCountEnd', 'balance', 'betChange', 'autoplay', 'quickSpin',
   ];
   names.forEach(name => gameEvents.on(name, () => events.push({ name, at: performance.now() })));
   (window as unknown as { __vslot: QaApi }).__vslot = { ...api, events };
