@@ -27,6 +27,7 @@
       "auto": { "x": 243, "y": 1465, "r": 60 },
       "spin": { "x": 487, "y": 1480, "r": 108 },
       "turbo": { "x": 728, "y": 1465, "r": 60 },
+      "buy": { "x": 878, "y": 1465, "r": 60 },
       "minus": { "x": 688, "y": 1322, "r": 28 },
       "plus": { "x": 912, "y": 1322, "r": 28 },
       "balanceValue": { "x": 159, "y": 1337 },
@@ -37,7 +38,8 @@
       "lastWinLabel": { "x": 473, "y": 1304, "w": 240 },
       "betLabel": { "x": 803, "y": 1304, "w": 150 },
       "autoLabel": { "x": 249, "y": 1503, "w": 92 },
-      "turboLabel": { "x": 727, "y": 1503, "w": 92 }
+      "turboLabel": { "x": 727, "y": 1503, "w": 92 },
+      "buyLabel": { "x": 878, "y": 1503, "w": 92 }
     }
   },
   "grid": { "rows": 5, "cols": 4 },
@@ -63,6 +65,7 @@
     "autoplayPause": 250
   },
   "rtp": 0.961,
+  "buyFeature": { "cost": 78 },
   "wild": "wild",
   "symbols": [
     { "id": "wild", "name": "Wild", "weight": 2 },
@@ -159,6 +162,7 @@
         { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 },
         { "wild": 2, "chest": 2, "gold": 3, "crystal": 4, "goblet": 6, "A": 8, "K": 8, "Q": 10, "J": 12, "10": 13, "9": 15 }
       ]
-    }
+    },
+    "buyFeature": { "cost": 78 }
   }
 }

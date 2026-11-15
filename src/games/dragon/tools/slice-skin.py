@@ -43,6 +43,7 @@ BUTTONS = {
     'auto': (243, 1465, 62, 62),
     'spin': (487, 1480, 172, 150),
     'turbo': (728, 1465, 62, 62),
+    'buy': (878, 1465, 62, 62),    # cut from the trophy disc, icon replaced by a small egg (caption drawn live)
     'minus': (688, 1322, 30, 30),
     'plus': (912, 1322, 30, 30),
 }
@@ -54,6 +55,9 @@ ROCK_DONOR = (800, 1368, 960, 1398)
 # Icon area inside the coins disc that becomes the "i" button (x0, y0, x1, y1)
 INFO_ICON_BOX = (60, 1433, 124, 1497)
 INFO_FONT = '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf'
+# Trophy icon inside its disc (x0, y0, x1, y1) → replaced by the egg (buy feature button)
+BUY_ICON_BOX = (836, 1422, 920, 1508)
+BUY_EGG = (878, 1450, 27)  # cx, cy, radius of the egg icon (caption goes under it)
 
 # Baked value texts to erase (x0, y0, x1, y1)
 TEXT_BOXES = [(64, 1316, 256, 1358), (400, 1316, 546, 1358), (730, 1316, 876, 1358)]
@@ -84,6 +88,26 @@ def retexture(arr, src, disc):
     w = np.clip((1 - d) / 0.25, 0, 1)[..., None]  # feathered towards the rim
     region = arr[cy - r:cy + r, cx - r:cx + r].astype(float)
     arr[cy - r:cy + r, cx - r:cx + r] = np.clip(region + detail * w, 0, 255).astype(np.uint8)
+
+
+def draw_egg_icon(arr, src):
+    """Small round egg (the scatter art) with a soft gold rim — icon of the feature-buy button."""
+    cx, cy, r = BUY_EGG
+    c, row = SYMBOLS['egg']
+    cell = (round(XS[c]) + INSET, round(YS[row]) + INSET, round(XS[c + 1]) - INSET, round(YS[row + 1]) - INSET)
+    w, h = cell[2] - cell[0], cell[3] - cell[1]
+    side = min(w, h)
+    sq = src.crop((cell[0] + (w - side) // 2, cell[1] + (h - side) // 2,
+                   cell[0] + (w + side) // 2, cell[1] + (h + side) // 2))
+    egg = np.asarray(sq.resize((2 * r, 2 * r), Image.LANCZOS)).astype(float)
+    yy, xx = np.mgrid[:2 * r, :2 * r]
+    d = np.sqrt((xx - r + 0.5) ** 2 + (yy - r + 0.5) ** 2)
+    alpha = np.clip(r - 1.5 - d, 0, 1)[..., None]
+    rim = (np.clip(1.6 - np.abs(d - (r - 1.5)), 0, 1))[..., None]
+    region = arr[cy - r:cy + r, cx - r:cx + r].astype(float)
+    region = region * (1 - alpha) + egg * alpha
+    region = region * (1 - rim) + np.array([255, 200, 80]) * rim
+    arr[cy - r:cy + r, cx - r:cx + r] = np.clip(region, 0, 255).astype(np.uint8)
 
 
 def draw_info_icon(arr, button):
@@ -122,12 +146,15 @@ def main():
         inpaint(arr, b, mode, GLYPH_GROW)
     for b in TEXT_BOXES:
         erase_box(arr, b)
-    for cx, cy, r in REMOVED_BUTTONS:
-        inpaint(arr, (cx - r, cy - r, cx + r, cy + r), 'disc', 0, pad=8, iterations=3000)
-        retexture(arr, src, (cx, cy, r))
+    # button sprites are cut before the trophy disc is erased from the background
     clean_arr = arr.copy()
     inpaint(clean_arr, INFO_ICON_BOX, 'gold', 3)
     draw_info_icon(clean_arr, BUTTONS['info'])
+    inpaint(clean_arr, BUY_ICON_BOX, 'gold', 4, iterations=1200)
+    draw_egg_icon(clean_arr, src)
+    for cx, cy, r in REMOVED_BUTTONS:
+        inpaint(arr, (cx - r, cy - r, cx + r, cy + r), 'disc', 0, pad=8, iterations=3000)
+        retexture(arr, src, (cx, cy, r))
     clean = Image.fromarray(clean_arr)
 
     for name, (cx, cy, rx, ry) in BUTTONS.items():

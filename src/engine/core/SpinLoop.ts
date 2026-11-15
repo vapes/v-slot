@@ -50,7 +50,18 @@ export class SpinLoop {
     else void this.run();
   }
 
-  async run(): Promise<void> {
+  /** Bought feature: one spin at the feature price (config.buyFeature) that triggers the feature. */
+  buyFeature(): void {
+    if (!this._autoplay) void this.run(true);
+  }
+
+  /** Price of the feature buy at the current bet, or null when the game has none. */
+  get buyPrice(): number | null {
+    const b = this.cfg.buyFeature;
+    return b ? Math.round(this.wallet.totalBet * b.cost) : null;
+  }
+
+  async run(buy = false): Promise<void> {
     if (this.reels.isSpinning || this.running) return;
     this.running = true;
     const { wallet, view } = this;
@@ -61,6 +72,7 @@ export class SpinLoop {
       const ctx: SpinContext = {
         balance: wallet.balance, lineBet: wallet.lineBet, totalBet: wallet.totalBet,
         turbo: isTurbo, quick: this._quick,
+        buy, stake: buy ? this.buyPrice ?? wallet.totalBet : wallet.totalBet,
         result: null, winAmount: 0, cancelled: false, meta: new Map(),
       };
       await this.pipeline().execute(ctx);
@@ -71,6 +83,7 @@ export class SpinLoop {
         view.hud.setStatus(t('status.noBalance'));
         break;
       }
+      if (buy) break;
       isTurbo = ctx.turbo && this.isButtonHeld();
       if (!isTurbo && this._autoplay) {
         await delay(lastWon ? this.cfg.timing.autoplayWinPauseMs : this.cfg.timing.autoplayPauseMs);

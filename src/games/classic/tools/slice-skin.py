@@ -57,9 +57,9 @@ LABEL_BOXES = [(485, 36, 1053, 110, 'box'), (122, 1964, 395, 2023, 'gold'), (712
 REEL_FILL = (10, 28, 66)
 
 # Baked buttons removed from the background after their sprites are cut:
-# "i" (moved to the top-right column) and the speaker (replaced by the engine
-# sound toggle at the top-right). (cx, cy, r) incl. drop shadow.
-REMOVED_BUTTONS = [(126, 2440, 96), (1416, 2442, 96)]
+# the speaker (replaced by the engine sound toggle at the top-right).
+# (cx, cy, r) incl. drop shadow. The "i" stays at its baked spot (bottom-left).
+REMOVED_BUTTONS = [(1416, 2442, 96)]
 
 # The bet block moves to the right panel (WIN takes the middle one): the baked
 # − / + discs are wiped from the middle panel's value band. Each row is refilled

@@ -15,6 +15,7 @@ import { t } from '../i18n/I18n';
  *   {{asset:PATH}}       absolute URL of public/games/<id>/PATH
  *   {{t:KEY}}            any translation
  *   {{paylines}}         generated payline diagrams (HTML, style .pl-* classes)
+ *   {{buyCost}}          feature-buy price at the current bet (config.buyFeature)
  *
  * Text values are HTML-escaped; unknown placeholders are left visible so
  * template authors notice them.
@@ -36,6 +37,7 @@ export function renderPaytable(template: string, cfg: SlotConfig, totalBet: numb
       case 'asset': return a ? esc(new URL(assetUrl(cfg.id, a), window.location.href).href) : m;
       case 't': return a ? esc(t(a)) : m;
       case 'paylines': return paylinesHtml(cfg);
+      case 'buyCost': return cfg.buyFeature ? esc(money(Math.round(totalBet * cfg.buyFeature.cost))) : m;
       default: return m;
     }
   });

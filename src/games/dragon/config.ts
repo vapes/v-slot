@@ -6,8 +6,12 @@ import { buildProfile, type MathMode } from './math/respinConfig';
 /** demo (default, generous RTP from config.demo) or real (`?mode=real`). */
 export const MODE: MathMode = detectPlayMode();
 
-/** Typed, resolved config; `rtp` is the active profile's (shown in the paytable). */
-const merged = { ...raw, rtp: MODE === 'demo' ? raw.demo.rtp : raw.rtp };
+/** Typed, resolved config; `rtp` and the feature-buy price are the active profile's (shown in the paytable). */
+const merged = {
+  ...raw,
+  rtp: MODE === 'demo' ? raw.demo.rtp : raw.rtp,
+  buyFeature: MODE === 'demo' ? raw.demo.buyFeature : raw.buyFeature,
+};
 const rawConfig: RawSlotConfig = merged;
 export const config = resolveConfig(rawConfig);
 
