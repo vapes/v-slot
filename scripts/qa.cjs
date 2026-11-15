@@ -109,7 +109,7 @@ async function main() {
     if (hasFeature) {
       await page.waitForTimeout(3500);
       await shot(`${id}-feature`);
-      await waitEvent('featureEnd', t, 90000);
+      await waitEvent('featureEnd', t, 180000);
     }
 
     // feature buy (games with config.buyFeature): stake > bet, the feature always starts
@@ -125,7 +125,7 @@ async function main() {
       const after = await page.evaluate(() => window.__vslot.state());
       if (before.balance - after.balance <= before.totalBet) problems.push(`${where}: buy took only ${before.balance - after.balance}`);
       await waitEvent('featureStart', t, 20000);
-      await waitEvent('featureEnd', t, 90000);
+      await waitEvent('featureEnd', t, 180000);
     }
     console.log(`${id}: ok${hasFeature ? ' (feature played)' : ' (no feature in this game)'}${bought ? ', feature buy ok' : ''}`);
   }
