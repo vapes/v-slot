@@ -61,6 +61,14 @@ REEL_FILL = (10, 28, 66)
 # sound toggle at the top-right). (cx, cy, r) incl. drop shadow.
 REMOVED_BUTTONS = [(126, 2440, 96), (1416, 2442, 96)]
 
+# The bet block moves to the right panel (WIN takes the middle one): the baked
+# − / + discs are wiped from the middle panel's value band. Each row is refilled
+# with the median colour of a clean strip of that row, shaped by the horizontal
+# brightness profile (vignette, rounded corners) of the same rows in the clean right panel.
+BET_DISCS_AREA = (527, 2036, 1010, 2166)  # x0, y0, x1, y1: middle panel interior, above its bottom border
+PROFILE_AREA_X = (1045, 1512)              # same interior of the right (WIN) panel
+CLEAN_STRIP = (690, 850)                   # x range of that panel without discs (value text already erased)
+
 
 def main():
     src = Image.open(SRC).convert('RGB')
@@ -89,6 +97,14 @@ def main():
 
     for cx, cy, r in REMOVED_BUTTONS:
         inpaint(arr, (cx - r, cy - r, cx + r, cy + r), 'disc', iterations=1500)
+
+    x0, y0, x1, y1 = BET_DISCS_AREA
+    row_fill = np.median(arr[y0:y1, CLEAN_STRIP[0]:CLEAN_STRIP[1]], axis=1).astype(float)
+    ref = arr[y0:y1, PROFILE_AREA_X[0]:PROFILE_AREA_X[1]].astype(float)
+    ref = np.asarray(Image.fromarray(ref.astype(np.uint8)).resize((x1 - x0, y1 - y0), Image.BILINEAR)).astype(float)
+    ref_mid = np.median(ref[:, ref.shape[1] // 3: 2 * ref.shape[1] // 3], axis=1)
+    shape = np.clip((ref + 1) / (ref_mid[:, None, :] + 1), 0.4, 4)
+    arr[y0:y1, x0:x1] = np.clip(row_fill[:, None, :] * shape, 0, 255).astype(np.uint8)
 
     arr[YS[0]:YS[-1], XS[0]:XS[-1]] = REEL_FILL
     Image.fromarray(arr).save(OUT / 'bg.jpg', quality=88, optimize=True, progressive=True)
