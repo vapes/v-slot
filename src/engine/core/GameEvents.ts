@@ -10,6 +10,8 @@ export interface GameEventMap {
   spinStart: { totalBet: number; turbo: boolean; quick: boolean };
   /** A reel landed on its symbols (before its bounce). */
   reelLand: { reel: number };
+  /** A symbol with a landing animation landed (one per cell; `turbo` = turbo variant). */
+  symbolLanding: { reel: number; row: number; symbol: string; turbo: boolean };
   /** All reels stopped; result known (wins not yet presented). */
   reelsStopped: { result: SpinResult };
   anticipationStart: { reel: number };

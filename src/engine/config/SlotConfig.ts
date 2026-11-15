@@ -1,4 +1,4 @@
-import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, TIMING_DEFAULTS } from './defaults';
+import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, LANDING_DEFAULTS, TIMING_DEFAULTS } from './defaults';
 
 /**
  * Slot configuration contract shared by every game.
@@ -112,8 +112,12 @@ export interface RawSlotConfig {
   rtp: number;
   /** Symbol id that substitutes for all others (pays nothing itself). */
   wild?: string | null;
-  /** `weight` drives only the random "blur" symbols during spin. */
-  symbols: { id: string; name?: string; weight: number }[];
+  /**
+   * `weight` drives only the random "blur" symbols during spin. `landing` /
+   * `turboLanding`: animation played on this symbol's visible cells when its
+   * reel stops in a normal / turbo (or quick) spin; none if absent.
+   */
+  symbols: { id: string; name?: string; weight: number; landing?: LandingAnimation; turboLanding?: LandingAnimation }[];
   /** symbol → match count → multiplier of the line bet. */
   paytable: Record<string, Record<string, number>>;
   /** One row index per reel, left to right. */
@@ -121,6 +125,9 @@ export interface RawSlotConfig {
 }
 
 export type TeaseConfig = typeof ANTICIPATION_DEFAULTS;
+export type LandingConfig = typeof LANDING_DEFAULTS;
+/** Landing animation as written in config.json (see LANDING_DEFAULTS). */
+export type LandingAnimation = Partial<LandingConfig>;
 
 export interface SlotConfig extends RawSlotConfig {
   /** Spin pacing with engine defaults applied (see config/defaults.ts). */
@@ -136,6 +143,8 @@ export interface SlotConfig extends RawSlotConfig {
   reelAreaHeight: number;
   symbolIds: string[];
   symbolName(id: string): string;
+  /** Resolved landing animation of a symbol for a normal / turbo stop, or null. */
+  landing(id: string, turbo: boolean): LandingConfig | null;
 }
 
 export function resolveConfig(raw: RawSlotConfig): SlotConfig {
@@ -143,6 +152,10 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
   const cellHeight = raw.symbol.height + raw.symbol.gap;
   const reelAreaWidth = raw.grid.cols * reelWidth;
   const names = new Map(raw.symbols.map(s => [s.id, s.name ?? s.id]));
+  const landings = new Map(raw.symbols.map(s => [s.id, {
+    normal: s.landing ? { ...LANDING_DEFAULTS, ...s.landing } : null,
+    turbo: s.turboLanding ? { ...LANDING_DEFAULTS, ...s.turboLanding } : null,
+  }]));
   const s = raw.spin;
   const tease = raw.anticipation && raw.anticipation.enabled !== false
     ? { ...ANTICIPATION_DEFAULTS, ...raw.anticipation } as TeaseConfig
@@ -164,6 +177,7 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
     reelAreaHeight: raw.grid.rows * cellHeight,
     symbolIds: raw.symbols.map(s => s.id),
     symbolName: (id) => names.get(id) ?? id,
+    landing: (id, turbo) => (turbo ? landings.get(id)?.turbo : landings.get(id)?.normal) ?? null,
   };
 }
 
