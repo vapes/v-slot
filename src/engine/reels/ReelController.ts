@@ -49,17 +49,13 @@ export class ReelController {
     const bgColor = cfg.reelStyle?.background;
     if (bgColor) {
       const bg = new Graphics();
-      bg.beginFill(color(bgColor), 1);
-      bg.drawRoundedRect(-8, -8, REEL_AREA_WIDTH + 16, REEL_AREA_HEIGHT + 16, 8);
-      bg.endFill();
+      bg.roundRect(-8, -8, REEL_AREA_WIDTH + 16, REEL_AREA_HEIGHT + 16, 8).fill(color(bgColor));
       this.container.addChild(bg);
     }
 
     this.reelLayer = new Container();
     const mask = new Graphics();
-    mask.beginFill(0xFFFFFF);
-    mask.drawRect(0, 0, REEL_AREA_WIDTH, REEL_AREA_HEIGHT);
-    mask.endFill();
+    mask.rect(0, 0, REEL_AREA_WIDTH, REEL_AREA_HEIGHT).fill(0xFFFFFF);
     this.reelLayer.addChild(mask);
     this.reelLayer.mask = mask;
     this.container.addChild(this.reelLayer);
@@ -91,7 +87,6 @@ export class ReelController {
     const sep = this.cfg.reelStyle?.separators;
     if (!sep) return g;
     const { reelAreaWidth, reelAreaHeight, cellHeight } = this.cfg;
-    g.lineStyle(sep.width, color(sep.color), sep.alpha);
     for (let i = 1; i < this.reelCount; i++) {
       g.moveTo(i * this.reelWidth, 0);
       g.lineTo(i * this.reelWidth, reelAreaHeight);
@@ -100,6 +95,7 @@ export class ReelController {
       g.moveTo(0, r * cellHeight);
       g.lineTo(reelAreaWidth, r * cellHeight);
     }
+    g.stroke({ width: sep.width, color: color(sep.color), alpha: sep.alpha });
     return g;
   }
 

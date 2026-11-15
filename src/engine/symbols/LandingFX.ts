@@ -1,4 +1,4 @@
-import { BLEND_MODES, ColorMatrixFilter, Container, Graphics } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics } from 'pixi.js';
 import { color, type LandingConfig } from '../config/SlotConfig';
 
 const FRAME_MS = 1000 / 60;
@@ -10,6 +10,8 @@ const BAND = 0.42;
  * diagonal light bands sweeping across the art, a brightness flash and an
  * optional hue rotation ("iridescent" shimmer). Lives inside SlotSymbol and
  * drives its `content` container; masked to the cell so bands never spill.
+ * The mask and the hue filter exist only while the animation plays (both cost
+ * extra GPU passes on mobile).
  */
 export class LandingFX {
   private layer = new Container();
@@ -21,11 +23,10 @@ export class LandingFX {
   private elapsed = 0;
 
   constructor(private content: Container, private w: number, private h: number) {
-    this.mask.beginFill(0xFFFFFF).drawRect(0, 0, w, h).endFill();
-    this.bands.blendMode = BLEND_MODES.ADD;
-    this.flash.blendMode = BLEND_MODES.ADD;
+    this.mask.rect(0, 0, w, h).fill(0xFFFFFF);
+    this.bands.blendMode = 'add';
+    this.flash.blendMode = 'add';
     this.layer.addChild(this.flash, this.bands, this.mask);
-    this.layer.mask = this.mask;
     this.layer.visible = false;
     content.addChild(this.layer);
   }
@@ -38,13 +39,14 @@ export class LandingFX {
     this.spec = spec;
     this.elapsed = 0;
     const c = color(spec.color);
-    this.flash.clear().beginFill(c, 1).drawRect(0, 0, this.w, this.h).endFill();
+    this.flash.clear().rect(0, 0, this.w, this.h).fill(c);
     this.drawBand(c);
     this.layer.visible = true;
+    this.layer.mask = this.mask;
     this.content.pivot.set(this.w / 2, this.h / 2);
     this.content.position.set(this.w / 2, this.h / 2);
     if (spec.hue) {
-      this.hue ??= new ColorMatrixFilter();
+      this.hue ??= new ColorMatrixFilter({ resolution: 1 }); // a short shimmer does not need retina resolution
       this.content.filters = [this.hue];
     }
     this.update(0);
@@ -80,6 +82,7 @@ export class LandingFX {
     if (!this.spec) return;
     this.spec = null;
     this.layer.visible = false;
+    this.layer.mask = null;
     this.content.scale.set(1);
     this.content.pivot.set(0, 0);
     this.content.position.set(0, 0);
@@ -93,11 +96,10 @@ export class LandingFX {
     const steps = 9;
     for (let i = 0; i < steps; i++) {
       const k = 1 - Math.abs((i + 0.5) / steps * 2 - 1); // 0 at edges, 1 in the centre
-      g.beginFill(i === (steps >> 1) ? 0xFFFFFF : c, 0.08 + 0.5 * k * k);
       const x = (i / steps) * bw;
       const skew = this.h * 0.45;
-      g.drawPolygon([x + skew, -4, x + skew + bw / steps, -4, x + bw / steps, this.h + 4, x, this.h + 4]);
-      g.endFill();
+      g.poly([x + skew, -4, x + skew + bw / steps, -4, x + bw / steps, this.h + 4, x, this.h + 4])
+        .fill({ color: i === (steps >> 1) ? 0xFFFFFF : c, alpha: 0.08 + 0.5 * k * k });
     }
   }
 }

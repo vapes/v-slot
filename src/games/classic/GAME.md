@@ -15,7 +15,7 @@
 | `math/PrecomputedTable.ts` | Parses `screens.bin` (nibble-packed grids grouped by category) |
 | `views/ClassicView.ts` | `GameView`: background, spin / ± / AUTO SPIN / TURBO / i buttons over their baked spots |
 | `views/ClassicHUD.ts` | BALANCE / BET / WIN values, message pill under the reels, jackpot meter |
-| `views/JackpotTicker.ts` | Decorative MEGA JACKPOT meter (`skin.jackpot`, not part of the math) |
+| `views/JackpotTicker.ts` | Decorative MEGA JACKPOT meter (`skin.jackpot`: start, perSecond, refreshMs — text redrawn ~4×/s, not every frame; not part of the math) |
 | `views/ClassicSymbols.ts` | `SymbolRenderer`: opaque art tiles |
 
 ## Skin pipeline

@@ -1,7 +1,7 @@
-import { Container, Graphics, type Mesh, type Shader } from 'pixi.js';
+import { Container, Graphics } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
 import { ANTICIPATION_DEFAULTS } from '../config/defaults';
-import { createFlameMesh } from './flameShader';
+import { createFlameMesh, flameUniforms, type FlameMesh } from './flameShader';
 import { MarqueeColumn } from './MarqueeColumn';
 import { Sparks } from './Sparks';
 
@@ -10,7 +10,7 @@ const PAD = 16;
 
 /** One anticipating-column visual; `update` gets the current fade (0..1). */
 interface ColumnFX {
-  readonly display: Container | Mesh<Shader>;
+  readonly display: Container | FlameMesh;
   update(dt: number, alpha: number, time: number): void;
 }
 
@@ -22,12 +22,14 @@ interface Column {
 
 function flameColumn(w: number, h: number, core: number, glow: number): ColumnFX {
   const mesh = createFlameMesh(w, h, PAD, core, glow);
+  const u = flameUniforms(mesh);
   return {
     display: mesh,
     update(_dt, alpha, time) {
       mesh.visible = alpha > 0;
-      mesh.shader.uniforms.uTime = time;
-      mesh.shader.uniforms.uAlpha = alpha;
+      if (!mesh.visible) return;
+      u.uTime = time;
+      u.uAlpha = alpha;
     },
   };
 }
@@ -101,16 +103,24 @@ export class AnticipationFX {
     this.sparks?.update(dt);
   }
 
-  /** Darken every column except the anticipating one, fading with the effect. */
+  /**
+   * Darken every column except the anticipating one, fading with the effect.
+   * Geometry is rebuilt only when the active column changes; the fade is alpha.
+   */
   private drawVeil(active: number): void {
-    this.veil.clear();
     const strength = Math.max(...this.columns.map(c => c.alpha));
-    if (strength <= 0 || this.veilAlpha <= 0) return;
+    this.veil.visible = strength > 0 && this.veilAlpha > 0;
+    if (!this.veil.visible) return;
+    this.veil.alpha = this.veilAlpha * strength;
+    if (active === this.veilColumn) return;
+    this.veilColumn = active;
     const { reelWidth, reelAreaHeight, grid } = this.cfg;
-    this.veil.beginFill(0x000000, this.veilAlpha * strength);
+    this.veil.clear();
     for (let i = 0; i < grid.cols; i++) {
-      if (i !== active) this.veil.drawRect(i * reelWidth, 0, reelWidth, reelAreaHeight);
+      if (i !== active) this.veil.rect(i * reelWidth, 0, reelWidth, reelAreaHeight);
     }
-    this.veil.endFill();
+    this.veil.fill(0x000000);
   }
+
+  private veilColumn = -2;
 }

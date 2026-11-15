@@ -34,7 +34,10 @@ export class SpriteButton {
     this.face.addChild(this.sprite);
     this.container.addChild(this.face);
 
-    this.glow = new Graphics();
+    // drawn once; only its alpha pulses (no per-frame geometry rebuild)
+    this.glow = new Graphics()
+      .circle(0, 0, this.radius + 3).stroke({ width: 8, color: 0xFF9800, alpha: 0.45 })
+      .circle(0, 0, this.radius).stroke({ width: 3, color: 0xFFE082 });
     this.glow.visible = false;
     this.container.addChild(this.glow);
 
@@ -93,11 +96,6 @@ export class SpriteButton {
   update(dt: number): void {
     if (!this._active) return;
     this.glowPhase += dt * 0.08;
-    const a = 0.55 + Math.sin(this.glowPhase) * 0.35;
-    this.glow.clear();
-    this.glow.lineStyle(8, 0xFF9800, a * 0.45);
-    this.glow.drawCircle(0, 0, this.radius + 3);
-    this.glow.lineStyle(3, 0xFFE082, a);
-    this.glow.drawCircle(0, 0, this.radius);
+    this.glow.alpha = 0.55 + Math.sin(this.glowPhase) * 0.35;
   }
 }

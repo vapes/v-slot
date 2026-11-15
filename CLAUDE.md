@@ -2,7 +2,7 @@
 
 Guidance for Claude Code and other agents working in this repository.
 
-V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline, line math, celebrations, HTML paytable overlay, i18n) plus self-contained **games** in `src/games/<id>/`, and a **lobby** that launches them. PixiJS v7.3.3, TypeScript 5.3 strict, Vite 5. Path alias `@/*` → `src/*`. Portrait mobile only.
+V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline, line math, celebrations, HTML paytable overlay, i18n) plus self-contained **games** in `src/games/<id>/`, and a **lobby** that launches them. PixiJS v8 (WebGL renderer), TypeScript 5.3 strict, Vite 5. Path alias `@/*` → `src/*`. Portrait mobile only.
 
 ## Commands
 
@@ -57,6 +57,7 @@ src/
 │   ├── core/qaHooks.ts      window.__vslot in dev builds (QA / agents)
 │   ├── core/GameInput.ts    Spin pointer (hit test in game px) + spacebar; tracks buttonHeld
 │   ├── core/fitCanvas.ts    Letterboxed canvas scaling, goToLobby()
+│   ├── core/createApp.ts    Pixi v8 Application tuned for mobile (WebGL, DPR ≤ 2, 60 fps cap, no move events)
 │   ├── core/wakeLock.ts     Screen Wake Lock while a game is open (re-acquired on tab return / first tap)
 │   ├── core/playMode.ts     detectPlayMode(): `demo` (default, no money backend) or `real` (`?mode=real`)
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
@@ -173,5 +174,14 @@ Stage
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
 - **Status line (all games):** engine-driven via `Hud.setStatus` — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
-- **Two-colour text:** Pixi v7 has no rich text; use two `Text` objects positioned from measured widths.
+- **Two-colour text:** use two `Text` objects positioned from measured widths (keeps each string a cached texture).
 - `BlurFilter` darkens even at blur=0 — use alpha for spin blur.
+
+## PixiJS v8 + mobile performance rules
+
+- **App:** always `createApp(w, h, bg, maxFps?)` (`engine/core/createApp.ts`): WebGL (`preference: 'webgl'`; the flame shader is GLSL), resolution = DPR capped at 2, MSAA only on low-DPI screens, no pointer-move / wheel hit testing, ticker capped at 60 fps (lobby 30). The renderer initialises asynchronously — build display objects in constructors, touch `app` only in `init()` / `mount()`.
+- **v8 API:** `new Text({ text, style })`; styles use `stroke: { color, width }`, `dropShadow: shadow(distance, alpha, blur)` and gradients via `vGradient([...colors], stops?)` (engine barrel, `ui/textStyle.ts`; a `TextStyle` cannot be spread — use `style.clone()`). Graphics: `g.rect(...).fill({ color, alpha }).stroke({ width, color, alpha })`, `roundRect`, `circle`, `poly`, `moveTo/lineTo` + one `stroke()`. Blend modes are strings (`'add'`). `Graphics` / `Sprite` are leaves — put children in a `Container`. Ticker callbacks get the `Ticker`: pass `ticker.deltaTime` (1 = one 60 fps frame) to `update(dt)`. Custom meshes: `new Geometry({ attributes: { aPosition, aUV }, indexBuffer })` + `Shader.from({ gl: { vertex, fragment }, resources: { group: { uName: { value, type } } } })`, vertex uses `uProjectionMatrix * uWorldTransformMatrix * uTransformMatrix` (see `fx/flameShader.ts`).
+- **No per-frame geometry:** draw `Graphics` once and animate `alpha` / `scale` / `tint` (button glow, sticky glow, anticipation veil). Rebuild only when the shape really changes.
+- **Particles = pooled `Sprite`s on one shared texture** (`fx/Sparks.ts → sparkTexture()`, `feature/RespinFlyFX.ts`): hide (`visible = false`) and reuse, never `new Graphics()` per particle, never add/remove children per frame — one batch, no garbage.
+- **Text changes are expensive** (canvas raster + texture upload): never set `.text` every frame; throttle tickers (`JackpotTicker`: `skin.jackpot.refreshMs`) and skip unchanged strings.
+- **Masks and filters only while needed** (`LandingFX` attaches its mask and hue `ColorMatrixFilter` for the animation, resolution 1, then removes them).

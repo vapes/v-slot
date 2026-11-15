@@ -1,4 +1,4 @@
-import { BLEND_MODES, Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics, Sprite } from 'pixi.js';
 import { sparkTexture } from './Sparks';
 
 const SPACING = 16;   // px between bulbs along the frame
@@ -17,10 +17,8 @@ export class MarqueeColumn {
 
   constructor(w: number, h: number, private core: number, private glow: number) {
     const inset = 3;
-    this.frame.lineStyle(2.5, glow, 0.95);
-    this.frame.drawRoundedRect(inset, inset, w - inset * 2, h - inset * 2, 6);
-    this.frame.lineStyle(1, core, 0.8);
-    this.frame.drawRoundedRect(inset + 2, inset + 2, w - inset * 2 - 4, h - inset * 2 - 4, 5);
+    this.frame.roundRect(inset, inset, w - inset * 2, h - inset * 2, 6).stroke({ width: 2.5, color: glow, alpha: 0.95 });
+    this.frame.roundRect(inset + 2, inset + 2, w - inset * 2 - 4, h - inset * 2 - 4, 5).stroke({ width: 1, color: core, alpha: 0.8 });
     this.container.addChild(this.frame);
 
     // bulbs clockwise around the perimeter
@@ -39,7 +37,7 @@ export class MarqueeColumn {
       const b = new Sprite(sparkTexture());
       b.anchor.set(0.5);
       b.position.set(x, y);
-      b.blendMode = BLEND_MODES.ADD;
+      b.blendMode = 'add';
       this.bulbs.push(b);
       this.container.addChild(b);
     }

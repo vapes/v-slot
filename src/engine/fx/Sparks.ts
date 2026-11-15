@@ -1,4 +1,4 @@
-import { BLEND_MODES, Container, Sprite, Texture } from 'pixi.js';
+import { Container, Sprite, Texture } from 'pixi.js';
 
 interface Spark {
   sprite: Sprite;
@@ -28,7 +28,11 @@ export function sparkTexture(): Texture {
   return glowTexture;
 }
 
-/** Additive spark/ember particles rising through rectangular areas (pooled sprites). */
+/**
+ * Additive spark/ember particles rising through rectangular areas. Sprites are
+ * pooled and only hidden when they die (no scene-graph churn), all share one
+ * texture so they batch into a single draw call.
+ */
 export class Sparks {
   readonly container = new Container();
   private live: Spark[] = [];
@@ -39,16 +43,20 @@ export class Sparks {
   /** Emit `count` sparks from the bottom and sides of the rect (x, y, w, h). */
   emit(x: number, y: number, w: number, h: number, count: number): void {
     for (let i = 0; i < count; i++) {
-      const sprite = this.pool.pop() ?? new Sprite(sparkTexture());
-      sprite.anchor.set(0.5);
-      sprite.blendMode = BLEND_MODES.ADD;
+      let sprite = this.pool.pop();
+      if (!sprite) {
+        sprite = new Sprite(sparkTexture());
+        sprite.anchor.set(0.5);
+        sprite.blendMode = 'add';
+        this.container.addChild(sprite);
+      }
+      sprite.visible = true;
       const side = Math.random();
       // 60 % from the bottom edge, the rest climb along the side edges
       sprite.x = side < 0.6 ? x + Math.random() * w : side < 0.8 ? x + Math.random() * 10 : x + w - Math.random() * 10;
       sprite.y = side < 0.6 ? y + h - Math.random() * 12 : y + Math.random() * h;
       sprite.tint = Math.random() < 0.5 ? this.colors[0] : this.colors[1];
       const maxLife = 40 + Math.random() * 50;
-      this.container.addChild(sprite);
       this.live.push({
         sprite, vx: (Math.random() - 0.5) * 0.8, vy: -(2 + Math.random() * 4.5),
         life: maxLife, maxLife, sway: Math.random() * Math.PI * 2,
@@ -61,7 +69,7 @@ export class Sparks {
       const p = this.live[i];
       p.life -= dt;
       if (p.life <= 0) {
-        this.container.removeChild(p.sprite);
+        p.sprite.visible = false;
         this.pool.push(p.sprite);
         this.live.splice(i, 1);
         continue;

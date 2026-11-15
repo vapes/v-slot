@@ -1,33 +1,33 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { formatMoney, t, type Hud } from '@/engine';
+import { shadow, vGradient, formatMoney, t, type Hud } from '@/engine';
 import { config, uiAnchor, type UiAnchorName, skin } from '../config';
 import { JackpotTicker } from './JackpotTicker';
 
 const FONT = '"Roboto Condensed", "Arial Narrow", Arial, Helvetica, sans-serif';
 const VALUE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 21, fontWeight: 'bold', fill: 0xFFFFFF,
-  dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 1, dropShadowBlur: 2, dropShadowAlpha: 0.7,
+  dropShadow: shadow(1, 0.7, 2),
 });
-const WIN_STYLE = new TextStyle({ ...VALUE_STYLE, fill: ['#FFF4C2', '#FFD54A', '#F0A020'] });
+const WIN_STYLE = Object.assign(VALUE_STYLE.clone(), { fill: vGradient(['#FFF4C2', '#FFD54A', '#F0A020']) });
 const MESSAGE_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 15, fontWeight: 'bold', fill: 0xFFE7A3, letterSpacing: 0.5,
 });
 /** Captions replacing the erased baked texts. */
 export const CLASSIC_LABEL_STYLE = new TextStyle({
-  fontFamily: FONT, fontSize: 19, fontWeight: 'bold', fill: ['#FFE7A0', '#F5C04A'],
-  stroke: 0x10224A, strokeThickness: 3,
+  fontFamily: FONT, fontSize: 19, fontWeight: 'bold', fill: vGradient(['#FFE7A0', '#F5C04A']),
+  stroke: { color: 0x10224A, width: 3 },
 });
 export const CLASSIC_BUTTON_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 19, fontWeight: 'bold', fill: 0xFFFFFF, align: 'center', lineHeight: 18,
-  stroke: 0x0A2A66, strokeThickness: 3,
+  stroke: { color: 0x0A2A66, width: 3 },
 });
 export const CLASSIC_SPIN_STYLE = new TextStyle({
   fontFamily: FONT, fontSize: 30, fontWeight: 'bold', fill: 0xFFFFFF,
-  stroke: 0x0B5A14, strokeThickness: 4, dropShadow: true, dropShadowDistance: 2, dropShadowAlpha: 0.5,
+  stroke: { color: 0x0B5A14, width: 4 }, dropShadow: shadow(2, 0.5),
 });
 const JACKPOT_LABEL_STYLE = new TextStyle({
-  fontFamily: FONT, fontSize: 22, fontWeight: 'bold', fill: ['#FFF2B8', '#F2B23A'],
-  stroke: 0x6A0E0E, strokeThickness: 4,
+  fontFamily: FONT, fontSize: 22, fontWeight: 'bold', fill: vGradient(['#FFF2B8', '#F2B23A']),
+  stroke: { color: 0x6A0E0E, width: 4 },
 });
 const money = (v: number) => formatMoney(config, v);
 
@@ -45,7 +45,7 @@ export class ClassicHUD implements Hud {
   }
 
   private value(name: UiAnchorName, style = VALUE_STYLE): Text {
-    const t = new Text('', style);
+    const t = new Text({ text: '', style: style });
     const a = uiAnchor(name);
     t.anchor.set(0.5);
     t.position.set(a.x, a.y);
@@ -72,10 +72,8 @@ export class ClassicHUD implements Hud {
     if (!text) return;
     const w = this.message.width + 28;
     const h = 24;
-    this.messageBg.lineStyle(1.5, 0xD9A441, 0.85);
-    this.messageBg.beginFill(0x061331, 0.92);
-    this.messageBg.drawRoundedRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2);
-    this.messageBg.endFill();
+    this.messageBg.roundRect(this.message.x - w / 2, this.message.y - h / 2, w, h, h / 2)
+      .fill({ color: 0x061331, alpha: 0.92 }).stroke({ width: 1.5, color: 0xD9A441, alpha: 0.85 });
   }
 
   private setLastWin(amount: number): void {

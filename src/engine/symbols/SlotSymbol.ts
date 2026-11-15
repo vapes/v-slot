@@ -72,10 +72,8 @@ export class SlotSymbol extends Container {
 
   private drawFrame(): void {
     this.winBorder.clear();
-    this.winBorder.lineStyle(6, 0xFF8A00, 0.35);
-    this.winBorder.drawRoundedRect(1, 1, this.w - 2, this.h - 2, 8);
-    this.winBorder.lineStyle(3, 0xFFD54A, 1);
-    this.winBorder.drawRoundedRect(2, 2, this.w - 4, this.h - 4, 8);
+    this.winBorder.roundRect(1, 1, this.w - 2, this.h - 2, 8).stroke({ width: 6, color: 0xFF8A00, alpha: 0.35 });
+    this.winBorder.roundRect(2, 2, this.w - 4, this.h - 4, 8).stroke({ width: 3, color: 0xFFD54A });
   }
 
   stopWinAnimation(): void {

@@ -1,4 +1,5 @@
 import { Container, Text, TextStyle } from 'pixi.js';
+import { vGradient, shadow } from './textStyle';
 import type { SlotConfig } from '../config/SlotConfig';
 import { t } from '../i18n/I18n';
 
@@ -37,20 +38,15 @@ function easeInCubic(t: number): number {
 }
 
 function makeText(label: string): Text {
-  return new Text(label, new TextStyle({
+  return new Text({ text: label, style: new TextStyle({
     fontFamily:      'Arial Black, Arial, sans-serif',
     fontSize:        FONT_SIZE,
     fontWeight:      'bold',
-    fill:            ['#FFF8D0', '#FFD34A', '#FF8A00', '#C2410C'],
-    fillGradientStops: [0, 0.4, 0.75, 1],
-    stroke:          0x3A0A00,
-    strokeThickness: 10,
-    dropShadow:      true,
-    dropShadowDistance: 4,
-    dropShadowBlur:     10,
-    dropShadowAlpha:    0.85,
+    fill: vGradient(['#FFF8D0', '#FFD34A', '#FF8A00', '#C2410C'], [0, 0.4, 0.75, 1]),
+    stroke: { color: 0x3A0A00, width: 10 },
+    dropShadow: shadow(4, 0.85, 10),
     align:           'center',
-  }));
+  }) });
 }
 
 /**

@@ -13,45 +13,36 @@ export class GameCard {
     c.cursor = 'pointer';
 
     const frame = new Graphics();
-    frame.lineStyle(2, game.accent, 0.9);
-    frame.beginFill(0x170C1F, 1);
-    frame.drawRoundedRect(0, 0, w, h, 18);
-    frame.endFill();
+    frame.roundRect(0, 0, w, h, 18).fill(0x170C1F).stroke({ width: 2, color: game.accent, alpha: 0.9 });
     c.addChild(frame);
 
     const thumbH = h - 96;
     const thumb = new Container();
     thumb.position.set(8, 8);
     const mask = new Graphics();
-    mask.beginFill(0xFFFFFF);
-    mask.drawRoundedRect(0, 0, w - 16, thumbH, 12);
-    mask.endFill();
+    mask.roundRect(0, 0, w - 16, thumbH, 12).fill(0xFFFFFF);
     const placeholder = new Graphics();
-    placeholder.beginFill(game.accent, 0.25);
-    placeholder.drawRect(0, 0, w - 16, thumbH);
-    placeholder.endFill();
+    placeholder.rect(0, 0, w - 16, thumbH).fill({ color: game.accent, alpha: 0.25 });
     thumb.addChild(placeholder, mask);
     thumb.mask = mask;
     c.addChild(thumb);
     void this.loadThumb(thumb, w - 16, thumbH);
 
-    const title = new Text(t(`game.${game.id}.title`, {}, game.title).toUpperCase(), new TextStyle({
+    const title = new Text({ text: t(`game.${game.id}.title`, {}, game.title).toUpperCase(), style: new TextStyle({
       fontFamily: FONT, fontSize: 24, fontWeight: 'bold', fill: 0xFFFFFF, letterSpacing: 1.5,
-    }));
+    }) });
     title.position.set(20, thumbH + 20);
-    const sub = new Text(t(`game.${game.id}.subtitle`, {}, game.subtitle), new TextStyle({ fontFamily: FONT, fontSize: 14, fill: 0xFFFFFF }));
+    const sub = new Text({ text: t(`game.${game.id}.subtitle`, {}, game.subtitle), style: new TextStyle({ fontFamily: FONT, fontSize: 14, fill: 0xFFFFFF }) });
     sub.alpha = 0.65;
     sub.position.set(20, thumbH + 54);
 
     const pill = new Graphics();
-    pill.beginFill(game.accent, 1);
-    pill.drawRoundedRect(-52, -20, 104, 40, 20);
-    pill.endFill();
+    pill.roundRect(-52, -20, 104, 40, 20).fill(game.accent);
     pill.position.set(w - 72, thumbH + 48);
-    const play = new Text(t('lobby.play'), new TextStyle({ fontFamily: FONT, fontSize: 18, fontWeight: 'bold', fill: 0x140A10 }));
+    const play = new Text({ text: t('lobby.play'), style: new TextStyle({ fontFamily: FONT, fontSize: 18, fontWeight: 'bold', fill: 0x140A10 }) });
     play.anchor.set(0.5);
-    pill.addChild(play);
-    c.addChild(title, sub, pill);
+    play.position.copyFrom(pill.position); // v8: Graphics are leaves, the label is a sibling
+    c.addChild(title, sub, pill, play);
 
     c.on('pointerdown', () => c.scale.set(0.98));
     c.on('pointerupoutside', () => c.scale.set(1));

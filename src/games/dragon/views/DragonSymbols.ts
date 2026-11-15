@@ -1,12 +1,12 @@
 import { Container, Graphics, Sprite, Text, TextStyle } from 'pixi.js';
-import { fitText, type SymbolRenderer, type SymbolView } from '@/engine';
+import { shadow, vGradient, fitText, type SymbolRenderer, type SymbolView } from '@/engine';
 import { config } from '../config';
 import { symbolTexture } from '../assets';
 
 const VALUE_STYLE = new TextStyle({
   fontFamily: '"Roboto Condensed", "Arial Narrow", Arial, sans-serif',
-  fontSize: 19, fontWeight: 'bold', fill: ['#FFFBE0', '#FFD34A', '#FF9A1F'],
-  stroke: 0x2A0600, strokeThickness: 4, dropShadow: true, dropShadowDistance: 1, dropShadowAlpha: 0.8,
+  fontSize: 19, fontWeight: 'bold', fill: vGradient(['#FFFBE0', '#FFD34A', '#FF9A1F']),
+  stroke: { color: 0x2A0600, width: 4 }, dropShadow: shadow(1, 0.8),
 });
 
 /** Vertical centre of the value badge, in cell px (top of the tile, above the WILD caption). */
@@ -22,7 +22,7 @@ export const dragonSymbols: SymbolRenderer = {
     const { width: w, height: h } = config.symbol;
     const root = new Container();
     const sprite = new Sprite(symbolTexture(id));
-    const value = new Text('', VALUE_STYLE);
+    const value = new Text({ text: '', style: VALUE_STYLE });
     value.anchor.set(0.5);
     value.position.set(w / 2, VALUE_Y);
     const pill = new Graphics();
@@ -48,8 +48,8 @@ export const dragonSymbols: SymbolRenderer = {
         value.text = label ?? '';
         fitText(value, w - 16);
         const pw = value.width + 14, ph = value.height + 2;
-        pill.clear().beginFill(0x1A0505, 0.82).lineStyle(1.5, 0xFFC94A, 0.9)
-          .drawRoundedRect((w - pw) / 2, VALUE_Y - ph / 2, pw, ph, ph / 2).endFill();
+        pill.clear().roundRect((w - pw) / 2, VALUE_Y - ph / 2, pw, ph, ph / 2)
+          .fill({ color: 0x1A0505, alpha: 0.82 }).stroke({ width: 1.5, color: 0xFFC94A, alpha: 0.9 });
       },
     };
   },

@@ -19,7 +19,7 @@
     "qa": "node scripts/qa.cjs"
   },
   "dependencies": {
-    "pixi.js": "^7.3.3"
+    "pixi.js": "^8.23.0"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",
