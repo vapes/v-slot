@@ -6,10 +6,11 @@ import { DragonMath } from '../../src/games/dragon/math/DragonMath';
 import { buildProfile, type MathMode } from '../../src/games/dragon/math/respinConfig';
 
 const cfg = resolveConfig(raw as unknown as RawSlotConfig);
+const LINES = cfg.paylines.length;
 
 describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => {
   const profile = buildProfile(raw, strips, mode);
-  const { scatters, sticky, respins: topUp, trigger } = profile.respin;
+  const { scatters, sticky, perWild, trigger } = profile.respin;
   const scatterIds = Object.keys(scatters);
 
   it('keeps the sticky wild in the nest only and the scatters (egg, dragon) in the base only', () => {
@@ -53,12 +54,12 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
       }
     });
 
-    it('tops the counter up to 3 on a new wild (never down) and counts down otherwise', () => {
+    it('adds +1 respin per new wild (every wild, whatever the counter) and counts down otherwise', () => {
       for (const r of rounds) {
         let left = r.feature!.initialRespins;
         for (const step of r.feature!.steps) {
           const fullNest = step.respinsLeft === 0 && step.newSticky.length > 0;
-          if (!fullNest) expect(step.respinsLeft).toBe(step.newSticky.length ? Math.max(left - 1, topUp) : left - 1);
+          if (!fullNest) expect(step.respinsLeft).toBe(left - 1 + step.newSticky.length * perWild);
           left = step.respinsLeft;
         }
         expect(left).toBe(0);
@@ -91,5 +92,26 @@ describe('Dragon feature buy', () => {
     // a normal spin is not forced
     const plain = Array.from({ length: 200 }, () => math.spin());
     expect(plain.some(r => !r.feature)).toBe(true);
+  });
+});
+
+/**
+ * Player-facing shape of the feature, not just its invariants: a MAX banner
+ * (≥ celebration.max × bet) must stay the exception, and a typical feature
+ * must stay well below it. Guards against math changes that make "almost every
+ * feature a MAX win" (seeded, 3000 forced features per profile).
+ */
+describe.each<[MathMode, number, number]>([
+  // mode, max share of MAX-banner features, max median (× bet)
+  ['real', 0.10, 25],
+  ['demo', 0.30, 50],
+])('Dragon feature win distribution (%s)', (mode, maxShare, maxMedian) => {
+  it('keeps MAX wins rare and the median feature modest', () => {
+    const math = new DragonMath(cfg, buildProfile(raw, strips, mode), createRng(2024), true);
+    const wins = Array.from({ length: 3000 }, () => math.spin().feature!.totalWin / LINES).sort((a, b) => a - b);
+    const maxShareSeen = wins.filter(w => w >= raw.celebration.max).length / wins.length;
+    expect(maxShareSeen).toBeLessThan(maxShare);
+    expect(wins[Math.floor(wins.length / 2)]).toBeLessThan(maxMedian);
+    expect(wins[Math.floor(wins.length * 0.95)]).toBeGreaterThan(raw.celebration.epic); // big wins still exist
   });
 });

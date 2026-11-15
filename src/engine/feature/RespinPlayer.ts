@@ -9,6 +9,7 @@ import { FeatureBanner } from '../ui/FeatureBanner';
 import { FeatureMeter } from './FeatureMeter';
 import { StickyLayer } from './StickyLayer';
 import { RespinFlyFX } from './RespinFlyFX';
+import { planRespinStep } from './respinStep';
 import { gameEvents } from '../core/GameEvents';
 
 const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
@@ -79,7 +80,8 @@ export class RespinPlayer {
     // 3. respins
     let respins = f.initialRespins;
     for (const step of f.steps) {
-      meter.setRespins(respins - 1);
+      const plan = planRespinStep(respins, step);
+      meter.setRespins(plan.during);
       await this.spin(step.grid, fast);
       for (const c of step.newSticky) {
         this.sticky.add(c, label(c));
@@ -88,13 +90,13 @@ export class RespinPlayer {
       running += step.lineWin;
       meter.setTotal(money(running));
       if (step.newSticky.length) await wait(ms(ft.newStickyMs));
-      // respins added by new sticky cells fly from the cells into the counter, then it ticks up
-      if (step.newSticky.length && step.respinsLeft > respins - 1) {
-        const to = meter.counterPoint(step.respinsLeft);
-        await Promise.all(step.newSticky.map(c => this.fly.fly(this.cellCenter(c), to, ms(ft.flyMs))));
-        meter.pop();
+      // every new sticky cell fires a comet into the counter; the number ticks up when they land
+      if (plan.fly.length) {
+        const to = meter.counterPoint(Math.max(plan.after, 1));
+        await Promise.all(plan.fly.map(c => this.fly.fly(this.cellCenter(c), to, ms(ft.flyMs))));
+        if (plan.pop) meter.pop();
       }
-      respins = step.respinsLeft;
+      respins = plan.after;
       meter.setRespins(respins);
       if (step.wins.length) {
         this.reels.showWins({ grid: step.grid, wins: step.wins, totalWin: step.lineWin }, 700);

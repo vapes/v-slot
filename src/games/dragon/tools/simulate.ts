@@ -45,10 +45,12 @@ const forced = new DragonMath(cfg, profile, Math.random, true);
 let fWin = 0, fCollect = 0, fLines = 0, grands = 0, respins = 0, eggs = 0, fMax = 0;
 const tags: Record<string, number> = {};
 let buyBase = 0;
+const featureWins: number[] = []; // × total bet, feature only
 for (let i = 0; i < FEATURES; i++) {
   const r = forced.spin({ buyFeature: true });
   const f = r.feature!;
   buyBase += r.totalWin;
+  featureWins.push(f.totalWin / LINES);
   fWin += f.totalWin;
   fCollect += f.collect;
   fLines += f.totalWin - f.collect - f.fullBonus;
@@ -99,4 +101,10 @@ console.log(`Jackpots / feature: ${Object.entries(tags).map(([k, v]) => `${k} ${
 const buyCost = (MODE === 'demo' ? raw.demo.buyFeature : raw.buyFeature).cost;
 const buyMean = (buyBase + fWin) / FEATURES / LINES;
 console.log(`Feature buy      : mean ${buyMean.toFixed(2)} × bet (trigger spin ${(buyBase / FEATURES / LINES).toFixed(2)} + nest ${meanFeature.toFixed(2)}) → at ${buyCost} × bet: RTP ${pct(buyMean / buyCost)}  (cost for 96%: ${(buyMean / 0.96).toFixed(1)} × bet)`);
+featureWins.sort((a, b) => a - b);
+const q = (p: number) => featureWins[Math.floor(p * (featureWins.length - 1))].toFixed(1);
+const share = (x: number) => pct(featureWins.filter(w => w >= x).length / featureWins.length);
+const cel = raw.celebration;
+console.log(`Feature win dist : p25 ${q(0.25)}  median ${q(0.5)}  p75 ${q(0.75)}  p95 ${q(0.95)}  p99 ${q(0.99)} × bet`);
+console.log(`Feature banners  : BIG+ ${share(cel.big)}  HUGE+ ${share(cel.huge)}  EPIC+ ${share(cel.epic)}  MAX ${share(cel.max)} of features`);
 console.log(`Max win seen     : base ${(maxWin / LINES).toFixed(1)} × bet, feature ${(fMax / LINES).toFixed(1)} × bet`);
