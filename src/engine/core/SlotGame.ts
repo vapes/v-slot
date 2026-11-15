@@ -15,6 +15,8 @@ import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
 import { HomeButton } from '../ui/HomeButton';
 import { SoundButton } from '../ui/SoundButton';
+import { BuyFeatureDialog } from '../ui/BuyFeatureDialog';
+import { formatMoney } from '../utils/Money';
 import type { SpinPipeline } from '../pipeline/SpinPipeline';
 import { buildSpinPipeline } from '../pipeline/buildSpinPipeline';
 
@@ -39,6 +41,7 @@ export class SlotGame {
   private celebration: WinCelebration;
   private respins: RespinPlayer;
   private paytable!: HtmlPaytable;
+  private buyDialog: BuyFeatureDialog;
   readonly pipeline: SpinPipeline;
 
   constructor(def: GameDefinition) {
@@ -58,12 +61,14 @@ export class SlotGame {
     this.reels = new ReelController(cfg, renderer);
     this.respins = new RespinPlayer(cfg, this.reels, renderer, this.app.stage);
     this.celebration = new WinCelebration(cfg);
+    this.buyDialog = new BuyFeatureDialog(cfg);
     this.view = def.createView({
       changeBet: (d, wrap) => this.changeBet(d, wrap ?? false),
       openPaytable: () => void this.paytable.show(this.wallet.totalBet),
       togglePaytable: () => this.paytable.toggle(this.wallet.totalBet),
       toggleAutoplay: () => this.loop.setAutoplay(!this.loop.autoplay),
       toggleQuickSpin: () => this.loop.toggleQuickSpin(),
+      buyFeature: () => void this.buyFeature(),
     });
     const { view, reels } = this;
     this.winCycle = new WinCycle(cfg, reels, view.hud);
@@ -100,7 +105,7 @@ export class SlotGame {
     this.input = new GameInput(canvas, cfg.canvas.width, view.spinButton, {
       onSpin: () => this.loop.onSpinPressed(),
       onStop: () => this.reels.forceStop(),
-      canInteract: () => !this.paytable.isOpen,
+      canInteract: () => !this.paytable.isOpen && !this.buyDialog.isOpen,
     });
 
     const stage = this.app.stage;
@@ -113,7 +118,7 @@ export class SlotGame {
       const { x, y, r } = cfg.soundButton;
       stage.addChild(new SoundButton(x, y, r).container);
     }
-    stage.addChild(this.celebration.container);
+    stage.addChild(this.celebration.container, this.buyDialog.container);
 
     this.app.ticker.add((dt) => {
       this.reels.update(dt);
@@ -127,6 +132,7 @@ export class SlotGame {
       spin: () => this.loop.onSpinPressed(),
       openPaytable: () => void this.paytable.show(this.wallet.totalBet),
       closePaytable: () => this.paytable.hide(),
+      buyFeature: () => void this.buyFeature(true),
       state: () => ({ balance: this.wallet.balance, totalBet: this.wallet.totalBet, spinning: this.loop.active }),
     });
 
@@ -150,7 +156,24 @@ export class SlotGame {
     this.updateBetControls(true);
   }
 
+  /** Feature buy: confirm the price (`skipConfirm` for QA), then one bought spin. */
+  private async buyFeature(skipConfirm = false): Promise<void> {
+    const price = this.loop.buyPrice;
+    if (price === null || this.loop.active || this.loop.autoplay || this.buyDialog.isOpen) return;
+    if (this.wallet.balance < price) {
+      this.view.hud.setStatus(t('status.noBalance'));
+      return;
+    }
+    if (skipConfirm || await this.buyDialog.ask(formatMoney(this.cfg, price))) this.loop.buyFeature();
+  }
+
   private updateBetControls(enabled: boolean): void {
-    this.view.setBetControls({ enabled, canDecrease: this.wallet.canDecrease, canIncrease: this.wallet.canIncrease });
+    const price = this.loop?.buyPrice ?? null;
+    this.view.setBetControls({
+      enabled,
+      canDecrease: this.wallet.canDecrease,
+      canIncrease: this.wallet.canIncrease,
+      canBuy: enabled && price !== null && this.wallet.balance >= price,
+    });
   }
 }

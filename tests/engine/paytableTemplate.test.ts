@@ -23,4 +23,10 @@ describe('renderPaytable', () => {
     expect(html).toContain('{{nope}}');
     expect(html).toContain('&lt;b&gt;');
   });
+
+  it('shows the feature-buy price for the current bet', () => {
+    const buy = testConfig({ currency: { code: 'EUR', decimals: 2 }, buyFeature: { cost: 78 } });
+    expect(renderPaytable('{{buyCost}}', buy, 300, '/')).toBe('<base href="/">234.00 EUR');
+    expect(renderPaytable('{{buyCost}}', cfg, 300, '/')).toContain('{{buyCost}}');
+  });
 });

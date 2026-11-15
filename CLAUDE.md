@@ -72,7 +72,7 @@ src/
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
-│   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton,
+│   ├── ui/                  WinCelebration, HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
 │   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions)
 │   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
@@ -110,7 +110,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
 
 ## Recipes
 
@@ -120,11 +120,13 @@ const game: GameDefinition = {
 
 **Skin from a mockup image:** put it in `art/`, copy a `tools/slice-skin.py` (it imports `scripts/skin_tools.py`: `erase_box`, `inpaint`), measure the reel grid and button centres in source pixels, store anchors in `config.json → skin.ui`, erase baked texts, then in `config.ts` `export const skin = createSkin(config.canvas.width, raw.skin)` and build buttons with the engine `SpriteButton` / `SpriteSpinButton` at `skin.scale`; captions via `skin.label()` / `skin.labelButton()` (see dragon/classic `GAME.md`).
 
-**Paytable / translations:** edit `public/cdn/paytables/<id>/<lang>.html` and `public/cdn/i18n/<lang>/*.json` (later: the real CDN). Template placeholders: `{{title}} {{rtp}} {{lines}} {{bet}} {{lineBet}} {{pay:ID:N}} {{mult:ID:N}} {{symbol:ID}} {{asset:PATH}} {{t:KEY}} {{paylines}}` (see `engine/ui/paytableTemplate.ts`). New language = new `i18n/<lang>/` folder + `<lang>.html` per game; missing files fall back to English. `npm run check` validates English presence, key parity and template symbols. Production CDN: build with `VITE_CONTENT_CDN=https://…/` (CDN must allow CORS).
+**Paytable / translations:** edit `public/cdn/paytables/<id>/<lang>.html` and `public/cdn/i18n/<lang>/*.json` (later: the real CDN). Template placeholders: `{{title}} {{rtp}} {{lines}} {{bet}} {{lineBet}} {{pay:ID:N}} {{mult:ID:N}} {{symbol:ID}} {{asset:PATH}} {{t:KEY}} {{paylines}} {{buyCost}}` (see `engine/ui/paytableTemplate.ts`). New language = new `i18n/<lang>/` folder + `<lang>.html` per game; missing files fall back to English. `npm run check` validates English presence, key parity and template symbols. Production CDN: build with `VITE_CONTENT_CDN=https://…/` (CDN must allow CORS).
 
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 
 **Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro window (`feature.title` header, `feature.intro` "CONGRATULATIONS!", `feature.won` "YOU WON {n} RESPINS") → optional initial sticky cells (values drawn by the game's `SymbolView.setValue`; value 0 = no label) → respins with a meter above the reels (respins added by a new sticky cell fly from it into the counter — `RespinFlyFX` comet + sparks — and the number ticks up on landing, `featureTiming.flyMs`) → cells with a value pay one by one → optional full-grid prize → "TOTAL WIN" window (`feature.total`) → base grid restored. Windows (`ui/FeatureBanner`) close by timer or a tap. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`); a numeric `{n}` param picks plural forms `<key>.one|few|many|other` when present. Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
+
+**Feature buy:** `config.buyFeature = { cost }` (× total bet; dragon picks the active profile's in `config.ts`). Views wire a button to `GameActions.buyFeature()` and enable it from `BetControlsState.canBuy`; the engine shows `ui/BuyFeatureDialog` (feature name, `buy.title`, price, `buy.confirm` / `buy.cancel`), then runs one spin with `ctx.buy` / `ctx.stake` = price (validate + deduct use the stake) and calls `math.spin({ buyFeature: true })` — the MathModel must return a result whose feature triggers. `spinStart` carries `buy` / `stake`; `{{buyCost}}` shows the price in paytables; `__vslot.buyFeature()` buys without the dialog (QA). Price it from the simulator (dragon: `npm run dragon:sim` prints "Feature buy … cost for 96%").
 
 **Landing animations:** a symbol in `config.symbols[]` may declare `landing` (normal stop) and/or `turboLanding` (turbo / quick spins): `{ ms, sweeps, scale, hue, flash, color }`, missing fields from `LANDING_DEFAULTS` (`engine/config/defaults.ts`). When a reel stops, every visible cell whose symbol has the animation for that kind of stop plays it (`SlotSymbol.playLanding` → `LandingFX`: pop, diagonal light bands, flash, `hue` degrees of colour rotation = iridescent shimmer) and `gameEvents` emits `symbolLanding` (hook sounds there). No entry → no animation (a symbol with only `landing` stays still in turbo). Resolved via `cfg.landing(id, turbo)`.
 
@@ -138,10 +140,10 @@ const game: GameDefinition = {
 
 ## Spin flow
 
-`SpinPipeline.execute(ctx)`; `SpinContext = { balance, lineBet, totalBet, turbo, quick, result, winAmount, cancelled, meta }` (money in minor units).
+`SpinPipeline.execute(ctx)`; `SpinContext = { balance, lineBet, totalBet, turbo, quick, buy, stake, result, winAmount, cancelled, meta }` (money in minor units).
 
-1. **pre** — validate balance → stop previous wins → deduct bet → stop-mode/disable bets → status "Good luck!"
-2. **server** — `math.spin()` → `ctx.result`
+1. **pre** — validate balance (≥ stake) → stop previous wins → deduct stake (bet, or the feature price) → stop-mode/disable bets → status "Good luck!"
+2. **server** — `math.spin({ buyFeature: ctx.buy })` → `ctx.result`
 3. **post** — reel animation (quick/turbo = fast; otherwise with anticipation from `computeAnticipation`) → resolve turbo flag → play feature (if `result.feature`) → wins = (base + feature totalWin) × lineBet → credit → HUD (win line, or "Place your bets" when nothing won) → win highlight + win cycle → celebration (thresholds `config.celebration`) → turbo delay → refresh balance → re-enable controls
 
 ## Rendering order

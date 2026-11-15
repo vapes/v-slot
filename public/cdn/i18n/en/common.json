@@ -28,5 +28,9 @@
   "paytable.title": "Paytable",
   "paytable.close": "Close",
   "paytable.unavailable": "Paytable is unavailable. Check your connection and try again.",
-  "lobby.title": "V-SLOT"
+  "lobby.title": "V-SLOT",
+  "button.buy": "BUY",
+  "buy.title": "BUY FEATURE",
+  "buy.confirm": "BUY",
+  "buy.cancel": "CANCEL"
 }

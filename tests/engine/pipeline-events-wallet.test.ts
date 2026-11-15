@@ -5,7 +5,7 @@ import { Wallet } from '../../src/engine/core/Wallet';
 import { testConfig } from '../helpers';
 
 const ctx = (): SpinContext => ({
-  balance: 100, lineBet: 1, totalBet: 3, turbo: false, quick: false,
+  balance: 100, lineBet: 1, totalBet: 3, turbo: false, quick: false, buy: false, stake: 3,
   result: null, winAmount: 0, cancelled: false, meta: new Map(),
 });
 

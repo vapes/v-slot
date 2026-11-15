@@ -6,7 +6,7 @@
  *
  * Starts its own Vite dev server, then per game and language: idle screen,
  * one spin, paytable, forced anticipation, forced feature (if the game has
- * one), plus the lobby. Waits on real game events via window.__vslot
+ * one), feature buy (games with config.buyFeature), plus the lobby. Waits on real game events via window.__vslot
  * (engine/core/qaHooks.ts). Screenshots → qa-shots/. Exits 1 on any console
  * error / page error / missing event.
  */
@@ -111,7 +111,23 @@ async function main() {
       await shot(`${id}-feature`);
       await waitEvent('featureEnd', t, 90000);
     }
-    console.log(`${id}: ok${hasFeature ? ' (feature played)' : ' (no feature in this game)'}`);
+
+    // feature buy (games with config.buyFeature): stake > bet, the feature always starts
+    where = `${id}/buy`;
+    await open(`game=${id}&lang=en&seed=3`);
+    const before = await page.evaluate(() => window.__vslot.state());
+    t = await now();
+    await page.evaluate(() => window.__vslot.buyFeature());
+    const bought = await page.waitForFunction(
+      (since) => window.__vslot.events.some(e => e.name === 'spinStart' && e.at > since), t, { timeout: 3000 },
+    ).then(() => true, () => false);
+    if (bought) {
+      const after = await page.evaluate(() => window.__vslot.state());
+      if (before.balance - after.balance <= before.totalBet) problems.push(`${where}: buy took only ${before.balance - after.balance}`);
+      await waitEvent('featureStart', t, 20000);
+      await waitEvent('featureEnd', t, 90000);
+    }
+    console.log(`${id}: ok${hasFeature ? ' (feature played)' : ' (no feature in this game)'}${bought ? ', feature buy ok' : ''}`);
   }
 
   await browser.close();

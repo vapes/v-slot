@@ -28,5 +28,9 @@
   "paytable.title": "Таблица выплат",
   "paytable.close": "Закрыть",
   "paytable.unavailable": "Таблица выплат недоступна. Проверьте соединение и попробуйте снова.",
-  "lobby.title": "V-SLOT"
+  "lobby.title": "V-SLOT",
+  "button.buy": "КУПИТЬ",
+  "buy.title": "КУПИТЬ БОНУС",
+  "buy.confirm": "КУПИТЬ",
+  "buy.cancel": "ОТМЕНА"
 }

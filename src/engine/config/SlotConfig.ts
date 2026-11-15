@@ -107,6 +107,8 @@ export interface RawSlotConfig {
     /** Rising spark particles (default: on for flame, off for marquee). */
     sparks?: boolean;
   };
+  /** Feature buy: price = `cost` × total bet; the math must trigger the feature (SpinOptions.buyFeature). */
+  buyFeature?: { cost: number };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
   celebration: { big: number; huge: number; epic: number; max: number };
   rtp: number;

@@ -83,3 +83,13 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
     expect(b).toEqual(a);
   });
 });
+
+describe('Dragon feature buy', () => {
+  it.each<MathMode>(['real', 'demo'])('always triggers the nest when bought (%s)', (mode) => {
+    const math = new DragonMath(cfg, buildProfile(raw, strips, mode), createRng(77));
+    for (let i = 0; i < 50; i++) expect(math.spin({ buyFeature: true }).feature).toBeDefined();
+    // a normal spin is not forced
+    const plain = Array.from({ length: 200 }, () => math.spin());
+    expect(plain.some(r => !r.feature)).toBe(true);
+  });
+});

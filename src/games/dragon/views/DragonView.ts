@@ -17,16 +17,19 @@ export class DragonView implements GameView {
   private readonly info = make('info');
   private readonly auto = make('auto');
   private readonly turbo = make('turbo');
+  private readonly buy = make('buy');
   private readonly fullscreenZone = new Container();
 
   constructor(actions: GameActions) {
     this.minus.onClick(() => actions.changeBet(-1));
     this.plus.onClick(() => actions.changeBet(1));
     this.info.onClick(actions.openPaytable);
+    this.buy.onClick(actions.buyFeature);
     this.auto.onClick(actions.toggleAutoplay);
     this.turbo.onClick(actions.toggleQuickSpin);
     skin.labelButton(this.auto, 'autoLabel', 'button.auto', DRAGON_LABEL_STYLE);
     skin.labelButton(this.turbo, 'turboLabel', 'button.turbo', DRAGON_LABEL_STYLE);
+    skin.labelButton(this.buy, 'buyLabel', 'button.buy', DRAGON_LABEL_STYLE);
 
     // The fullscreen icon is baked into the background; this is its hit zone.
     const z = this.fullscreenZone;
@@ -38,7 +41,7 @@ export class DragonView implements GameView {
   }
 
   private get buttons(): SpriteButton[] {
-    return [this.spinButton, this.minus, this.plus, this.info, this.auto, this.turbo];
+    return [this.spinButton, this.minus, this.plus, this.info, this.auto, this.turbo, this.buy];
   }
 
   private bg: Sprite | null = null;
@@ -56,7 +59,8 @@ export class DragonView implements GameView {
     this.hud.addToStage(stage);
   }
 
-  setBetControls({ enabled, canDecrease, canIncrease }: BetControlsState): void {
+  setBetControls({ enabled, canDecrease, canIncrease, canBuy }: BetControlsState): void {
+    this.buy.enabled = canBuy;
     this.minus.enabled = enabled && canDecrease;
     this.plus.enabled = enabled && canIncrease;
   }

@@ -20,9 +20,15 @@ export interface SymbolRenderer {
 }
 
 /** Produces spin outcomes. `load` runs once before the first spin. */
+/** Per-spin options from the engine. */
+export interface SpinOptions {
+  /** Bought feature: the result must trigger the game's feature (config.buyFeature). */
+  buyFeature?: boolean;
+}
+
 export interface MathModel {
   load?(): Promise<void>;
-  spin(): SpinResult;
+  spin(opts?: SpinOptions): SpinResult;
 }
 
 /** The spin/stop button. Pointer input is routed by the engine via hitTest. */
@@ -47,6 +53,8 @@ export interface BetControlsState {
   enabled: boolean;
   canDecrease: boolean;
   canIncrease: boolean;
+  /** Feature buy is possible now (config.buyFeature set, idle, balance covers the price). */
+  canBuy: boolean;
 }
 
 /** Commands a view may trigger from its own buttons. */
@@ -56,6 +64,8 @@ export interface GameActions {
   togglePaytable(): void;
   toggleAutoplay(): void;
   toggleQuickSpin(): void;
+  /** Ask to buy the feature (engine shows a confirmation with the price; needs config.buyFeature). */
+  buyFeature(): void;
 }
 
 /**

@@ -1,6 +1,6 @@
 import {
   evaluateLines, random, ReelStripMath,
-  type FeatureRound, type FeatureStep, type MathModel, type SlotConfig, type SpinResult, type StickyCell,
+  type FeatureRound, type FeatureStep, type MathModel, type SlotConfig, type SpinOptions, type SpinResult, type StickyCell,
 } from '@/engine/math';
 import type { MathProfile, RespinConfig } from './respinConfig';
 
@@ -30,9 +30,11 @@ export class DragonMath implements MathModel {
     this.nest = profile.nest;
   }
 
-  spin(): SpinResult {
+  /** `buyFeature`: bought feature — base spins are redrawn until they trigger the nest (natural trigger mix). */
+  spin(opts?: SpinOptions): SpinResult {
+    const force = this.forceFeature || !!opts?.buyFeature;
     let result = this.base.spin();
-    for (let i = 0; this.forceFeature && this.scatters(result.grid).length < this.rc.trigger && i < 1_000_000; i++) {
+    for (let i = 0; force && this.scatters(result.grid).length < this.rc.trigger && i < 1_000_000; i++) {
       result = this.base.spin();
     }
     const trigger = this.scatters(result.grid);

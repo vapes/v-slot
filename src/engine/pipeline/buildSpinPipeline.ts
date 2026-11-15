@@ -37,7 +37,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'validateBalance',
     execute: (ctx) => {
-      if (ctx.balance < ctx.totalBet) ctx.cancelled = true;
+      if (ctx.balance < ctx.stake) ctx.cancelled = true;
     },
   });
 
@@ -52,7 +52,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('pre', {
     name: 'deductBalance',
     execute: (ctx) => {
-      ctx.balance -= ctx.totalBet;
+      ctx.balance -= ctx.stake;
       deps.setBalance(ctx.balance);
     },
   });
@@ -69,7 +69,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
     name: 'showPreSpinUI',
     execute: (ctx) => {
       hud.setStatus(t('status.spin'));
-      gameEvents.emit('spinStart', { totalBet: ctx.totalBet, turbo: ctx.turbo, quick: ctx.quick });
+      gameEvents.emit('spinStart', { totalBet: ctx.totalBet, turbo: ctx.turbo, quick: ctx.quick, buy: ctx.buy, stake: ctx.stake });
       hud.updateBalanceDisplay(ctx.balance, ctx.totalBet);
     },
   });
@@ -78,7 +78,7 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   pipeline.add('server', {
     name: 'generateResult',
     execute: (ctx) => {
-      ctx.result = slotMath.spin();
+      ctx.result = slotMath.spin(ctx.buy ? { buyFeature: true } : undefined);
     },
   });
 

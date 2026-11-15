@@ -9,6 +9,10 @@ export interface SpinContext {
   turbo: boolean;
   /** TURBO toggle: quick reels, full win presentation. */
   quick: boolean;
+  /** Feature buy: the math must trigger the feature. */
+  buy: boolean;
+  /** Money taken for this spin: totalBet, or the feature price when `buy`. */
+  stake: number;
   result: SpinResult | null;
   winAmount: number;
   cancelled: boolean;

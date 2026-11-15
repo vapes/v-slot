@@ -44,8 +44,11 @@ for (let i = 0; i < SPINS; i++) {
 const forced = new DragonMath(cfg, profile, Math.random, true);
 let fWin = 0, fCollect = 0, fLines = 0, grands = 0, respins = 0, eggs = 0, fMax = 0;
 const tags: Record<string, number> = {};
+let buyBase = 0;
 for (let i = 0; i < FEATURES; i++) {
-  const f = forced.spin().feature!;
+  const r = forced.spin({ buyFeature: true });
+  const f = r.feature!;
+  buyBase += r.totalWin;
   fWin += f.totalWin;
   fCollect += f.collect;
   fLines += f.totalWin - f.collect - f.fullBonus;
@@ -93,4 +96,7 @@ console.log(`Anticipation     : ${pct(teases / SPINS)} of spins, ${pct(teasesWon
 console.log(`Respins / feature: ${(respins / FEATURES).toFixed(2)}   sticky / feature: ${(eggs / FEATURES).toFixed(2)}`);
 console.log(`GRAND (full nest): 1 in ${grands ? (FEATURES / grands).toFixed(0) : '∞'} features`);
 console.log(`Jackpots / feature: ${Object.entries(tags).map(([k, v]) => `${k} ${(v / FEATURES).toFixed(4)}`).join(', ')}`);
+const buyCost = (MODE === 'demo' ? raw.demo.buyFeature : raw.buyFeature).cost;
+const buyMean = (buyBase + fWin) / FEATURES / LINES;
+console.log(`Feature buy      : mean ${buyMean.toFixed(2)} × bet (trigger spin ${(buyBase / FEATURES / LINES).toFixed(2)} + nest ${meanFeature.toFixed(2)}) → at ${buyCost} × bet: RTP ${pct(buyMean / buyCost)}  (cost for 96%: ${(buyMean / 0.96).toFixed(1)} × bet)`);
 console.log(`Max win seen     : base ${(maxWin / LINES).toFixed(1)} × bet, feature ${(fMax / LINES).toFixed(1)} × bet`);

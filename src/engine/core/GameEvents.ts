@@ -6,8 +6,8 @@ import type { FeatureRound, SpinResult } from '../math/types';
  * the engine emits, games and add-ons only listen. Money in minor units.
  */
 export interface GameEventMap {
-  /** Spin accepted, bet deducted. */
-  spinStart: { totalBet: number; turbo: boolean; quick: boolean };
+  /** Spin accepted, stake deducted (`buy`: bought feature, `stake` = its price). */
+  spinStart: { totalBet: number; turbo: boolean; quick: boolean; buy: boolean; stake: number };
   /** A reel landed on its symbols (before its bounce). */
   reelLand: { reel: number };
   /** A symbol with a landing animation landed (one per cell; `turbo` = turbo variant). */

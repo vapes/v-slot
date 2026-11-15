@@ -10,4 +10,4 @@ export { linePayout, lineBetOf } from './math/Paytable';
 export { random, createRng, setSeed } from './math/rng';
 export { ReelStripMath } from './math/ReelStripMath';
 export { computeAnticipation } from './math/anticipation';
-export type { MathModel } from './contracts';
+export type { MathModel, SpinOptions } from './contracts';

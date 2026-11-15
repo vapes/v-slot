@@ -5,6 +5,8 @@ export interface QaApi {
   spin(): void;
   openPaytable(): void;
   closePaytable(): void;
+  /** Buy the feature without the confirmation window (no-op when the game has none). */
+  buyFeature(): void;
   state(): { balance: number; totalBet: number; spinning: boolean };
   /** Every game event since load, oldest first. */
   events: { name: keyof GameEventMap; at: number }[];

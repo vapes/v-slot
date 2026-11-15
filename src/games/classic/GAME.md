@@ -27,7 +27,7 @@ Same approach as `dragon`: grid lines and button centres measured on `art/source
 - `screens.bin` stores symbols by their index in `config.symbols` — **after changing symbols, their order, paytable, reels, paylines or payoutDistribution, rerun `npm run classic:screens`.**
 
 ## Controls
-SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick reels toggle; the mockup's INFO button with a translated caption), i (paytable, top-right under sound), sound on/off (top-right), home (top-left). The mockup's bottom-row "i" and speaker are erased from the background (`REMOVED_BUTTONS` in the slicer).
+SPIN (hold = turbo loop), − / +, AUTO SPIN (autoplay toggle), TURBO (quick reels toggle; the mockup's INFO button with a translated caption), i (paytable, bottom row left — its baked spot), sound on/off (top-right), home (top-left). The mockup's bottom-row speaker is erased from the background (`REMOVED_BUTTONS` in the slicer).
 
 ## Content CDN
 - Paytable: `public/cdn/paytables/classic/<lang>.html` (en, ru) — HTML template, payouts via `{{pay:ID:N}}`, art via `{{asset:symbols/ID.jpg}}`.
