@@ -1,12 +1,21 @@
 import raw from './config.json';
-import { createSkin, resolveConfig, type RawSlotConfig } from '@/engine';
+import { createSkin, detectPlayMode, resolveConfig, type PlayMode, type RawSlotConfig } from '@/engine';
 
-/** Typed, resolved config. The annotation makes tsc validate config.json. */
-const rawConfig: RawSlotConfig = raw;
+/** demo (default, generous RTP from config.demo) or real (`?mode=real`). */
+export const MODE: PlayMode = detectPlayMode();
+
+/** Typed, resolved config; `rtp` is the active profile's (shown in the paytable). */
+const rawConfig: RawSlotConfig = { ...raw, rtp: MODE === 'demo' ? raw.demo.rtp : raw.rtp };
 export const config = resolveConfig(rawConfig);
 
-/** Probability per payout category, in screens.bin category order. */
-export const PAYOUT_PROBABILITIES: number[] = raw.payoutDistribution.map(d => d.probability);
+/**
+ * Probability per payout category, in screens.bin category order. Both
+ * profiles share screens.bin; demo only shifts weight to the paying categories
+ * (config.demo.payoutProbabilities, priced by tools/demo-rtp.ts).
+ */
+export const PAYOUT_PROBABILITIES: number[] = MODE === 'demo'
+  ? raw.demo.payoutProbabilities
+  : raw.payoutDistribution.map(d => d.probability);
 
 /** Skin anchors (config.json → skin.ui, source px), translated captions and scale. */
 export const skin = createSkin(config.canvas.width, raw.skin);

@@ -11,6 +11,7 @@
     "new-game": "node scripts/new-game.mjs",
     "thumbnails": "node scripts/make-thumbnails.cjs",
     "classic:screens": "node src/games/classic/tools/generate-screens.mjs",
+    "classic:rtp": "tsx src/games/classic/tools/demo-rtp.ts",
     "dragon:reels": "node src/games/dragon/tools/build-reels.mjs",
     "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py",
     "classic:slice": "python3 src/games/classic/tools/slice-skin.py",
