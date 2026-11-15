@@ -2,12 +2,13 @@
  * Exact RTP of both classic profiles from screens.bin (no sampling): mean win
  * of every payout category × its probability (config.payoutDistribution for
  * real, config.demo.payoutProbabilities for demo). Also prints the hit rate
- * and how often each category lands, to tune the demo profile.
+ * and how often each category lands, to tune the demo profile, and checks
+ * that every paytable combination can land in each profile (project rule).
  *
  *   npm run classic:rtp
  */
 import raw from '../config.json';
-import { evaluateLines, resolveConfig, type RawSlotConfig } from '@/engine/math';
+import { evaluateLines, paytableCombos, resolveConfig, type RawSlotConfig } from '@/engine/math';
 
 const cfg = resolveConfig(raw as RawSlotConfig);
 const LINES = cfg.paylines.length;
@@ -23,17 +24,23 @@ const header = 6 + cats * 4;
 
 /** Mean win (× total bet) per category, in screens.bin order. */
 const means: number[] = [];
+/** Paytable combinations ("symbol×count") paid by at least one screen, per category. */
+const combos: Set<string>[] = [];
 let screen = 0;
 for (let c = 0; c < cats; c++) {
   const count = view.getUint32(6 + c * 4, true);
   let sum = 0;
+  const seen = new Set<string>();
+  combos.push(seen);
   for (let k = 0; k < count; k++, screen++) {
     const grid: string[][] = Array.from({ length: cfg.grid.cols }, () => []);
     for (let n = 0; n < CELLS; n++) {
       const b = data[header + screen * SCREEN_BYTES + (n >> 1)];
       grid[Math.floor(n / cfg.grid.rows)][n % cfg.grid.rows] = cfg.symbolIds[n % 2 === 0 ? (b >> 4) & 15 : b & 15];
     }
-    sum += evaluateLines(cfg, grid).reduce((s, w) => s + w.multiplier, 0) / LINES;
+    const wins = evaluateLines(cfg, grid);
+    for (const w of wins) seen.add(`${w.symbol}×${w.count}`);
+    sum += wins.reduce((s, w) => s + w.multiplier, 0) / LINES;
   }
   means.push(count ? sum / count : 0);
 }
@@ -51,4 +58,8 @@ for (const [name, probs, configured] of profiles) {
     const p = probs[i];
     console.log(`  ${d.type.padEnd(7)} p ${p.toFixed(6)}  1 in ${(1 / p).toFixed(1).padStart(8)}  mean ${means[i].toFixed(2).padStart(7)}×  share ${(p * means[i] / rtp * 100).toFixed(1)}%`);
   });
+  // project rule: every paytable combination must be able to land in this profile
+  const reachable = new Set(probs.flatMap((p, i) => (p > 0 ? [...combos[i]] : [])));
+  const missing = paytableCombos(cfg).filter(c => !reachable.has(c));
+  console.log(missing.length ? `  ✗ MISSING combinations: ${missing.join(', ')}` : '  ✓ every paytable combination can land');
 }

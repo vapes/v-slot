@@ -69,6 +69,20 @@ const PROFILES = {
   demo: { base: cfg.demo?.reelComposition ?? cfg.reelComposition, nest: cfg.demo?.respin?.composition ?? cfg.respin.composition },
 };
 
+/**
+ * Project rule: every paytable combination (symbol × 3, × 4, …) must be able
+ * to land, else the paytable lies. Same logic as engine missingCombosOnStrips
+ * (math/combos.ts; the tests run that one): symbol on reels 0..n-1 and a
+ * breaker (not the symbol, not wild) on reel n for a shorter combo.
+ */
+function assertAllCombos(label, strips) {
+  const missing = Object.entries(cfg.paytable).flatMap(([sym, pays]) => Object.keys(pays).map(Number)
+    .filter(n => strips.slice(0, n).some(r => !r.includes(sym))
+      || (n < cfg.grid.cols && !strips[n].some(x => x !== sym && x !== cfg.wild)))
+    .map(n => `${sym}×${n}`));
+  if (missing.length) throw new Error(`${label}: paytable combinations that cannot land: ${missing.join(', ')}`);
+}
+
 let strips;
 if (reportOnly) {
   strips = JSON.parse(readFileSync(STRIPS_PATH, 'utf8'));
@@ -80,6 +94,8 @@ if (reportOnly) {
       reels: p.base.map((comp, i) => buildStrip(comp, 1000 + seed + i)),
       nest: p.nest.map((comp, i) => buildStrip(comp, 2000 + seed + i)),
     };
+    assertAllCombos(`${mode} base`, strips[mode].reels);
+    assertAllCombos(`${mode} nest`, strips[mode].nest);
     console.log(`${mode}: base ${strips[mode].reels.map(r => r.length).join('/')}  nest ${strips[mode].nest.map(r => r.length).join('/')}`);
   }
   const rows = (arr) => arr.map(r => '      ' + JSON.stringify(r)).join(',\n');
@@ -108,7 +124,10 @@ function lineWin(cols, line) {
   return sym === null ? 0 : pay(sym, n);
 }
 
-const buckets = [[0, 0], [0.0001, 1], [1, 2], [2, 5], [5, 20], [20, 50], [50, Infinity]];
+/** Win buckets in total bets; from BIG up they follow the celebration tiers (config.celebration). */
+const T = cfg.celebration;
+const buckets = [[0, 0], [0.0001, 1], [1, T.big], [T.big, T.huge], [T.huge, T.epic], [T.epic, T.max], [T.max, Infinity]];
+const tierName = { [T.big]: 'BIG', [T.huge]: 'HUGE', [T.epic]: 'EPIC', [T.max]: 'MAX' };
 
 /** Exact base-game report: every stop combination of the 4 base strips. */
 function report(mode, reels) {
@@ -143,7 +162,9 @@ function report(mode, reels) {
   console.log(`Max win      : ${maxWin.toFixed(2)} × bet`);
   buckets.forEach(([lo, hi], i) => {
     const label = lo === 0 && hi === 0 ? 'no win' : `${lo === 0.0001 ? '>0' : lo}–${hi === Infinity ? '∞' : hi}`;
-    console.log(`  ${label.padEnd(8)} ${(counts[i] / N * 100).toFixed(4)}%`);
+    const tier = tierName[lo] ?? '';
+    const odds = counts[i] ? `1 in ${(N / counts[i]).toFixed(0)}` : 'never';
+    console.log(`  ${label.padEnd(8)} ${tier.padEnd(5)} ${(counts[i] / N * 100).toFixed(4)}%  (${odds})`);
   });
 }
 

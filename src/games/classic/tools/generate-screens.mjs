@@ -577,6 +577,29 @@ else {
     }
   }
 
+  // ── Step 5c: Paytable completeness (project rule) ─────────────────────────
+  // Every paytable combination (symbol × 3 / 4 / 5) must be paid by at least
+  // one screen of a category that can be drawn, or the paytable lies. The
+  // tests re-check it per play profile with engine missingCombosInGrids.
+  {
+    const seen = new Set();
+    finalScreens.forEach((buf, ci) => {
+      if (!(CATEGORIES[ci].prob > 0)) return;
+      for (let base = 0; base < buf.length; base += SCREEN_BYTES) {
+        const grid = unpackGrid(buf, base);
+        for (const line of PAYLINES) {
+          const first = grid[0][line[0]];
+          let count = 1;
+          while (count < NUM_REELS && grid[count][line[count]] === first) count++;
+          if (PAYTABLE[first][count]) seen.add(`${SYMBOLS[first]}×${count}`);
+        }
+      }
+    });
+    const missing = SYMBOLS.flatMap((sym, i) => Object.keys(PAYTABLE[i]).map(n => `${sym}×${n}`)).filter(c => !seen.has(c));
+    if (missing.length) throw new Error(`screens.bin would miss paytable combinations: ${missing.join(', ')} — raise TOTAL_SCREENS / POOL_MULT or seed them`);
+    console.log('All paytable combinations present ✓');
+  }
+
   // ── Step 6: Write binary file ─────────────────────────────────────────────
   const HEADER_SIZE = 4 + 1 + 1 + CATEGORIES.length * 4;
   const file = Buffer.alloc(HEADER_SIZE + TOTAL_SCREENS * SCREEN_BYTES, 0);

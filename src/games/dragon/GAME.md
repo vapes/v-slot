@@ -29,6 +29,8 @@
 ## Math — two profiles
 `config.ts` picks the profile from `detectPlayMode()`: **demo** (default) or **real** (`?mode=real`). Authored inputs live in `config.json` (real at top level, demo overrides in `demo`); generated strips in `strips.json` (`npm run dragon:reels`, never edit by hand). `{{rtp}}` in the paytable shows the active profile.
 
+**Every paytable combination must be able to land** (CLAUDE.md Hard Rule 9): every paying symbol × 3 and × 4 on the base strips and on the nest strips of both profiles. `dragon:reels` refuses to write strips that break it; `tests/games/dragon.test.ts` checks it with `missingCombosOnStrips`.
+
 | | real | demo |
 |---|---|---|
 | Base-game RTP (exact) | 62.95% | 59.28% |

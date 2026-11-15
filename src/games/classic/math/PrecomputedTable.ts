@@ -62,6 +62,19 @@ export class PrecomputedTable {
     return this._decodeGrid(idx);
   }
 
+  /**
+   * Every grid of the categories with probability > 0 under `probabilities`
+   * (default: the table's own) — i.e. every screen the game can return.
+   * Used by the paytable-completeness check (tests, tools).
+   */
+  *reachableGrids(probabilities: number[] = this.probabilities): Generator<SymbolId[][]> {
+    for (let c = 0; c < this.slices.length; c++) {
+      if (!(probabilities[c] > 0)) continue;
+      const { start, count } = this.slices[c];
+      for (let i = start; i < start + count; i++) yield this._decodeGrid(i);
+    }
+  }
+
   // ── Private ────────────────────────────────────────────────────────────────
 
   private _parse(data: Uint8Array): void {
