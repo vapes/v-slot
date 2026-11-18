@@ -51,4 +51,8 @@ describe('Classic precomputed math (screens.bin)', () => {
   ])('%s profile can land every paytable combination (3×, 4×, 5× of each symbol)', (_name, probs) => {
     expect(missingCombosInGrids(cfg, table.reachableGrids(probs))).toEqual([]);
   });
+
+  it('first screen is a real losing screen', () => {
+    for (let i = 0; i < 200; i++) expect(evaluateLines(cfg, table.pickFromCategory(0)!)).toHaveLength(0);
+  });
 });

@@ -42,7 +42,7 @@
     }
   },
   "grid": { "rows": 5, "cols": 4 },
-  "symbol": { "width": 121, "height": 90, "gap": 0 },
+  "symbol": { "width": 119, "height": 88, "gap": 2 },
   "reelOffsetX": 29.5,
   "reelOffsetY": 240,
   "startBalance": 100000,
@@ -67,7 +67,7 @@
   "buyFeature": { "cost": 28 },
   "wild": "wild",
   "symbols": [
-    { "id": "wild", "name": "Wild", "weight": 2 },
+    { "id": "wild", "name": "Wild", "weight": 0 },
     {
       "id": "dragon",
       "name": "Dragon Medal",

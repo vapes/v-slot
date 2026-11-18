@@ -30,6 +30,12 @@ export interface SpinOptions {
 export interface MathModel {
   load?(): Promise<void>;
   spin(opts?: SpinOptions): SpinResult;
+  /**
+   * Screen shown before the first spin (after load): a grid the base game can
+   * really land, without a win or a feature trigger. Without it the engine
+   * keeps the random blur symbols (config.symbols[].weight; weight 0 = never).
+   */
+  initialGrid?(): string[][] | undefined;
 }
 
 /** The spin/stop button. Pointer input is routed by the engine via hitTest. */

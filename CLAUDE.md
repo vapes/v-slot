@@ -108,7 +108,7 @@ A game's `index.ts` default-exports:
 const game: GameDefinition = {
   config,                                  // resolveConfig(raw)
   loadAssets?: () => Promise<void>,        // textures etc., before SlotGame is built
-  createMath: () => MathModel,             // spin(): SpinResult; optional async load()
+  createMath: () => MathModel,             // spin(): SpinResult; optional async load(); optional initialGrid() = first screen
   createSymbolRenderer: () => SymbolRenderer, // createView(id) → { display, setSymbol(id) }
   createView: (actions: GameActions) => GameView,
 };
@@ -161,8 +161,8 @@ Stage
 ├── GameView.mountBelowReels   (e.g. dragon background sprite)
 ├── ReelController.container   at (reelOffsetX, reelOffsetY)
 │   ├── optional reelStyle.background panel
+│   ├── optional reelStyle.separators grid (UNDER the symbols, centred in the symbol.gap between tiles)
 │   ├── reelLayer (masked) → Reel[i].symbolContainer
-│   ├── optional reelStyle.separators grid
 │   ├── overlay (feature sticky cells)
 │   ├── AnticipationFX (veil, flame meshes, sparks)
 │   └── winLayer (unmasked; winning symbols promoted here)
@@ -181,6 +181,8 @@ Stage
 - **Symbol recycling:** symbols leaving the bottom jump to the top with a new id: blur zone = random ids at `blurAlpha`, target zone = result ids at full alpha (placed in reverse so they land in the right rows after `snapToTarget()`).
 - **Win z-order:** winning symbols move from their reel container to `winLayer` (above the mask) and back before the next spin.
 - **Win cycle:** all wins for `winAllDelay`, then each line every `winLineInterval` with a fresh pulse.
+- **First screen & blur symbols:** only symbols the base game can really show. `MathModel.initialGrid()` gives the screen before the first spin (dragon: a base-strip stop without win / trigger; classic: a losing screen from `screens.bin`). Blur symbols during spins follow `config.symbols[].weight`; weight 0 = never (dragon's wild exists only in the nest — the feature sets its own blur pool via `FeatureRound.reelSymbols`).
+- **Slam stop:** STOP (or SPIN held in turbo) never skips the spin: each reel cuts its blur stretch and lands the targets at full speed (`Reel.forceStop`); a reel still in its bounce-up or not started yet (start interval) stops right after it starts.
 - **Turbo:** holding SPIN keeps `buttonHeld`; spins loop with abbreviated win display. TURBO toggle (`ctx.quick`) = fast reels, normal wins. AUTO = autoplay loop; SPIN or AUTO stops it.
 - **Status line (all games):** engine-driven in the win box (`WinBox.setStatus`) — `status.idle` ("Place your bets") while idle (after load, after a losing spin, after a turbo loop), `status.spin` ("Good luck!") from the SPIN press until the result. Texts are i18n keys in `common.json`; views only render them.
 - **Two-colour text:** use two `Text` objects positioned from measured widths (keeps each string a cached texture).

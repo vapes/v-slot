@@ -23,6 +23,8 @@ export class ReelController {
   private wasSpinning: boolean[] = [];
   /** Layer for feature visuals that sit on top of cells (sticky symbols). */
   readonly overlay = new Container();
+  /** Slam stop pressed during this spin (applies to reels that start later too). */
+  private stopRequested = false;
   private anticipation: AnticipationDirector;
   /** While set (e.g. during a feature) spinning blur symbols come only from this pool. */
   private blurPool: string[] | null = null;
@@ -53,6 +55,9 @@ export class ReelController {
       this.container.addChild(bg);
     }
 
+    // grid lines sit UNDER the symbols (visible in the symbol.gap between tiles)
+    this.container.addChild(this.buildSeparators());
+
     this.reelLayer = new Container();
     const mask = new Graphics();
     mask.rect(0, 0, REEL_AREA_WIDTH, REEL_AREA_HEIGHT).fill(0xFFFFFF);
@@ -69,8 +74,6 @@ export class ReelController {
       this.reels.push(reel);
     }
 
-    this.container.addChild(this.buildSeparators());
-
     // Above the reels, below winners: feature sticky cells, then anticipation FX
     this.container.addChild(this.overlay);
     this.anticipation = new AnticipationDirector(cfg, this.reels);
@@ -81,19 +84,20 @@ export class ReelController {
     this.container.addChild(this.wins.layer);
   }
 
-  /** Optional thin grid lines between cells (cfg.reelStyle.separators). */
+  /** Optional thin grid lines between cells (cfg.reelStyle.separators), centred in the symbol gap; drawn under the symbols. */
   private buildSeparators(): Graphics {
     const g = new Graphics();
     const sep = this.cfg.reelStyle?.separators;
     if (!sep) return g;
     const { reelAreaWidth, reelAreaHeight, cellHeight } = this.cfg;
+    const half = this.cfg.symbol.gap / 2;
     for (let i = 1; i < this.reelCount; i++) {
-      g.moveTo(i * this.reelWidth, 0);
-      g.lineTo(i * this.reelWidth, reelAreaHeight);
+      g.moveTo(i * this.reelWidth - half, 0);
+      g.lineTo(i * this.reelWidth - half, reelAreaHeight);
     }
     for (let r = 1; r < this.rowCount && sep.rows !== false; r++) {
-      g.moveTo(0, r * cellHeight);
-      g.lineTo(reelAreaWidth, r * cellHeight);
+      g.moveTo(0, r * cellHeight - half);
+      g.lineTo(reelAreaWidth, r * cellHeight - half);
     }
     g.stroke({ width: sep.width, color: color(sep.color), alpha: sep.alpha });
     return g;
@@ -114,6 +118,7 @@ export class ReelController {
       setTimeout(() => {
         this.anticipation.markStarted(i);
         this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped());
+        if (this.stopRequested) this.reels[i].forceStop();
       }, i * reelStartInterval);
     }
   }
@@ -137,9 +142,10 @@ export class ReelController {
     grid.forEach((col, i) => this.reels[i].snapToTarget(col));
   }
 
-  /** Instantly stop all spinning reels and snap to their targets. */
+  /** Slam stop: every reel lands its targets at full speed (Reel.forceStop); reels not started yet stop right after starting. */
   forceStop(): void {
     if (!this.spinning) return;
+    this.stopRequested = true;
     this.anticipation.cancel();
     for (const reel of this.reels) reel.forceStop();
   }
@@ -147,6 +153,7 @@ export class ReelController {
   private beginSpin(onComplete: () => void): boolean {
     if (this.spinning) return false;
     this.spinning = true;
+    this.stopRequested = false;
     this.reelsStopped = 0;
     this.onAllStoppedCallback = onComplete;
     this.wins.demote();

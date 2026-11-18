@@ -46,6 +46,16 @@ export class DragonMath implements MathModel {
     return result;
   }
 
+  /** First screen: a real base-strip stop with no line win and no nest trigger. */
+  initialGrid(): string[][] {
+    let grid = this.base.spin().grid;
+    for (let i = 0; i < 1000; i++) {
+      if (evaluateLines(this.cfg, grid).length === 0 && this.scatters(grid).length < this.rc.trigger) break;
+      grid = this.base.spin().grid;
+    }
+    return grid;
+  }
+
   private scatters(grid: string[][]): [number, number][] {
     const out: [number, number][] = [];
     grid.forEach((col, reel) => col.forEach((s, row) => { if (s in this.rc.scatters) out.push([reel, row]); }));

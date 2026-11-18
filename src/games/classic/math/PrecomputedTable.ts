@@ -75,6 +75,13 @@ export class PrecomputedTable {
     }
   }
 
+  /** A random grid of one category (e.g. 0 = lose for the first screen), or null before load. */
+  pickFromCategory(category: number): SymbolId[][] | null {
+    const slice = this.slices[category];
+    if (!this._ready || !slice?.count) return null;
+    return this._decodeGrid(slice.start + ((random() * slice.count) | 0));
+  }
+
   // ── Private ────────────────────────────────────────────────────────────────
 
   private _parse(data: Uint8Array): void {

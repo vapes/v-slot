@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import raw from '../../src/games/dragon/config.json';
 import strips from '../../src/games/dragon/strips.json';
-import { createRng, missingCombosOnStrips, resolveConfig, type RawSlotConfig } from '../../src/engine/math';
+import { createRng, evaluateLines, missingCombosOnStrips, resolveConfig, type RawSlotConfig } from '../../src/engine/math';
 import { DragonMath } from '../../src/games/dragon/math/DragonMath';
 import { buildProfile, type MathMode } from '../../src/games/dragon/math/respinConfig';
 
@@ -19,6 +19,18 @@ describe.each<MathMode>(['real', 'demo'])('Dragon math (%s profile)', (mode) => 
     for (const s of scatterIds) {
       expect(profile.reels.flat()).toContain(s);
       expect(profile.nest.flat()).not.toContain(s);
+    }
+  });
+
+  it('first screen: a real base stop without a win, a trigger or a wild', () => {
+    const math = new DragonMath(cfg, profile, createRng(9));
+    const onStrips = new Set(profile.reels.flat());
+    for (let i = 0; i < 200; i++) {
+      const grid = math.initialGrid();
+      grid.flat().forEach(s => expect(onStrips.has(s)).toBe(true));
+      expect(evaluateLines(cfg, grid)).toHaveLength(0);
+      expect(grid.flat().filter(s => s in scatters).length).toBeLessThan(trigger);
+      expect(grid.flat()).not.toContain(sticky);
     }
   });
 
