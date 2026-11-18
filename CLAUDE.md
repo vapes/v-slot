@@ -118,7 +118,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud: balance / bet values), `winBox` (WinBoxLayout: where the engine win box goes), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud: balance / bet values), `winBox` (WinBoxLayout: where the engine win box goes), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free. **Button sides (every game):** the info (paytable) button is always on the LEFT, the feature-buy button always on the RIGHT.
 
 ## Recipes
 
