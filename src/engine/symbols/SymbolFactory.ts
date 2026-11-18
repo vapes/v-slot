@@ -1,4 +1,5 @@
 import { SlotSymbol } from './SlotSymbol';
+import { cellSymbol } from '../math/cells';
 import type { SymbolRenderer } from '../contracts';
 import type { SlotConfig } from '../config/SlotConfig';
 
@@ -16,11 +17,18 @@ export class SymbolFactory {
       return sym;
     }
     const { width, height } = this.cfg.symbol;
-    return new SlotSymbol(this.renderer.createView(id), id, width, height);
+    const base = cellSymbol(id);
+    const fresh = new SlotSymbol(this.renderer.createView(base), base, width, height);
+    fresh.setSymbol(id); // a cell value ("mult:25") becomes the view's caption
+    return fresh;
   }
 
   release(symbol: SlotSymbol): void {
     symbol.visible = false;
+    symbol.scale.set(1);
+    symbol.alpha = 1;
+    symbol.x = 0;
+    symbol.parent?.removeChild(symbol);
     symbol.stopWinAnimation();
     this.pool.push(symbol);
   }

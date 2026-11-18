@@ -30,5 +30,18 @@
   "button.buy": "BUY",
   "buy.title": "BUY FEATURE",
   "buy.confirm": "BUY",
-  "buy.cancel": "CANCEL"
+  "buy.cancel": "CANCEL",
+  "game.crystal.title": "Crystal Falls",
+  "game.crystal.subtitle": "6×5 · pay anywhere · tumbles · multipliers",
+  "cell.value": "×{n}",
+  "win.cluster": "{count}× {symbol} — {amount}",
+  "win.multiplier": "MULTIPLIER ×{n}",
+  "freespins.title": "FREE SPINS",
+  "freespins.intro": "CONGRATULATIONS!",
+  "freespins.won": "YOU WON {n} FREE SPINS",
+  "freespins.won.one": "YOU WON {n} FREE SPIN",
+  "freespins.more": "+{n} FREE SPINS",
+  "freespins.more.one": "+{n} FREE SPIN",
+  "freespins.left": "FREE SPINS",
+  "freespins.retrigger": "RETRIGGER!"
 }

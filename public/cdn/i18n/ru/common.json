@@ -30,5 +30,22 @@
   "button.buy": "КУПИТЬ",
   "buy.title": "КУПИТЬ БОНУС",
   "buy.confirm": "КУПИТЬ",
-  "buy.cancel": "ОТМЕНА"
+  "buy.cancel": "ОТМЕНА",
+  "game.crystal.title": "Crystal Falls",
+  "game.crystal.subtitle": "6×5 · выигрыш в любом месте · каскады · множители",
+  "cell.value": "×{n}",
+  "win.cluster": "{count}× {symbol} — {amount}",
+  "win.multiplier": "МНОЖИТЕЛЬ ×{n}",
+  "freespins.title": "ФРИСПИНЫ",
+  "freespins.intro": "ПОЗДРАВЛЯЕМ!",
+  "freespins.won": "ВЫ ВЫИГРАЛИ {n} ФРИСПИНОВ",
+  "freespins.won.one": "ВЫ ВЫИГРАЛИ {n} ФРИСПИН",
+  "freespins.won.few": "ВЫ ВЫИГРАЛИ {n} ФРИСПИНА",
+  "freespins.won.many": "ВЫ ВЫИГРАЛИ {n} ФРИСПИНОВ",
+  "freespins.more": "+{n} ФРИСПИНОВ",
+  "freespins.more.one": "+{n} ФРИСПИН",
+  "freespins.more.few": "+{n} ФРИСПИНА",
+  "freespins.more.many": "+{n} ФРИСПИНОВ",
+  "freespins.left": "ФРИСПИНЫ",
+  "freespins.retrigger": "ЕЩЁ ФРИСПИНЫ!"
 }

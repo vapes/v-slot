@@ -21,6 +21,8 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run classic:slice` | Re-slice classic art from `src/games/classic/art/source.jpg` (Pillow + numpy) |
 | `npm run dragon:reels` | Rebuild dragon base + nest strips for both profiles into `strips.json`; exact base-game RTP per profile |
 | `npm run dragon:sim [-- real\|demo spins features]` | Monte-Carlo of the full dragon math incl. Dragon's Nest respins (real TS math via tsx) + exact trigger rate |
+| `npm run crystal:sim [-- spins features]` | Monte-Carlo of crystal (base tumbles + orbs + free spins, feature-buy price) |
+| `npm run crystal:art` | Redraw crystal art procedurally (symbols, background, buttons; Pillow + numpy) |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
 
 Verification: `npm run check` + `npm test` always; `npm run qa` for anything visual. URL switches (see `engine/core/devFlags.ts`): `?force=feature,anticipation` and `?debug=pipeline` in dev builds, `?seed=<n>` for a reproducible math RNG (dev + demo), `?lang=`, `?mode=real`. In dev builds `window.__vslot` (`engine/core/qaHooks.ts`) exposes `spin()`, `openPaytable()`, `state()` and the event log for Playwright / agents.
@@ -63,15 +65,16 @@ src/
 │   ├── core/wakeLock.ts     Screen Wake Lock while a game is open (re-acquired on tab return / first tap)
 │   ├── core/playMode.ts     detectPlayMode(): `demo` (default, no money backend) or `real` (`?mode=real`)
 │   ├── pipeline/            SpinPipeline (pre → server → post middleware) + buildSpinPipeline (all stages)
-│   ├── reels/               Reel (state machine, symbol recycling, boost), ReelController (spin control, layers),
+│   ├── reels/               Reel (state machine, symbol recycling, boost) or DropReel (config.drop: falling pebbles, tumbles) behind ReelView, ReelController (spin control, layers, tumble),
 │   │                        WinPresenter (promote / dim / pulse winners)
 │   │                        + AnticipationDirector (extends/boosts teasing reels, drives the FX)
 │   ├── fx/                  CoinShower (pooled win coins + glints), AnticipationFX (per-game style): flame = flameShader (GLSL Mesh) + Sparks;
 │   │                        marquee = MarqueeColumn (chasing casino bulbs); dim veil
 │   ├── symbols/             SlotSymbol (pulse + gold frame around a game SymbolView) + pool,
 │   │                        LandingFX (symbol landing animation: pop, light sweeps, flash, hue shimmer)
-│   ├── math/                evaluateLines (wild-aware), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types,
+│   ├── math/                evaluateLines (wild-aware), payAnywhere, tumble (runTumbles), cells (valued ids "mult:25"), Paytable helpers, ReelStripMath, computeAnticipation, rng (seedable), types,
 │   │                        combos (paytable completeness: missingCombosInGrids / missingCombosOnStrips)
+│   ├── drop/                TumblePlayer (cascades + multiplier fly-in), FreeSpinsPlayer (drop-mode free spins)
 │   ├── feature/             RespinPlayer (plays a FeatureRound), StickyLayer (sticky cells over reels), FeatureMeter,
 │   │                        RespinFlyFX (added respins fly from a cell into the counter)
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
@@ -83,7 +86,8 @@ src/
 ├── games/
 │   ├── registry.ts          Lobby list (scaffold inserts at @new-game markers)
 │   ├── classic/             5×3 777 Casino Classic, sliced fruit-machine skin, precomputed screens.bin math
-│   └── dragon/              4×5 Dragon Hoard, sliced sprite skin, reel-strip math
+│   ├── dragon/              4×5 Dragon Hoard, sliced sprite skin, reel-strip math
+│   └── crystal/             6×5 Crystal Falls: drop mode (tumbles), pay anywhere, multiplier orbs, free spins; procedural art
 │       ├── GAME.md          ★ read first when touching a game
 │       ├── config.json      engine config + game-specific keys
 │       ├── config.ts        typed import (`const raw: RawSlotConfig = json` validates it) + game helpers
@@ -114,7 +118,7 @@ const game: GameDefinition = {
 };
 ```
 
-`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud: balance / bet values), `winBox` (WinBoxLayout: where the engine win box goes), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free.
+`GameView` supplies `spinButton` (SpinControl with `hitTest`), `hud` (Hud: balance / bet values), `winBox` (WinBoxLayout: where the engine win box goes), `mountBelowReels` / `mountAboveReels`, `setBetControls`, optional `setAutoplay` / `setQuickSpin` / `update`. Views call back through `GameActions` (`changeBet`, `openPaytable`, `togglePaytable`, `toggleAutoplay`, `toggleQuickSpin`, `buyFeature`). The engine adds reels, celebration, the HTML paytable overlay, the home button (top-left) and the sound toggle (top-right) itself — games only set their positions in config and must keep those corners free. **Button sides (every game):** the info (paytable) button is always on the LEFT, the feature-buy button always on the RIGHT.
 
 ## Recipes
 
@@ -129,6 +133,8 @@ const game: GameDefinition = {
 **Change the engine:** keep it game-agnostic; extend `contracts.ts` / `RawSlotConfig` with optional members so existing games keep compiling; verify every game in the browser.
 
 **Bonus features (sticky respins):** the game's MathModel decides the whole round and returns it as `SpinResult.feature` (`FeatureRound`: trigger, initialSticky, steps with grid / newSticky / respinsLeft / line wins, collect, fullBonus, totalWin; values are × line bet). The engine plays it back in the pipeline stage `playFeature` (`RespinPlayer`): trigger pulse → intro window (`feature.title` header, `feature.intro` "CONGRATULATIONS!", `feature.won` "YOU WON {n} RESPINS") → optional initial sticky cells (values drawn by the game's `SymbolView.setValue`; value 0 = no label) → respins with a meter above the reels (respins added by a new sticky cell fly from it into the counter — `RespinFlyFX` comet + sparks — and the number ticks up on landing, `featureTiming.flyMs`) → cells with a value pay one by one → optional full-grid prize → "TOTAL WIN" window (`feature.total`) → base grid restored. Windows (`ui/FeatureBanner`) close by timer or a tap. Views may implement `GameView.setFeatureMode(on)` for mood changes. Timings: `config.feature`. Texts: `feature.*` i18n keys (engine fallbacks in `ENGINE_STRINGS`); a numeric `{n}` param picks plural forms `<key>.one|few|many|other` when present. Keep feature math pure and simulate it (`tools/simulate.ts`). Dev only: `?force=feature` (dragon) makes every spin trigger.
+
+**Drop mode (tumble / cascade, pay anywhere):** `config.drop` (timings over `DROP_DEFAULTS`) makes every column a `DropReel`: on a spin the screen falls out bottom row first and the new symbols drop in reel by reel (`spin.reelStartInterval`) under gravity with a pebble bounce; anticipation holds a column empty longer; STOP drops everything at once. `config.payMode: "anywhere"` = N+ of a symbol anywhere pays (paytable keys = minimum counts, `paylines: []`, bet unit = total bet). The math decides everything (`runTumbles(grid, evaluate, refill)` + `evaluateAnywhere` from `@/engine/math`) and returns `SpinResult.grid` (what drops in), `tumbles[]` (wins, removed cells, grid after each cascade), optional `multiplier` (orb cells on the final grid, applied value) and optional `freeSpins` (`FreeSpinsRound`: every free spin is a full drop-mode `SpinResult`). The engine plays it: pipeline stage `playTumbles` (`drop/TumblePlayer`: winners pulse, info line `win.cluster`, running amount in the win box, cells burst, the rest tumbles; orbs fly into the win box, `win.multiplier`) and `playFeature` → `drop/FreeSpinsPlayer` (`freespins.*` keys, meter, retrigger window). A cell id may carry a value: `withValue('mult', 25)` → `"mult:25"`; config lookups use the bare symbol and `SymbolView.setValue` gets the caption (`cell.value`). Events: `tumble`, `multiplier`. Paytable completeness for independent-cell math: `missingCombosAnywhere(cfg, weightTables)`. See `games/crystal`.
 
 **Feature buy:** `config.buyFeature = { cost }` (× total bet; dragon picks the active profile's in `config.ts`). Views wire a button to `GameActions.buyFeature()` and enable it from `BetControlsState.canBuy`; the engine shows `ui/BuyFeatureDialog` (feature name, `buy.title`, price, `buy.confirm` / `buy.cancel`), then runs one spin with `ctx.buy` / `ctx.stake` = price (validate + deduct use the stake) and calls `math.spin({ buyFeature: true })` — the MathModel must return a result whose feature triggers. `spinStart` carries `buy` / `stake`; `{{buyCost}}` shows the price in paytables; `__vslot.buyFeature()` buys without the dialog (QA). Price it from the simulator (dragon: `npm run dragon:sim` prints "Feature buy … cost for 96%").
 

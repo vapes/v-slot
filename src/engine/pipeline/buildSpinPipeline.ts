@@ -29,6 +29,10 @@ export interface PipelineDeps {
   startWinCycle(result: SpinResult): void;
   /** Play a bonus round decided by the math (e.g. sticky respins). */
   playFeature(result: SpinResult, ctx: SpinContext): Promise<void>;
+  /** Drop mode: cascades + multiplier of the spin (SpinResult.tumbles / multiplier). */
+  playTumbles(result: SpinResult, ctx: SpinContext): Promise<void>;
+  /** Drop mode: free spins triggered by the spin (SpinResult.freeSpins). */
+  playFreeSpins(result: SpinResult, ctx: SpinContext): Promise<void>;
 }
 
 export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
@@ -120,17 +124,26 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
   });
 
   pipeline.add('post', {
+    name: 'playTumbles',
+    execute: async (ctx) => {
+      if (ctx.result?.tumbles?.length || ctx.result?.multiplier) await deps.playTumbles(ctx.result, ctx);
+    },
+  });
+
+  pipeline.add('post', {
     name: 'playFeature',
     execute: async (ctx) => {
       if (ctx.result?.feature) await deps.playFeature(ctx.result, ctx);
+      if (ctx.result?.freeSpins) await deps.playFreeSpins(ctx.result, ctx);
     },
   });
 
   pipeline.add('post', {
     name: 'calculateWins',
     execute: (ctx) => {
-      const total = (ctx.result?.totalWin ?? 0) + (ctx.result?.feature?.totalWin ?? 0);
-      if (total > 0) ctx.winAmount = total * ctx.lineBet;
+      const r = ctx.result;
+      const total = (r?.totalWin ?? 0) + (r?.feature?.totalWin ?? 0) + (r?.freeSpins?.totalWin ?? 0);
+      if (total > 0) ctx.winAmount = Math.round(total * ctx.lineBet);
     },
   });
 
@@ -150,7 +163,10 @@ export function buildSpinPipeline(deps: PipelineDeps): SpinPipeline {
       if (ctx.winAmount > 0) {
         if (!animated(ctx)) winBox.showWin(ctx.winAmount);
         // small win: quick count-up in place (BIG+ counts in playCelebration)
-        else if (!getWinCategory(cfg, ctx.winAmount, ctx.totalBet)) void winBox.countUp(ctx.winAmount, ctx.totalBet);
+        else if (getWinCategory(cfg, ctx.winAmount, ctx.totalBet)) return;
+        // drop mode already ran the amount up tumble by tumble
+        else if (cfg.dropTiming) winBox.showWin(ctx.winAmount);
+        else void winBox.countUp(ctx.winAmount, ctx.totalBet);
       } else if (!ctx.turbo) {
         winBox.setStatus(t('status.idle'));
       }

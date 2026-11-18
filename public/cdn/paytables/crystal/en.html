@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --acc: #B9A4FF; --gold: #FFD36A; --panel: #1A0B3D; --text: #EEE8FF; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at 50% 0, #3B1A7A, #0B0420 60%); color: var(--text);
+         font: 15px/1.45 "Roboto Condensed", "Arial Narrow", Arial, sans-serif; padding: 20px 16px 40px; }
+  h1 { margin: 6px 56px 4px 0; font-size: 24px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+  h2 { margin: 28px 0 12px; font-size: 13px; letter-spacing: 3px; color: var(--acc); text-transform: uppercase;
+       display: flex; align-items: center; gap: 10px; }
+  h2::before, h2::after { content: ""; flex: 1; height: 1px; background: rgba(185,164,255,.35); }
+  .lead { opacity: .85; margin: 0 0 8px; }
+  .card { background: var(--panel); border: 1.5px solid rgba(185,164,255,.5); border-radius: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sym { padding: 8px 6px 10px; text-align: center; }
+  .sym img { width: 64%; display: block; margin: 2px auto 4px; }
+  .sym .n { font-size: 10px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+  .sym .p { font-size: 13px; } .sym .p b { font-size: 14px; }
+  .box { margin-top: 12px; padding: 14px; }
+  .row { display: flex; gap: 12px; align-items: center; }
+  .row img { width: 84px; }
+  .box ol, .box ul { margin: 10px 0 0; padding-left: 20px; } .box li { margin: 4px 0; }
+  .rtp { margin-top: 22px; padding: 14px; text-align: center; }
+  .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
+  .small { font-size: 12px; opacity: .6; }
+</style>
+</head>
+<body>
+  <h1>{{title}}</h1>
+  <p class="lead">Symbols pay <b>anywhere</b> on the screen: 8 or more of the same symbol win. Values are shown for the current bet of {{bet}}.</p>
+
+  <h2>Tumble</h2>
+  <div class="card box"><ol>
+      <li>After every win the winning symbols burst, the symbols above fall down and new ones drop in from the top.</li>
+      <li>Tumbling continues while new wins appear — one spin can win many times.</li>
+      <li>{{symbol:scatter}} never bursts and stays until the tumbling ends.</li></ol></div>
+
+  <h2>Power Orb</h2>
+  <div class="card box"><div class="row"><img src="{{asset:symbols/mult.png}}" alt=""><div>Each {{symbol:mult}} carries a random multiplier from <b>×2</b> to <b>×500</b>. When the tumbling ends and the spin won, all orbs on the screen add up and multiply the total tumble win.</div></div></div>
+
+  <h2>Free spins</h2>
+  <div class="card box"><div class="row"><img src="{{asset:symbols/scatter.png}}" alt=""><div><b>4 or more</b> {{symbol:scatter}} anywhere after the tumbling pay {{mult:scatter:4}} / {{mult:scatter:5}} / {{mult:scatter:6}} the bet (4 / 5 / 6+) and start <b>15 free spins</b>.
+    <ul><li>In free spins every orb of a winning spin adds to a <b>total multiplier</b> that multiplies every following win.</li>
+      <li><b>3 or more</b> {{symbol:scatter}} in free spins add <b>+5 free spins</b>.</li></ul></div></div></div>
+
+  <h2>Feature buy</h2>
+  <div class="card box"><div class="row"><img src="{{asset:ui/buy.png}}" alt="" style="width:64px"><div>Press <b>{{t:button.buy}}</b> (right of the win box) to start the free spins right away for <b>{{buyCost}}</b> — 135× the current bet. The bought spin always lands 4 or more {{symbol:scatter}}.</div></div></div>
+
+  <h2>Symbols</h2>
+  <div class="grid">
+    <div class="card sym"><div class="n">{{symbol:crown}}</div><img src="{{asset:symbols/crown.png}}" alt=""><div class="p">12-30 <b>{{pay:crown:12}}</b><br>10-11 <b>{{pay:crown:10}}</b><br>8-9 <b>{{pay:crown:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:heart}}</div><img src="{{asset:symbols/heart.png}}" alt=""><div class="p">12-30 <b>{{pay:heart:12}}</b><br>10-11 <b>{{pay:heart:10}}</b><br>8-9 <b>{{pay:heart:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:star}}</div><img src="{{asset:symbols/star.png}}" alt=""><div class="p">12-30 <b>{{pay:star:12}}</b><br>10-11 <b>{{pay:star:10}}</b><br>8-9 <b>{{pay:star:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:drop}}</div><img src="{{asset:symbols/drop.png}}" alt=""><div class="p">12-30 <b>{{pay:drop:12}}</b><br>10-11 <b>{{pay:drop:10}}</b><br>8-9 <b>{{pay:drop:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:emerald}}</div><img src="{{asset:symbols/emerald.png}}" alt=""><div class="p">12-30 <b>{{pay:emerald:12}}</b><br>10-11 <b>{{pay:emerald:10}}</b><br>8-9 <b>{{pay:emerald:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:sapphire}}</div><img src="{{asset:symbols/sapphire.png}}" alt=""><div class="p">12-30 <b>{{pay:sapphire:12}}</b><br>10-11 <b>{{pay:sapphire:10}}</b><br>8-9 <b>{{pay:sapphire:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:amethyst}}</div><img src="{{asset:symbols/amethyst.png}}" alt=""><div class="p">12-30 <b>{{pay:amethyst:12}}</b><br>10-11 <b>{{pay:amethyst:10}}</b><br>8-9 <b>{{pay:amethyst:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:topaz}}</div><img src="{{asset:symbols/topaz.png}}" alt=""><div class="p">12-30 <b>{{pay:topaz:12}}</b><br>10-11 <b>{{pay:topaz:10}}</b><br>8-9 <b>{{pay:topaz:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:opal}}</div><img src="{{asset:symbols/opal.png}}" alt=""><div class="p">12-30 <b>{{pay:opal:12}}</b><br>10-11 <b>{{pay:opal:10}}</b><br>8-9 <b>{{pay:opal:8}}</b></div></div>
+  </div>
+
+  <div class="card rtp"><div class="small">Theoretical return to player</div><div class="v">{{rtp}}</div></div>
+  <p class="small">Max win 5 000× the bet. Malfunction voids all pays and plays.</p>
+</body>
+</html>

@@ -1,4 +1,6 @@
-import { ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, LANDING_DEFAULTS, TIMING_DEFAULTS, WINBOX_DEFAULTS, LINE_INFO_DEFAULTS } from './defaults';
+import { DROP_DEFAULTS, ANTICIPATION_DEFAULTS, FEATURE_TIMING_DEFAULTS, LANDING_DEFAULTS, TIMING_DEFAULTS, WINBOX_DEFAULTS, LINE_INFO_DEFAULTS } from './defaults';
+
+import { cellSymbol } from '../math/cells';
 
 /**
  * Slot configuration contract shared by every game.
@@ -111,6 +113,17 @@ export interface RawSlotConfig {
   winBox?: Partial<typeof WINBOX_DEFAULTS>;
   /** Info line under the reels (see LINE_INFO_DEFAULTS). */
   lineInfo?: Partial<typeof LINE_INFO_DEFAULTS>;
+  /**
+   * "lines" (default): paylines left to right. "anywhere": a symbol pays when
+   * N+ of it are anywhere on the screen (paytable keys = minimum counts), the
+   * bet unit is the total bet and `paylines` may be empty.
+   */
+  payMode?: 'lines' | 'anywhere';
+  /**
+   * Drop mode: reels do not spin, symbols fall in like pebbles and wins
+   * tumble (SpinResult.tumbles / multiplier / freeSpins). See DROP_DEFAULTS.
+   */
+  drop?: Partial<typeof DROP_DEFAULTS>;
   /** Feature buy: price = `cost` × total bet; the math must trigger the feature (SpinOptions.buyFeature). */
   buyFeature?: { cost: number };
   /** Win ÷ total bet thresholds for the BIG/HUGE/EPIC/MAX banners. */
@@ -144,6 +157,8 @@ export interface SlotConfig extends RawSlotConfig {
   winBox: typeof WINBOX_DEFAULTS;
   /** Info line settings with defaults applied. */
   lineInfo: typeof LINE_INFO_DEFAULTS;
+  /** Resolved drop-mode settings, or null for spinning reels. */
+  dropTiming: typeof DROP_DEFAULTS | null;
   /** Resolved anticipation settings, or null when the game has none / disabled it. */
   tease: TeaseConfig | null;
   reelOffsetX: number;
@@ -182,14 +197,15 @@ export function resolveConfig(raw: RawSlotConfig): SlotConfig {
     winBox: { ...WINBOX_DEFAULTS, ...raw.winBox },
     lineInfo: { ...LINE_INFO_DEFAULTS, ...raw.lineInfo },
     tease,
+    dropTiming: raw.drop ? { ...DROP_DEFAULTS, ...raw.drop } : null,
     reelOffsetX: raw.reelOffsetX ?? (raw.canvas.width - reelAreaWidth) / 2,
     reelWidth,
     cellHeight,
     reelAreaWidth,
     reelAreaHeight: raw.grid.rows * cellHeight,
     symbolIds: raw.symbols.map(s => s.id),
-    symbolName: (id) => names.get(id) ?? id,
-    landing: (id, turbo) => (turbo ? landings.get(id)?.turbo : landings.get(id)?.normal) ?? null,
+    symbolName: (id) => names.get(cellSymbol(id)) ?? id,
+    landing: (id, turbo) => (turbo ? landings.get(cellSymbol(id))?.turbo : landings.get(cellSymbol(id))?.normal) ?? null,
   };
 }
 

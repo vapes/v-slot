@@ -1,6 +1,6 @@
 import type { SlotConfig } from '../config/SlotConfig';
 import { AnticipationFX } from '../fx/AnticipationFX';
-import type { Reel } from './Reel';
+import type { ReelView } from './ReelView';
 import { gameEvents } from '../core/GameEvents';
 
 /**
@@ -16,7 +16,7 @@ export class AnticipationDirector {
   private state: ('idle' | 'active' | 'done')[] = [];
   private suppressed: () => boolean = () => false;
 
-  constructor(private cfg: SlotConfig, private reels: Reel[]) {
+  constructor(private cfg: SlotConfig, private reels: ReelView[]) {
     this.fx = new AnticipationFX(cfg);
   }
 

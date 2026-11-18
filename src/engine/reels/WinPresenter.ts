@@ -2,7 +2,7 @@ import { Container } from 'pixi.js';
 import type { SlotConfig } from '../config/SlotConfig';
 import type { WinResult } from '../math/types';
 import type { SlotSymbol } from '../symbols/SlotSymbol';
-import type { Reel } from './Reel';
+import type { ReelView } from './ReelView';
 
 interface PromotedSymbol {
   symbol: SlotSymbol;
@@ -21,7 +21,7 @@ export class WinPresenter {
   readonly layer = new Container();
   private promoted: PromotedSymbol[] = [];
 
-  constructor(private cfg: SlotConfig, private reels: Reel[]) {}
+  constructor(private cfg: SlotConfig, private reels: ReelView[]) {}
 
   /** Highlight `wins`; `decorate` starts the pulse or draws the turbo frame. */
   highlight(wins: WinResult[], decorate: (sym: SlotSymbol) => void): void {
