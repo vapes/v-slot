@@ -67,7 +67,7 @@
   "buyFeature": { "cost": 28 },
   "wild": "wild",
   "symbols": [
-    { "id": "wild", "name": "Wild", "weight": 2 },
+    { "id": "wild", "name": "Wild", "weight": 0 },
     {
       "id": "dragon",
       "name": "Dragon Medal",

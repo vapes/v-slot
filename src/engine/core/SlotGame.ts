@@ -148,6 +148,8 @@ export class SlotGame {
     this.updateBetControls(false);
     try {
       await this.math.load?.();
+      const start = this.math.initialGrid?.();
+      if (start) this.reels.snapTo(start);
       winBox.setStatus(t('status.idle'));
       view.spinButton.enabled = true;
       this.updateBetControls(true);

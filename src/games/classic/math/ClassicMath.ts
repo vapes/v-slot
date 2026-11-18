@@ -13,6 +13,11 @@ export class ClassicMath implements MathModel {
     await this.table.load(assetUrl(config.id, 'screens.bin'));
   }
 
+  /** First screen: a real losing screen from screens.bin (category 0 = lose). */
+  initialGrid(): string[][] | undefined {
+    return this.table.pickFromCategory(0) ?? undefined;
+  }
+
   spin(): SpinResult {
     const grid = this.table.pickGrid();
     if (!grid) throw new Error('PrecomputedTable is not ready');
