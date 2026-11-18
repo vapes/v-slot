@@ -20,11 +20,10 @@ export class ReelController {
 
   private reelLayer: Container;
   private wins: WinPresenter;
-  private wasSpinning: boolean[] = [];
   /** Layer for feature visuals that sit on top of cells (sticky symbols). */
   readonly overlay = new Container();
-  /** Slam stop pressed during this spin (applies to reels that start later too). */
-  private stopRequested = false;
+  /** Reels whose start (reelStartInterval stagger) is still pending: index → start now. */
+  private pendingStarts = new Map<number, { timer: ReturnType<typeof setTimeout>; start: () => void }>();
   private anticipation: AnticipationDirector;
   /** While set (e.g. during a feature) spinning blur symbols come only from this pool. */
   private blurPool: string[] | null = null;
@@ -115,11 +114,13 @@ export class ReelController {
     const extra = this.anticipation.plan(anticipate, suppressed);
     for (let i = 0; i < this.reelCount; i++) {
       const screens = (scrollScreens[i] ?? (i + 1)) + extra[i];
-      setTimeout(() => {
+      const start = (skipBounceUp = false) => {
+        this.pendingStarts.delete(i);
         this.anticipation.markStarted(i);
-        this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped());
-        if (this.stopRequested) this.reels[i].forceStop();
-      }, i * reelStartInterval);
+        this.reels[i].startSpin(result.grid[i], screens, () => this.onReelStopped(), skipBounceUp);
+      };
+      if (i === 0 || reelStartInterval <= 0) start();
+      else this.pendingStarts.set(i, { timer: setTimeout(() => start(), i * reelStartInterval), start: () => start(true) });
     }
   }
 
@@ -142,18 +143,27 @@ export class ReelController {
     grid.forEach((col, i) => this.reels[i].snapToTarget(col));
   }
 
-  /** Slam stop: every reel lands its targets at full speed (Reel.forceStop); reels not started yet stop right after starting. */
+  /**
+   * STOP: all reels land together, like a turbo stop. Reels still waiting for
+   * their staggered start start now; every spinning reel scrolls its targets
+   * in over the same number of frames (one screen at turbo speed).
+   */
   forceStop(): void {
     if (!this.spinning) return;
-    this.stopRequested = true;
     this.anticipation.cancel();
-    for (const reel of this.reels) reel.forceStop();
+    for (const { timer, start } of this.pendingStarts.values()) {
+      clearTimeout(timer);
+      start();
+    }
+    const { spinSpeed, turboSpeedMultiplier } = this.cfg.spin;
+    const frames = (this.rowCount * this.cfg.cellHeight) / (spinSpeed * turboSpeedMultiplier);
+    for (const reel of this.reels) reel.forceStop(frames);
   }
 
   private beginSpin(onComplete: () => void): boolean {
     if (this.spinning) return false;
     this.spinning = true;
-    this.stopRequested = false;
+    this.pendingStarts.clear();
     this.reelsStopped = 0;
     this.onAllStoppedCallback = onComplete;
     this.wins.demote();
@@ -175,12 +185,13 @@ export class ReelController {
 
   update(dt: number): void {
     this.reels.forEach((reel, i) => {
+      // compare before / after this update: a long frame can start and land a reel in one step
+      const before = reel.isSpinning;
       reel.update(dt);
-      if (this.wasSpinning[i] && !reel.isSpinning) {
+      if (before && !reel.isSpinning) {
         gameEvents.emit('reelLand', { reel: i });
         this.playLandings(i, reel.getVisibleSymbols());
       }
-      this.wasSpinning[i] = reel.isSpinning;
     });
     for (const sym of this.landing) {
       sym.updateLanding(dt);
