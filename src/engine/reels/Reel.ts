@@ -39,7 +39,6 @@ export class Reel {
   private blurDistance = 0;   // pixels of blur symbols before targets
   private totalDistance = 0;  // total pixels to scroll (blur + target entry)
   private targetPlaced = 0;  // how many target symbols have been recycled in
-  private quickStop = false;  // slam-stop requested: land the targets at full speed as soon as possible
 
   constructor(cfg: SlotConfig, factory: SymbolFactory, private pickBlur: () => SymbolId) {
     this.spinConfig = cfg.spin;
@@ -74,7 +73,6 @@ export class Reel {
     this.totalScrolled = 0;
     this.targetPlaced = 0;
     this.phaseFrame = 0;
-    this.quickStop = false;
 
     this.blurDistance = scrollScreens * this.rows * this.cell;
     this.totalDistance = this.blurDistance + this.rows * this.cell;
@@ -104,7 +102,6 @@ export class Reel {
           }
           this.state = ReelState.SpinUp;
           this.phaseFrame = 0;
-          if (this.quickStop) this.applyQuickStop();
         }
         break;
       }
@@ -172,25 +169,25 @@ export class Reel {
   }
 
   /**
-   * Slam stop: the reel still visibly spins — the blur stretch is cut short
-   * and the targets scroll in at full speed (≈ one screen), then bounce and
-   * settle. A reel still in its bounce-up takes the stop as soon as it starts
-   * scrolling, so a stop right after SPIN never skips the spin entirely.
+   * Slam stop, landing in exactly `frames` frames (the controller passes the
+   * same value to every reel, so all reels land together like a turbo stop):
+   * the blur stretch is cut, the targets scroll in at the constant speed that
+   * covers the remaining distance in time, then bounce and settle. A reel in
+   * its bounce-up starts scrolling at once.
    */
-  forceStop(): void {
+  forceStop(frames: number): void {
     if (!this.isSpinning) return;
-    this.quickStop = true;
-    if (this.state !== ReelState.BounceUp) this.applyQuickStop();
-  }
-
-  private applyQuickStop(): void {
-    this.speed = this.maxSpeed;
-    this.state = ReelState.Spinning;
+    if (this.state === ReelState.BounceUp) {
+      this.symbolContainer.y = 0;
+      for (const sym of this.symbols) sym.alpha = this.spinConfig.blurAlpha;
+    }
     // still in the blur zone: bring the targets in now (else they are already arriving)
     if (this.totalScrolled < this.blurDistance) {
       this.blurDistance = this.totalScrolled;
       this.totalDistance = this.blurDistance + this.rows * this.cell;
     }
+    this.speed = this.maxSpeed = Math.max((this.totalDistance - this.totalScrolled) / frames, 1);
+    this.state = ReelState.Spinning;
   }
 
   private checkScrollComplete(): void {
