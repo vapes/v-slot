@@ -34,6 +34,7 @@ export function computeAnticipation(cfg: SlotConfig, grid: string[][]): boolean[
       }
     }
 
+    if (lines === 0) continue; // no paylines (pay-anywhere game): scatter tease only
     let potential = 0;
     for (const line of cfg.paylines) {
       let sym: string | null = null;

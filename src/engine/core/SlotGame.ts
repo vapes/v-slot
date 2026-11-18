@@ -14,6 +14,8 @@ import { WinCelebration } from '../ui/WinCelebration';
 import { WinBox } from '../ui/WinBox';
 import { LineInfo } from '../ui/LineInfo';
 import { RespinPlayer } from '../feature/RespinPlayer';
+import { TumblePlayer } from '../drop/TumblePlayer';
+import { FreeSpinsPlayer } from '../drop/FreeSpinsPlayer';
 import { HtmlPaytable } from '../ui/HtmlPaytable';
 import { t } from '../i18n/I18n';
 import { HomeButton } from '../ui/HomeButton';
@@ -46,6 +48,8 @@ export class SlotGame {
   private winBox: WinBox;
   private lineInfo: LineInfo;
   private respins: RespinPlayer;
+  private tumbles: TumblePlayer;
+  private freeSpins: FreeSpinsPlayer;
   private paytable!: HtmlPaytable;
   private buyDialog: BuyFeatureDialog;
   readonly pipeline: SpinPipeline;
@@ -72,6 +76,8 @@ export class SlotGame {
     const winBox = (this.winBox = new WinBox(cfg, view.winBox));
     this.lineInfo = new LineInfo(cfg);
     this.winCycle = new WinCycle(cfg, reels, this.lineInfo);
+    this.tumbles = new TumblePlayer(cfg, reels, this.lineInfo, winBox, view.winBox);
+    this.freeSpins = new FreeSpinsPlayer(cfg, reels, this.tumbles);
     this.loop = new SpinLoop(cfg, this.wallet, view, winBox, reels, () => this.pipeline,
       () => this.input.buttonHeld, (on) => this.updateBetControls(on));
 
@@ -95,6 +101,9 @@ export class SlotGame {
       startWinCycle: (result) => this.winCycle.start(result, this.wallet.lineBet),
       playFeature: (result, ctx) =>
         this.respins.play(result.feature!, result.grid, ctx.lineBet, ctx.turbo || ctx.quick, view),
+      playTumbles: (result, ctx) => this.tumbles.play(result, ctx.lineBet, ctx.turbo || ctx.quick),
+      playFreeSpins: (result, ctx) => this.freeSpins.play(result.freeSpins!, result.tumbles?.[result.tumbles.length - 1]?.grid ?? result.grid,
+        result.totalWin, ctx.lineBet, ctx.turbo || ctx.quick, view),
     });
   }
 
@@ -117,6 +126,8 @@ export class SlotGame {
     view.mountAboveReels(stage);
     stage.addChild(this.lineInfo.container, winBox.container);
     this.respins.mount(stage);
+    this.tumbles.mount(stage);
+    this.freeSpins.mount(stage);
     stage.addChild(new HomeButton(cfg.homeButton.x, cfg.homeButton.y, goToLobby, cfg.homeButton.r).container);
     if (cfg.soundButton) {
       const { x, y, r } = cfg.soundButton;
@@ -130,6 +141,8 @@ export class SlotGame {
       this.celebration.update(dt);
       winBox.update(dt);
       this.respins.update(dt);
+      this.tumbles.update(dt);
+      this.freeSpins.update(dt);
       view.update?.(dt);
     });
     fitCanvas(this.app, cfg.canvas.width, cfg.canvas.height);

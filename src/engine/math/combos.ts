@@ -43,3 +43,16 @@ export function missingCombosOnStrips(cfg: SlotConfig, strips: string[][]): stri
     })
     .map(n => `${symbol}×${n}`));
 }
+
+/**
+ * Pay-anywhere math with independent weighted cells: symbol × N can land when
+ * the symbol has a positive weight in a pool that fills the cells and the
+ * grid has at least N cells. `pools` = every weight table the game draws
+ * cells from (symbol → weight; e.g. base, free spins, demo).
+ */
+export function missingCombosAnywhere(cfg: SlotConfig, pools: Record<string, number>[]): string[] {
+  const cells = cfg.grid.rows * cfg.grid.cols;
+  return Object.entries(cfg.paytable).flatMap(([symbol, pays]) => Object.keys(pays).map(Number)
+    .filter(n => n > cells || !pools.every(p => (p[symbol] ?? 0) > 0))
+    .map(n => `${symbol}×${n}`));
+}

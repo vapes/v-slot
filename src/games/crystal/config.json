@@ -1,0 +1,109 @@
+{
+  "id": "crystal",
+  "title": "Crystal Falls",
+  "canvas": { "width": 540, "height": 968 },
+  "backgroundColor": "0x120A2E",
+  "currency": { "code": "USD", "decimals": 2, "symbol": "$", "thousands": "," },
+  "homeButton": { "x": 34, "y": 34 },
+  "soundButton": { "x": 506, "y": 34 },
+  "celebration": { "big": 10, "huge": 25, "epic": 50, "max": 100 },
+  "lineInfo": { "gap": 8 },
+  "winBox": { "bigScale": 1.6 },
+  "feature": { "meterY": 160 },
+  "anticipation": { "startReel": 2, "scatter": "scatter", "scatterTrigger": 4, "extraMs": 900, "speedBoost": 1, "colors": ["0xC8F4FF", "0x7A4DFF"], "veil": 0.3 },
+  "buyFeature": { "cost": 135 },
+  "payMode": "anywhere",
+  "drop": {},
+  "skin": {
+    "sourceWidth": 1080,
+    "ui": {
+      "spin":         { "x": 540, "y": 1756, "r": 132 },
+      "auto":         { "x": 250, "y": 1756, "r": 80 },
+      "turbo":        { "x": 830, "y": 1756, "r": 80 },
+      "info":         { "x": 960, "y": 1368, "r": 56 },
+      "buy":          { "x": 120, "y": 1368, "r": 84 },
+      "minus":        { "x": 640, "y": 1540, "r": 40 },
+      "plus":         { "x": 1004, "y": 1540, "r": 40 },
+      "winBox":       { "x": 540, "y": 1368, "w": 600, "h": 132 },
+      "balanceValue": { "x": 280, "y": 1556 },
+      "betValue":     { "x": 822, "y": 1556 },
+      "balanceLabel": { "x": 280, "y": 1510, "w": 300 },
+      "betLabel":     { "x": 822, "y": 1510, "w": 240 },
+      "autoLabel":    { "x": 250, "y": 1866, "w": 200 },
+      "turboLabel":   { "x": 830, "y": 1866, "w": 200 },
+      "buyLabel":     { "x": 120, "y": 1368, "w": 140 }
+    }
+  },
+  "grid": { "rows": 5, "cols": 6 },
+  "symbol": { "width": 82, "height": 82, "gap": 4 },
+  "reelOffsetX": 12,
+  "reelOffsetY": 184,
+  "reelStyle": { "separators": { "color": "0x9F8CFF", "alpha": 0.12, "width": 1 } },
+  "startBalance": 500000,
+  "betOptions": [20, 40, 100, 200, 400, 1000, 2000],
+  "defaultBetIndex": 3,
+  "wild": null,
+
+  "spin": {
+    "reelStartInterval": 70,
+    "bounceUp": { "amount": 0, "duration": 1 },
+    "spinSpeed": 45,
+    "turboSpeedMultiplier": 1.5,
+    "acceleration": 3.0,
+    "blurAlpha": 1,
+    "scrollScreens": [1, 1, 1, 1, 1, 1],
+    "bounceDown": { "amount": 0, "duration": 1 },
+    "settle": { "duration": 1 },
+    "winAllDelay": 2000,
+    "winLineInterval": 1500
+  },
+
+  "rtp": 0.96,
+  "maxWin": 5000,
+  "math": {
+    "scatter": "scatter",
+    "multiplier": "mult",
+    "freeSpins": { "trigger": 4, "spins": 15, "retrigger": 3, "extra": 5 },
+    "buyScatters": 4,
+    "base": {
+      "weights": { "crown": 4, "heart": 5, "star": 6, "drop": 7, "emerald": 9, "sapphire": 10, "amethyst": 12, "topaz": 14, "opal": 15, "scatter": 1.4, "mult": 0.45 },
+      "multipliers": { "2": 30, "3": 22, "4": 16, "5": 12, "6": 8, "8": 6, "10": 5, "12": 3, "15": 2.5, "20": 2, "25": 1.2, "50": 0.6, "100": 0.25, "250": 0.08, "500": 0.03 }
+    },
+    "free": {
+      "weights": { "crown": 4, "heart": 5, "star": 6, "drop": 7, "emerald": 9, "sapphire": 11, "amethyst": 13, "topaz": 15, "opal": 17, "scatter": 1.2, "mult": 2.8 },
+      "multipliers": { "2": 30, "3": 22, "4": 16, "5": 12, "6": 8, "8": 6, "10": 5, "12": 3, "15": 2.5, "20": 2, "25": 1.2, "50": 0.6, "100": 0.25, "250": 0.08, "500": 0.03 }
+    }
+  },
+
+  "symbols": [
+    { "id": "crown",    "name": "Crown",      "weight": 4 },
+    { "id": "heart",    "name": "Ruby Heart", "weight": 5 },
+    { "id": "star",     "name": "Gold Star",  "weight": 6 },
+    { "id": "drop",     "name": "Aqua Drop",  "weight": 7 },
+    { "id": "emerald",  "name": "Emerald",    "weight": 9 },
+    { "id": "sapphire", "name": "Sapphire",   "weight": 10 },
+    { "id": "amethyst", "name": "Amethyst",   "weight": 11 },
+    { "id": "topaz",    "name": "Topaz",      "weight": 12 },
+    { "id": "opal",     "name": "Opal",       "weight": 13 },
+    { "id": "scatter",  "name": "Prism",      "weight": 1,
+      "landing": { "ms": 800, "sweeps": 1, "hue": 360, "scale": 1.2, "flash": 0.6, "color": "0xE8FBFF" },
+      "turboLanding": { "ms": 400, "sweeps": 1, "hue": 360, "scale": 1.1, "flash": 0.4, "color": "0xE8FBFF" } },
+    { "id": "mult",     "name": "Power Orb",  "weight": 0,
+      "landing": { "ms": 700, "sweeps": 1, "scale": 1.18, "flash": 0.55, "color": "0xFFE6A8" },
+      "turboLanding": { "ms": 380, "sweeps": 1, "scale": 1.1, "flash": 0.4, "color": "0xFFE6A8" } }
+  ],
+
+  "paytable": {
+    "crown":    { "8": 10,   "10": 25,   "12": 50 },
+    "heart":    { "8": 2.5,  "10": 10,   "12": 25 },
+    "star":     { "8": 2,    "10": 5,    "12": 15 },
+    "drop":     { "8": 1.5,  "10": 2,    "12": 12 },
+    "emerald":  { "8": 1,    "10": 1.5,  "12": 10 },
+    "sapphire": { "8": 0.8,  "10": 1.2,  "12": 8 },
+    "amethyst": { "8": 0.5,  "10": 1,    "12": 5 },
+    "topaz":    { "8": 0.4,  "10": 0.9,  "12": 4 },
+    "opal":     { "8": 0.25, "10": 0.75, "12": 2 },
+    "scatter":  { "4": 3,    "5": 5,     "6": 100 }
+  },
+  "paylines": []
+}

@@ -41,8 +41,9 @@ export class FeatureMeter {
     this.container.visible = false;
   }
 
-  show(respins: number, total: string): void {
-    this.label.text = t('feature.respins');
+  /** `labelKey`: i18n key of the counter caption (respins / free spins). */
+  show(respins: number, total: string, labelKey = 'feature.respins'): void {
+    this.label.text = t(labelKey);
     fitText(this.label, this.w * 0.3);
     this.container.visible = true;
     this.setRespins(respins);

@@ -1,0 +1,16 @@
+{
+  "game.title": "Crystal Falls",
+  "symbol.crown": "Crown",
+  "symbol.heart": "Ruby Heart",
+  "symbol.star": "Gold Star",
+  "symbol.drop": "Aqua Drop",
+  "symbol.emerald": "Emerald",
+  "symbol.sapphire": "Sapphire",
+  "symbol.amethyst": "Amethyst",
+  "symbol.topaz": "Topaz",
+  "symbol.opal": "Opal",
+  "symbol.scatter": "Prism",
+  "symbol.mult": "Power Orb",
+  "feature.total": "TOTAL WIN",
+  "feature.collected": "WIN {amount}"
+}

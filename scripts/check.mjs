@@ -96,7 +96,9 @@ for (const id of games) {
   });
   for (const [sym, pays] of Object.entries(c.paytable)) {
     if (!ids.includes(sym)) bad(`paytable symbol "${sym}" is not in symbols`);
-    for (const n of Object.keys(pays)) if (+n > c.grid.cols || +n < 1) bad(`paytable ${sym}[${n}] impossible on ${c.grid.cols} reels`);
+    // lines: at most one per reel; pay anywhere: at most one per cell
+    const most = c.payMode === 'anywhere' ? c.grid.cols * c.grid.rows : c.grid.cols;
+    for (const n of Object.keys(pays)) if (+n > most || +n < 1) bad(`paytable ${sym}[${n}] impossible (max ${most} on this grid)`);
   }
   if (c.anticipation) {
     const a = c.anticipation;
@@ -106,7 +108,11 @@ for (const id of games) {
     (a.scatters ?? []).forEach(s => { if (!ids.includes(s)) bad(`anticipation.scatters: "${s}" is not a symbol`); });
     if ((a.startReel ?? 2) < 1 || (a.startReel ?? 2) >= c.grid.cols) bad('anticipation.startReel must be 1..cols-1');
   }
-  c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
+  if (c.payMode !== 'anywhere') {
+    if (!c.paylines.length) bad('paylines is empty (only pay-anywhere games, payMode "anywhere", have none)');
+    c.betOptions.forEach(b => { if (b % c.paylines.length) bad(`bet ${b} is not divisible by ${c.paylines.length} lines`); });
+  }
+  if (c.payMode && !['lines', 'anywhere'].includes(c.payMode)) bad(`payMode "${c.payMode}" must be lines|anywhere`);
   if (c.defaultBetIndex < 0 || c.defaultBetIndex >= c.betOptions.length) bad('defaultBetIndex out of range');
   if (c.spin.scrollScreens.length < c.grid.cols) bad(`spin.scrollScreens needs ${c.grid.cols} entries`);
   // generated strips (e.g. src/games/<id>/strips.json): every symbol must exist

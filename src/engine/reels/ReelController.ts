@@ -1,18 +1,20 @@
 import { Container, Graphics } from 'pixi.js';
 import { color, type SlotConfig } from '../config/SlotConfig';
 import { Reel } from './Reel';
+import { DropReel } from './DropReel';
+import type { ReelView } from './ReelView';
 import { AnticipationDirector } from './AnticipationDirector';
 import { WinPresenter } from './WinPresenter';
 import { gameEvents } from '../core/GameEvents';
 import { SymbolFactory } from '../symbols/SymbolFactory';
-import type { SpinResult, WinResult } from '../math/types';
+import type { SpinResult, TumbleStep, WinResult } from '../math/types';
 import type { SymbolRenderer } from '../contracts';
 import { createSymbolPicker } from '../utils/Random';
 import type { SlotSymbol } from '../symbols/SlotSymbol';
 
 export class ReelController {
   readonly container: Container;
-  private reels: Reel[] = [];
+  private reels: ReelView[] = [];
   private factory: SymbolFactory;
   private spinning = false;
   private reelsStopped = 0;
@@ -67,7 +69,7 @@ export class ReelController {
     const basePick = createSymbolPicker(cfg);
     const pickBlur = () => (this.blurPool ? this.blurPool[Math.floor(Math.random() * this.blurPool.length)] : basePick());
     for (let i = 0; i < this.reelCount; i++) {
-      const reel = new Reel(cfg, this.factory, pickBlur);
+      const reel = cfg.dropTiming ? new DropReel(cfg, this.factory, pickBlur) : new Reel(cfg, this.factory, pickBlur);
       reel.container.x = i * this.reelWidth;
       this.reelLayer.addChild(reel.container);
       this.reels.push(reel);
@@ -188,9 +190,11 @@ export class ReelController {
       // compare before / after this update: a long frame can start and land a reel in one step
       const before = reel.isSpinning;
       reel.update(dt);
+      // drop mode: every pebble lands on its own
+      if (reel.takeLanded) for (const { sym, row } of reel.takeLanded()) this.playLanding(i, row, sym);
       if (before && !reel.isSpinning) {
         gameEvents.emit('reelLand', { reel: i });
-        this.playLandings(i, reel.getVisibleSymbols());
+        if (!reel.takeLanded) reel.getVisibleSymbols().forEach((sym, row) => this.playLanding(i, row, sym));
       }
     });
     for (const sym of this.landing) {
@@ -202,14 +206,28 @@ export class ReelController {
   }
 
   /** Symbols with a landing animation (config.symbols[].landing / turboLanding) play it as their reel stops. */
-  private playLandings(reel: number, cells: SlotSymbol[]): void {
-    cells.forEach((sym, row) => {
-      const spec = this.cfg.landing(sym.symbolId, this.turbo);
-      if (!spec) return;
-      sym.playLanding(spec);
-      this.landing.add(sym);
-      gameEvents.emit('symbolLanding', { reel, row, symbol: sym.symbolId, turbo: this.turbo });
+  private playLanding(reel: number, row: number, sym: SlotSymbol): void {
+    const spec = this.cfg.landing(sym.symbolId, this.turbo);
+    if (!spec) return;
+    sym.playLanding(spec);
+    this.landing.add(sym);
+    gameEvents.emit('symbolLanding', { reel, row, symbol: sym.symbolId, turbo: this.turbo });
+  }
+
+  /**
+   * Drop mode: one cascade — the step's removed cells burst, the rest fall
+   * and new cells drop in (they are the top of `step.grid` in each reel).
+   */
+  tumble(step: TumbleStep, fast: boolean): Promise<void> {
+    this.wins.demote();
+    this.wins.undim();
+    this.turbo = fast;
+    const jobs = this.reels.map((reel, i) => {
+      const rows = step.removed.filter(([r]) => r === i).map(([, row]) => row);
+      if (!rows.length || !(reel instanceof DropReel)) return Promise.resolve();
+      return new Promise<void>(done => reel.tumble(rows, step.grid[i].slice(0, rows.length), done, fast));
     });
+    return Promise.all(jobs).then(() => undefined);
   }
 
   /** Highlight every winning position with a pulse; dim the rest. */

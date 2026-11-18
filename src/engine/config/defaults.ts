@@ -111,3 +111,37 @@ export const LINE_INFO_DEFAULTS = {
   /** Gap between the reels' bottom edge and the pill when `y` is null. */
   gap: 6,
 };
+
+/**
+ * Drop mode (config.drop): reels do not spin — symbols fall like pebbles.
+ * The old screen falls out, the new one drops in reel by reel
+ * (spin.reelStartInterval), winning cells burst and the rest tumbles down.
+ * Frames are 60 fps frames; config.drop overrides any field.
+ */
+export const DROP_DEFAULTS = {
+  /** Gravity, px per frame² (turbo / slam stop multiply it by turboGravity). */
+  gravity: 2.2,
+  turboGravity: 2.5,
+  /** Start delay between rows of one reel (bottom row first), frames. */
+  rowDelay: 2.5,
+  /** Delay between the old screen leaving and the new one dropping in, frames. */
+  refillDelay: 4,
+  /** Pebble bounce after a landing: height (share of a cell) and length, frames. */
+  bounce: 0.1,
+  bounceFrames: 12,
+  /** Winning cells are shown this long before they burst, ms. */
+  winMs: 900,
+  /** Burst of the winning cells, ms. */
+  popMs: 320,
+  /** Pause after a tumble landed, ms. */
+  tumblePauseMs: 150,
+  /** Multiplier cells pulse, then fly into the win box, ms. */
+  multiplierMs: 700,
+  flyMs: 650,
+  /** Every drop-mode timing (ms) in turbo / quick spins is multiplied by this. */
+  fastFactor: 0.45,
+  /** Free spins: number of spins awarded by a retrigger is shown this long, ms. */
+  retriggerMs: 1800,
+  /** Pause between free spins, ms. */
+  freeSpinPauseMs: 350,
+};

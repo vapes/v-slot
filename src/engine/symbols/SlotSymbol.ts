@@ -2,6 +2,8 @@ import { Container, Graphics } from 'pixi.js';
 import type { SymbolView } from '../contracts';
 import type { LandingConfig } from '../config/SlotConfig';
 import { LandingFX } from './LandingFX';
+import { cellSymbol, cellValue } from '../math/cells';
+import { t } from '../i18n/I18n';
 
 /**
  * One reel cell. The game-provided SymbolView draws the art; this class adds
@@ -31,11 +33,18 @@ export class SlotSymbol extends Container {
     return this._symbolId;
   }
 
-  /** Update symbol identity (used for recycling). */
+  /**
+   * Update symbol identity (used for recycling). A cell id with a value
+   * ("mult:25", see math/cells) shows the bare symbol plus the value caption
+   * (`cell.value` i18n key) through SymbolView.setValue.
+   */
   setSymbol(id: string): void {
     if (id !== this._symbolId) {
+      const prev = this._symbolId;
       this._symbolId = id;
-      this.view.setSymbol(id);
+      if (cellSymbol(id) !== cellSymbol(prev)) this.view.setSymbol(cellSymbol(id));
+      const value = cellValue(id);
+      if (value !== null || cellValue(prev) !== null) this.view.setValue?.(value === null ? null : t('cell.value', { n: value }));
     }
     this.stopWinAnimation();
   }

@@ -1,4 +1,4 @@
-import type { FeatureRound, SpinResult } from '../math/types';
+import type { FeatureRound, FreeSpinsRound, SpinResult } from '../math/types';
 
 /**
  * Everything observable that happens in a game, for audio, analytics,
@@ -16,8 +16,12 @@ export interface GameEventMap {
   reelsStopped: { result: SpinResult };
   anticipationStart: { reel: number };
   anticipationEnd: { reel: number };
-  featureStart: { feature: FeatureRound };
-  /** One respin finished. */
+  featureStart: { feature: FeatureRound | FreeSpinsRound };
+  /** Drop mode: one cascade started (`win` in minor units). */
+  tumble: { index: number; win: number };
+  /** Drop mode: multiplier cells applied to the spin's tumble win. */
+  multiplier: { applied: number; sum: number };
+  /** One respin / free spin finished. */
   featureStep: { index: number; newSticky: number; respinsLeft: number };
   featureEnd: { totalWin: number };
   /** Spin finished with a win (base + feature). */

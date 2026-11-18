@@ -1,5 +1,5 @@
 import type { SlotConfig } from '../config/SlotConfig';
-import { linePayout } from '../math/Paytable';
+import { linePayout, lineBetOf } from '../math/Paytable';
 import { assetUrl, formatMoney } from '../utils/Money';
 import { t } from '../i18n/I18n';
 
@@ -21,7 +21,7 @@ import { t } from '../i18n/I18n';
  * template authors notice them.
  */
 export function renderPaytable(template: string, cfg: SlotConfig, totalBet: number, baseHref: string): string {
-  const lineBet = totalBet / cfg.paylines.length;
+  const lineBet = lineBetOf(cfg, totalBet);
   const money = (v: number) => formatMoney(cfg, v);
 
   const html = template.replace(/\{\{\s*([\w.-]+)(?::([^}:]+))?(?::([^}]+))?\s*\}\}/g, (m, name: string, a?: string, b?: string) => {

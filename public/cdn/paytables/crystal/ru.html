@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --acc: #B9A4FF; --gold: #FFD36A; --panel: #1A0B3D; --text: #EEE8FF; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(circle at 50% 0, #3B1A7A, #0B0420 60%); color: var(--text);
+         font: 15px/1.45 "Roboto Condensed", "Arial Narrow", Arial, sans-serif; padding: 20px 16px 40px; }
+  h1 { margin: 6px 56px 4px 0; font-size: 24px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+  h2 { margin: 28px 0 12px; font-size: 13px; letter-spacing: 3px; color: var(--acc); text-transform: uppercase;
+       display: flex; align-items: center; gap: 10px; }
+  h2::before, h2::after { content: ""; flex: 1; height: 1px; background: rgba(185,164,255,.35); }
+  .lead { opacity: .85; margin: 0 0 8px; }
+  .card { background: var(--panel); border: 1.5px solid rgba(185,164,255,.5); border-radius: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sym { padding: 8px 6px 10px; text-align: center; }
+  .sym img { width: 64%; display: block; margin: 2px auto 4px; }
+  .sym .n { font-size: 10px; letter-spacing: 1px; color: var(--gold); text-transform: uppercase; }
+  .sym .p { font-size: 13px; } .sym .p b { font-size: 14px; }
+  .box { margin-top: 12px; padding: 14px; }
+  .row { display: flex; gap: 12px; align-items: center; }
+  .row img { width: 84px; }
+  .box ol, .box ul { margin: 10px 0 0; padding-left: 20px; } .box li { margin: 4px 0; }
+  .rtp { margin-top: 22px; padding: 14px; text-align: center; }
+  .rtp .v { font-size: 34px; font-weight: bold; color: var(--gold); }
+  .small { font-size: 12px; opacity: .6; }
+</style>
+</head>
+<body>
+  <h1>{{title}}</h1>
+  <p class="lead">Символы платят <b>в любом месте</b> экрана: выигрыш — 8 и больше одинаковых символов. Суммы показаны для текущей ставки {{bet}}.</p>
+
+  <h2>Каскад</h2>
+  <div class="card box"><ol>
+      <li>После каждого выигрыша выигравшие символы лопаются, символы сверху падают вниз, а сверху падают новые.</li>
+      <li>Каскад продолжается, пока появляются новые выигрыши — один спин может выиграть много раз.</li>
+      <li>{{symbol:scatter}} не лопается и остаётся до конца каскада.</li></ol></div>
+
+  <h2>Сфера силы</h2>
+  <div class="card box"><div class="row"><img src="{{asset:symbols/mult.png}}" alt=""><div>Каждая {{symbol:mult}} несёт случайный множитель от <b>×2</b> до <b>×500</b>. Когда каскад закончился и спин выиграл, все сферы на экране складываются и умножают общий выигрыш каскада.</div></div></div>
+
+  <h2>Фриспины</h2>
+  <div class="card box"><div class="row"><img src="{{asset:symbols/scatter.png}}" alt=""><div><b>4 и больше</b> {{symbol:scatter}} в любом месте после каскада платят {{mult:scatter:4}} / {{mult:scatter:5}} / {{mult:scatter:6}} ставки (4 / 5 / 6+) и дают <b>15 фриспинов</b>.
+    <ul><li>Во фриспинах каждая сфера выигравшего спина добавляется к <b>общему множителю</b>, который умножает все следующие выигрыши.</li>
+      <li><b>3 и больше</b> {{symbol:scatter}} во фриспинах дают <b>+5 фриспинов</b>.</li></ul></div></div></div>
+
+  <h2>Покупка бонуса</h2>
+  <div class="card box"><div class="row"><img src="{{asset:ui/buy.png}}" alt="" style="width:64px"><div>Нажмите <b>{{t:button.buy}}</b> (слева от окна выигрыша), чтобы сразу начать фриспины за <b>{{buyCost}}</b> — 135× текущей ставки. Купленный спин всегда приносит 4 и больше {{symbol:scatter}}.</div></div></div>
+
+  <h2>Символы</h2>
+  <div class="grid">
+    <div class="card sym"><div class="n">{{symbol:crown}}</div><img src="{{asset:symbols/crown.png}}" alt=""><div class="p">12-30 <b>{{pay:crown:12}}</b><br>10-11 <b>{{pay:crown:10}}</b><br>8-9 <b>{{pay:crown:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:heart}}</div><img src="{{asset:symbols/heart.png}}" alt=""><div class="p">12-30 <b>{{pay:heart:12}}</b><br>10-11 <b>{{pay:heart:10}}</b><br>8-9 <b>{{pay:heart:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:star}}</div><img src="{{asset:symbols/star.png}}" alt=""><div class="p">12-30 <b>{{pay:star:12}}</b><br>10-11 <b>{{pay:star:10}}</b><br>8-9 <b>{{pay:star:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:drop}}</div><img src="{{asset:symbols/drop.png}}" alt=""><div class="p">12-30 <b>{{pay:drop:12}}</b><br>10-11 <b>{{pay:drop:10}}</b><br>8-9 <b>{{pay:drop:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:emerald}}</div><img src="{{asset:symbols/emerald.png}}" alt=""><div class="p">12-30 <b>{{pay:emerald:12}}</b><br>10-11 <b>{{pay:emerald:10}}</b><br>8-9 <b>{{pay:emerald:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:sapphire}}</div><img src="{{asset:symbols/sapphire.png}}" alt=""><div class="p">12-30 <b>{{pay:sapphire:12}}</b><br>10-11 <b>{{pay:sapphire:10}}</b><br>8-9 <b>{{pay:sapphire:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:amethyst}}</div><img src="{{asset:symbols/amethyst.png}}" alt=""><div class="p">12-30 <b>{{pay:amethyst:12}}</b><br>10-11 <b>{{pay:amethyst:10}}</b><br>8-9 <b>{{pay:amethyst:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:topaz}}</div><img src="{{asset:symbols/topaz.png}}" alt=""><div class="p">12-30 <b>{{pay:topaz:12}}</b><br>10-11 <b>{{pay:topaz:10}}</b><br>8-9 <b>{{pay:topaz:8}}</b></div></div>
+    <div class="card sym"><div class="n">{{symbol:opal}}</div><img src="{{asset:symbols/opal.png}}" alt=""><div class="p">12-30 <b>{{pay:opal:12}}</b><br>10-11 <b>{{pay:opal:10}}</b><br>8-9 <b>{{pay:opal:8}}</b></div></div>
+  </div>
+
+  <div class="card rtp"><div class="small">Теоретический возврат игроку</div><div class="v">{{rtp}}</div></div>
+  <p class="small">Максимальный выигрыш — 5 000× ставки. Сбой аннулирует все выплаты и игры.</p>
+</body>
+</html>

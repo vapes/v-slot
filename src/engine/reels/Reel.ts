@@ -2,6 +2,7 @@ import { Container } from 'pixi.js';
 import type { SlotConfig } from '../config/SlotConfig';
 import type { SlotSymbol } from '../symbols/SlotSymbol';
 import type { SymbolFactory } from '../symbols/SymbolFactory';
+import type { ReelView } from './ReelView';
 
 type SymbolId = string;
 
@@ -18,7 +19,7 @@ export enum ReelState {
  * Single reel column.
  * Uses symbol recycling: symbols that scroll off the top are repositioned at the bottom.
  */
-export class Reel {
+export class Reel implements ReelView {
   readonly container: Container;
   readonly symbolContainer: Container;
   private symbols: SlotSymbol[] = [];

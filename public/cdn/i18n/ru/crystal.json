@@ -1,0 +1,16 @@
+{
+  "game.title": "Crystal Falls",
+  "symbol.crown": "Корона",
+  "symbol.heart": "Рубиновое сердце",
+  "symbol.star": "Золотая звезда",
+  "symbol.drop": "Аквамарин",
+  "symbol.emerald": "Изумруд",
+  "symbol.sapphire": "Сапфир",
+  "symbol.amethyst": "Аметист",
+  "symbol.topaz": "Топаз",
+  "symbol.opal": "Опал",
+  "symbol.scatter": "Призма",
+  "symbol.mult": "Сфера силы",
+  "feature.total": "ОБЩИЙ ВЫИГРЫШ",
+  "feature.collected": "ВЫИГРЫШ {amount}"
+}

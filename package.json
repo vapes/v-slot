@@ -16,6 +16,8 @@
     "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py",
     "classic:slice": "python3 src/games/classic/tools/slice-skin.py",
     "dragon:sim": "tsx src/games/dragon/tools/simulate.ts",
+    "crystal:sim": "tsx src/games/crystal/tools/simulate.ts",
+    "crystal:art": "python3 src/games/crystal/tools/draw-symbols.py && python3 src/games/crystal/tools/draw-skin.py",
     "test": "vitest run",
     "qa": "node scripts/qa.cjs"
   },
