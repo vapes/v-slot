@@ -39,6 +39,7 @@ export class Reel {
   private blurDistance = 0;   // pixels of blur symbols before targets
   private totalDistance = 0;  // total pixels to scroll (blur + target entry)
   private targetPlaced = 0;  // how many target symbols have been recycled in
+  private quickStop = false;  // slam-stop requested: land the targets at full speed as soon as possible
 
   constructor(cfg: SlotConfig, factory: SymbolFactory, private pickBlur: () => SymbolId) {
     this.spinConfig = cfg.spin;
@@ -73,6 +74,7 @@ export class Reel {
     this.totalScrolled = 0;
     this.targetPlaced = 0;
     this.phaseFrame = 0;
+    this.quickStop = false;
 
     this.blurDistance = scrollScreens * this.rows * this.cell;
     this.totalDistance = this.blurDistance + this.rows * this.cell;
@@ -102,6 +104,7 @@ export class Reel {
           }
           this.state = ReelState.SpinUp;
           this.phaseFrame = 0;
+          if (this.quickStop) this.applyQuickStop();
         }
         break;
       }
@@ -168,13 +171,26 @@ export class Reel {
     return this.state === ReelState.BounceUp || this.state === ReelState.SpinUp || this.state === ReelState.Spinning;
   }
 
-  /** Snap to target symbols and play the BounceDown→Settling easing (same as turbo stop). */
+  /**
+   * Slam stop: the reel still visibly spins — the blur stretch is cut short
+   * and the targets scroll in at full speed (≈ one screen), then bounce and
+   * settle. A reel still in its bounce-up takes the stop as soon as it starts
+   * scrolling, so a stop right after SPIN never skips the spin entirely.
+   */
   forceStop(): void {
-    if (this.state === ReelState.Idle) return;
-    this.speed = 0;
-    this.snapToTarget();
-    this.state = ReelState.BounceDown;
-    this.phaseFrame = 0;
+    if (!this.isSpinning) return;
+    this.quickStop = true;
+    if (this.state !== ReelState.BounceUp) this.applyQuickStop();
+  }
+
+  private applyQuickStop(): void {
+    this.speed = this.maxSpeed;
+    this.state = ReelState.Spinning;
+    // still in the blur zone: bring the targets in now (else they are already arriving)
+    if (this.totalScrolled < this.blurDistance) {
+      this.blurDistance = this.totalScrolled;
+      this.totalDistance = this.blurDistance + this.rows * this.cell;
+    }
   }
 
   private checkScrollComplete(): void {

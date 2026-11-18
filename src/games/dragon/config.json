@@ -42,7 +42,7 @@
     }
   },
   "grid": { "rows": 5, "cols": 4 },
-  "symbol": { "width": 121, "height": 90, "gap": 0 },
+  "symbol": { "width": 119, "height": 88, "gap": 2 },
   "reelOffsetX": 29.5,
   "reelOffsetY": 240,
   "startBalance": 100000,
