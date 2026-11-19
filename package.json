@@ -14,6 +14,7 @@
     "classic:rtp": "tsx src/games/classic/tools/demo-rtp.ts",
     "dragon:reels": "node src/games/dragon/tools/build-reels.mjs",
     "dragon:slice": "python3 src/games/dragon/tools/slice-skin.py",
+    "dragon:video": "python3 src/games/dragon/tools/make-video-bg.py",
     "classic:slice": "python3 src/games/classic/tools/slice-skin.py",
     "dragon:sim": "tsx src/games/dragon/tools/simulate.ts",
     "crystal:sim": "tsx src/games/crystal/tools/simulate.ts",

@@ -1,9 +1,9 @@
-import { Circle, Container, Sprite } from 'pixi.js';
+import { Circle, Container } from 'pixi.js';
 import {
-  SpriteButton, SpriteSpinButton, type BetControlsState, type GameActions, type GameView,
+  SpriteButton, SpriteSpinButton, VideoBackdrop, type BetControlsState, type GameActions, type GameView,
 } from '@/engine';
 import { config, SKIN_SCALE, uiAnchor, skin } from '../config';
-import { backgroundTexture, uiTexture, type UiSpriteName } from '../assets';
+import { backgroundTexture, backgroundVideos, overlayTexture, uiTexture, type UiSpriteName } from '../assets';
 import { DragonHUD, DRAGON_LABEL_STYLE, dragonWinBox } from './DragonHUD';
 
 const NIGHT_TINT = 0x8C7BC8;
@@ -45,13 +45,16 @@ export class DragonView implements GameView {
     return [this.spinButton, this.minus, this.plus, this.info, this.auto, this.turbo, this.buy];
   }
 
-  private bg: Sprite | null = null;
+  private bg: VideoBackdrop | null = null;
 
+  /** Looping scenery video (muted, autoplay) under the frame / plates / dragon overlay; bg.jpg if it cannot play. */
   mountBelowReels(stage: Container): void {
-    const bg = (this.bg = new Sprite(backgroundTexture()));
-    bg.width = config.canvas.width;
-    bg.height = config.canvas.width * bg.texture.height / bg.texture.width;
-    stage.addChild(bg);
+    const bg = (this.bg = new VideoBackdrop({
+      sources: backgroundVideos(), still: backgroundTexture(), overlay: overlayTexture(),
+      width: config.canvas.width, height: config.canvas.height,
+    }));
+    stage.addChild(bg.container);
+    void bg.start();
   }
 
   mountAboveReels(stage: Container): void {

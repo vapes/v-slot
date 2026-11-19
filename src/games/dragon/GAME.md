@@ -7,9 +7,10 @@
 |---|---|
 | `art/source.png` | 971×1619 mockup — the single source of all art |
 | `tools/slice-skin.py` | Slices the mockup into `public/games/dragon/` (`npm run dragon:slice`) |
+| `art/bg-video.mp4` + `tools/make-video-bg.py` | Animated background (`npm run dragon:video`): video → `bg.mp4` (H.264) + `bg.webm` (VP9), muted; dragon / reel frame / plates / fullscreen icon cut out of `bg.jpg` → `overlay.webp`; tighter `ui/spin.png` (re-run after `dragon:slice`) |
 | `config.json` | Engine config + `skin.ui` anchors (source px) + real math inputs (`reelComposition`, `reelStacks`, `respin`) + `demo` overrides |
 | `config.ts` | Typed config, `skin` (engine `createSkin`: `SKIN_SCALE`, `uiAnchor()`, captions), `REEL_STRIPS` |
-| `assets.ts` | Loads bg, 13 symbol tiles and 8 button sprites |
+| `assets.ts` | Loads bg, overlay, 13 symbol tiles and the button sprites; background video URLs |
 | `views/DragonView.ts` | `GameView`: background sprite, engine `SpriteButton`s over their baked spots, fullscreen zone |
 | `views/DragonHUD.ts` | Values in the baked BALANCE / BET panels; the middle panel is the engine `WinBox` (status line + counting win, BIG+ wins ride onto the reels) at `skin.ui.winBox` |
 | `views/DragonSymbols.ts` | `SymbolRenderer`: opaque art tiles; `setValue` draws a sticky cell's cash value (unused now: wilds carry none) |
@@ -70,3 +71,6 @@ Egg and Dragon Medal (the scatters) shimmer as they land: `config.json → symbo
 
 ## Tests
 `tests/games/dragon.test.ts` (both profiles, seeded): a bought spin always triggers the nest; wild only in the nest, eggs / dragons only on base strips, grant egg = 1 / dragon = 3, the nest starts empty (scatters do not stay), no scatters in nest steps, sticky wilds stay, +1 respin per new wild, wilds carry no value and totalWin = Σ line wins, same seed → same round; **distribution guard**: MAX-banner features < 10% (real) / < 30% (demo), median feature < 25× / < 50× bet. Engine: `tests/engine/respinStep.test.ts` — every new sticky wild fires a comet and the counter follows.
+
+## Animated background
+`DragonView` mounts the engine `VideoBackdrop`: the scenery video (`bg.mp4`, else `bg.webm`) plays muted, looped and inline without a tap, with `overlay.webp` (the dragon on the frame, the reel frame, the BALANCE / WIN / BET plates, the fullscreen icon) on top. If the browser does not start it (autoplay refused, low-power mode, no codec, load error) the old still `bg.jpg` stays — the game looks exactly as before. The Dragon's Nest night tint applies to every layer.

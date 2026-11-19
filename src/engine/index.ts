@@ -11,6 +11,7 @@ export { detectPlayMode, type PlayMode } from './core/playMode';
 export { forced, debugging, applySeed } from './core/devFlags';
 export { gameEvents, type GameEventMap } from './core/GameEvents';
 export { SpriteButton } from './ui/SpriteButton';
+export { VideoBackdrop, type VideoBackdropOptions } from './ui/VideoBackdrop';
 export { fitText } from './ui/fitText';
 export type { WinBoxLayout, WinBoxStyles, WinBoxPanel } from './ui/winBoxStyle';
 export { vGradient, shadow } from './ui/textStyle';
