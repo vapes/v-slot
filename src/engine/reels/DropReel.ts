@@ -43,7 +43,8 @@ export class DropReel implements ReelView {
   private readonly cell: number;
   private readonly d: typeof DROP_DEFAULTS;
 
-  constructor(private cfg: SlotConfig, private factory: SymbolFactory, pick: () => string) {
+  /** `col` = column index (the clearing wave starts at the bottom-left cell). */
+  constructor(private cfg: SlotConfig, private factory: SymbolFactory, pick: () => string, private col = 0) {
     this.rows = cfg.grid.rows;
     this.cell = cfg.cellHeight;
     this.d = cfg.dropTiming!;
@@ -61,25 +62,32 @@ export class DropReel implements ReelView {
   }
 
   /**
-   * The column falls one screen as a solid stack: the old cells leave at the
-   * bottom, `targets` (stacked right above them) land in their rows.
-   * `screens` > 1 holds the column longer before it falls (anticipation).
+   * Clear, then fill: the old cells fall out in a wave that starts at the
+   * bottom-left cell (column → right, row → up), the empty screen waits
+   * `clearMs` (+ `lag` frames: reel order, + extra `screens`: anticipation),
+   * then `targets` drop in as one stack.
    */
-  startSpin(targets: string[], screens: number, onStop: () => void, fast = false): void {
+  startSpin(targets: string[], screens: number, onStop: () => void, fast = false, lag = 0): void {
     this.finishAll();
     this.targets = targets;
     this.onStop = onStop;
     this.gravity = this.d.gravity * (fast ? this.d.turboGravity : 1);
     const drop = this.rows * this.cell;
-    const hold = Math.max(0, screens - 1) * (this.cfg.reelAreaHeight / this.cfg.spin.spinSpeed);
-    // same start + same gravity = the stack stays tight while it falls
+    const { clearColDelay, clearRowDelay } = this.d;
+    const wave = (r: number) => this.col * clearColDelay + (this.rows - 1 - r) * clearRowDelay;
     this.cells.forEach((sym, r) => {
       sym.stopWinAnimation();
-      this.fall(sym, -1, r * this.cell + drop, hold);
+      this.fall(sym, -1, r * this.cell + drop, wave(r));
     });
+    // frames until the last (top-right) cell of the screen is gone
+    const cols = this.cfg.grid.cols;
+    const out = (cols - 1) * clearColDelay + (this.rows - 1) * clearRowDelay + Math.sqrt((2 * drop) / this.gravity);
+    const pause = (this.d.clearMs * (fast ? this.d.fastFactor : 1)) / (1000 / 60);
+    const hold = Math.max(0, screens - 1) * (this.cfg.reelAreaHeight / this.cfg.spin.spinSpeed);
+    const delay = out + pause + hold + lag;
     this.cells = targets.map((id, r) => {
       const sym = this.place(id, r * this.cell - drop);
-      this.fall(sym, r, r * this.cell, hold, this.stagger(r));
+      this.fall(sym, r, r * this.cell, delay, this.stagger(r));
       return sym;
     });
   }
@@ -116,12 +124,13 @@ export class DropReel implements ReelView {
 
   private popFrames = 1;
 
-  forceStop(frames: number): void {
+  forceStop(): void {
     if (!this.isSpinning) return;
-    // the whole stack starts at once (still tight) and falls faster
+    // old cells vanish, every new stack drops now and faster (all reels land together)
     this.gravity = this.d.gravity * this.d.turboGravity;
-    const start = Math.min(frames / 2, Math.min(...this.fallers.map(f => f.delay)));
-    for (const f of this.fallers) f.delay = Math.max(0, Math.min(f.delay, start));
+    for (const f of this.fallers) if (f.row < 0) this.factory.release(f.sym);
+    this.fallers = this.fallers.filter(f => f.row >= 0);
+    for (const f of this.fallers) f.delay = 0;
   }
 
   snapToTarget(ids?: string[]): void {
