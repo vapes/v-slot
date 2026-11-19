@@ -114,18 +114,19 @@ export const LINE_INFO_DEFAULTS = {
 
 /**
  * Drop mode (config.drop): reels do not spin — symbols fall like pebbles.
- * The old screen falls out, the new one drops in reel by reel
- * (spin.reelStartInterval), winning cells burst and the rest tumbles down.
+ * On a spin each column falls as one solid stack: the old symbols drop out
+ * at the bottom and the new ones follow right on top of them (no empty
+ * screen), reel by reel (spin.reelStartInterval). In a tumble the winning
+ * cells burst and everything above a gap falls as one block, new cells
+ * stacked right on top.
  * Frames are 60 fps frames; config.drop overrides any field.
  */
 export const DROP_DEFAULTS = {
   /** Gravity, px per frame² (turbo / slam stop multiply it by turboGravity). */
   gravity: 2.2,
   turboGravity: 2.5,
-  /** Start delay between rows of one reel (bottom row first), frames. */
-  rowDelay: 2.5,
-  /** Delay between the old screen leaving and the new one dropping in, frames. */
-  refillDelay: 4,
+  /** Landing stagger inside a column (bottom row first), frames; cells still fall as one stack. */
+  landStagger: 1.5,
   /** Pebble bounce after a landing: height (share of a cell) and length, frames. */
   bounce: 0.1,
   bounceFrames: 12,
