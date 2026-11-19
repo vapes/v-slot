@@ -24,6 +24,7 @@ V-Slot is a multi-game slot platform: a shared **engine** (reels, spin pipeline,
 | `npm run crystal:sim [-- spins features]` | Monte-Carlo of crystal (base tumbles + orbs + free spins, feature-buy price) |
 | `npm run crystal:art` | Redraw crystal art procedurally (symbols, background, buttons; Pillow + numpy) |
 | `npm run dragon:slice` | Re-slice dragon art from `src/games/dragon/art/source.png` (Pillow + numpy) |
+| `npm run dragon:video` | Dragon animated background: `art/bg-video.mp4` → muted `bg.mp4` + `bg.webm`, overlay cut from `bg.jpg`, tight spin sprite (needs ffmpeg) |
 
 Verification: `npm run check` + `npm test` always; `npm run qa` for anything visual. URL switches (see `engine/core/devFlags.ts`): `?force=feature,anticipation` and `?debug=pipeline` in dev builds, `?seed=<n>` for a reproducible math RNG (dev + demo), `?lang=`, `?mode=real`. In dev builds `window.__vslot` (`engine/core/qaHooks.ts`) exposes `spin()`, `openPaytable()`, `state()` and the event log for Playwright / agents.
 
@@ -80,7 +81,8 @@ src/
 │   ├── content/cdn.ts       Content CDN base (VITE_CONTENT_CDN or ./cdn/), i18n + paytable URLs
 │   ├── i18n/I18n.ts         i18n / t(): CDN translations, lang → en → fallback, detectLanguage()
 │   ├── ui/                  WinCelebration, WinBox (+ WinTitle, winTicks plan), LineInfo (info line under the reels), HtmlPaytable + paytableTemplate ({{…}} placeholders), HomeButton, BuyFeatureDialog,
-│   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions)
+│   │                        SpriteButton / SpriteSpinButton, skin (createSkin: anchors, scale, translated captions),
+│   │                        VideoBackdrop (muted autoplay video background + overlay; still picture if it cannot play)
 │   ├── audio/soundSettings.ts  Global sound on/off (localStorage); future audio must respect `muted` / `onChange`
 │   └── utils/               Money (formatMoney, assetUrl), Random (blur symbol picker)
 ├── games/
@@ -147,6 +149,8 @@ const game: GameDefinition = {
 **Anticipation (reel tease):** `config.anticipation` (startReel, minCategory, scatter / scatters[] / scatterTrigger, extraMs, speedBoost, colors, style `flame`|`marquee`, veil, sparks). `computeAnticipation(cfg, grid)` (pure) marks reel i when the reels left of it are one symbol short of the feature (trigger − 1 scatters) or of a `minCategory`+ line win (default HUGE ≈ MEGA). Decided from the final grid, so near misses tease too. Never in turbo / TURBO toggle; dropped if SPIN is held when the tease would start; slam-stop cancels it. The teasing reel gets extra distance + a speed boost, later reels wait; FX style per game: `flame` (GLSL flame border + rising sparks, default) or `marquee` (thin frame with chasing bulbs — light, for classic machines); plus a dim veil (`veil`). Dev only: `?force=anticipation`. `npm run dragon:sim` reports how often it fires.
 
 **Tests:** pure logic gets a vitest test in `tests/` (engine → `tests/engine`, game math → `tests/games/<id>.test.ts`, seed with `createRng`). New game math must at least test its invariants (symbols per reel set, totals add up, reproducible with a seed) and that every paytable combination can land in every profile (Hard Rule 9).
+
+**Video background:** `new VideoBackdrop({ sources: [mp4, webm], still, overlay?, width, height })` from `@/engine`, mounted in `GameView.mountBelowReels`, then `start()`: plays muted + inline + looped without a tap; the still picture stays if the browser refuses (autoplay policy, low-power mode, codec, error). `overlay` = the parts of the still the video scene lacks (frame, plates…), shown only while the video plays; `tint` tints every layer. See dragon `GAME.md`.
 
 **Sound / analytics:** subscribe to `gameEvents` and respect `soundSettings.muted`; nothing in the engine needs to change.
 
