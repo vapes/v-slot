@@ -15,15 +15,19 @@ interface Faller {
   delay: number;
   /** Frames into the landing bounce; -1 while still falling. */
   bounce: number;
+  /** Frames to rest after landing before the bounce (bounces ripple up the column). */
+  wait: number;
 }
 
 interface Pop { sym: SlotSymbol; age: number; y: number }
 
 /**
- * Drop-mode column (config.drop): no spinning strip. On a spin the screen
- * falls out (bottom row first) and the new symbols drop in from above; in a
- * tumble the winning cells burst, the cells above fall into the gaps and new
- * ones drop in on top. Cells come from the shared SymbolFactory pool.
+ * Drop-mode column (config.drop): no spinning strip. On a spin the whole
+ * column falls as one stack — the old cells drop out at the bottom while the
+ * new ones, stacked right on top of them, fall into place (the screen is
+ * never empty). In a tumble the winning cells burst, everything above a gap
+ * falls as one block and the new cells come stacked right on top.
+ * Cells come from the shared SymbolFactory pool.
  */
 export class DropReel implements ReelView {
   readonly container = new Container();
@@ -56,26 +60,33 @@ export class DropReel implements ReelView {
     return this.pops.length > 0 || this.fallers.some(f => f.bounce < 0);
   }
 
-  /** Old screen falls out, `targets` drop in; `screens` > 1 holds the column empty longer (anticipation). */
+  /**
+   * The column falls one screen as a solid stack: the old cells leave at the
+   * bottom, `targets` (stacked right above them) land in their rows.
+   * `screens` > 1 holds the column longer before it falls (anticipation).
+   */
   startSpin(targets: string[], screens: number, onStop: () => void, fast = false): void {
     this.finishAll();
     this.targets = targets;
     this.onStop = onStop;
     this.gravity = this.d.gravity * (fast ? this.d.turboGravity : 1);
-    const { rowDelay, refillDelay } = this.d;
-    const bottom = this.rows * this.cell;
-    // leaving: bottom row first
+    const drop = this.rows * this.cell;
+    const hold = Math.max(0, screens - 1) * (this.cfg.reelAreaHeight / this.cfg.spin.spinSpeed);
+    // same start + same gravity = the stack stays tight while it falls
     this.cells.forEach((sym, r) => {
       sym.stopWinAnimation();
-      this.fall(sym, -1, bottom + this.cell, (this.rows - 1 - r) * rowDelay);
+      this.fall(sym, -1, r * this.cell + drop, hold);
     });
-    const hold = Math.max(0, screens - 1) * (this.cfg.reelAreaHeight / this.cfg.spin.spinSpeed);
-    const base = (this.rows - 1) * rowDelay + refillDelay + hold;
     this.cells = targets.map((id, r) => {
-      const sym = this.place(id, -(this.rows - r) * this.cell);
-      this.fall(sym, r, r * this.cell, base + (this.rows - 1 - r) * rowDelay);
+      const sym = this.place(id, r * this.cell - drop);
+      this.fall(sym, r, r * this.cell, hold, this.stagger(r));
       return sym;
     });
+  }
+
+  /** The stack lands at once; the bounce ripples up from the bottom row (pebble feel, no gaps). */
+  private stagger(row: number): number {
+    return (this.rows - 1 - row) * this.d.landStagger;
   }
 
   /**
@@ -95,8 +106,9 @@ export class DropReel implements ReelView {
     });
     const fresh = newTop.map((id, i) => this.place(id, -(newTop.length - i) * this.cell));
     this.cells = [...fresh, ...kept];
+    // everything above a gap starts together, so a block stays a block
     this.cells.forEach((sym, r) => {
-      if (sym.y !== r * this.cell) this.fall(sym, r, r * this.cell, popFrames + (this.rows - 1 - r) * this.d.rowDelay * 0.5);
+      if (sym.y !== r * this.cell) this.fall(sym, r, r * this.cell, popFrames, this.stagger(r));
     });
     this.popFrames = popFrames;
     if (!this.fallers.length && !this.pops.length) this.done();
@@ -106,16 +118,10 @@ export class DropReel implements ReelView {
 
   forceStop(frames: number): void {
     if (!this.isSpinning) return;
+    // the whole stack starts at once (still tight) and falls faster
     this.gravity = this.d.gravity * this.d.turboGravity;
-    for (const f of this.fallers) {
-      if (f.row < 0) {
-        this.factory.release(f.sym);
-        f.delay = Infinity; // removed below
-      } else {
-        f.delay = Math.min(f.delay, Math.max(0, frames / 2 - (this.rows - 1 - f.row)));
-      }
-    }
-    this.fallers = this.fallers.filter(f => f.delay !== Infinity);
+    const start = Math.min(frames / 2, Math.min(...this.fallers.map(f => f.delay)));
+    for (const f of this.fallers) f.delay = Math.max(0, Math.min(f.delay, start));
   }
 
   snapToTarget(ids?: string[]): void {
@@ -153,6 +159,8 @@ export class DropReel implements ReelView {
           f.bounce = 0;
           if (f.row >= 0) this.landed.push({ sym: f.sym, row: f.row });
         }
+      } else if (f.wait > 0) {
+        f.wait -= dt;
       } else {
         f.bounce += dt;
         const p = Math.min(f.bounce / bounceFrames, 1);
@@ -191,8 +199,8 @@ export class DropReel implements ReelView {
     cb?.();
   }
 
-  private fall(sym: SlotSymbol, row: number, targetY: number, delay: number): void {
-    this.fallers.push({ sym, row, targetY, vy: 0, delay, bounce: -1 });
+  private fall(sym: SlotSymbol, row: number, targetY: number, delay: number, wait = 0): void {
+    this.fallers.push({ sym, row, targetY, vy: 0, delay, bounce: -1, wait });
   }
 
   private place(id: string, y: number): SlotSymbol {
