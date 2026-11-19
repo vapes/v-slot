@@ -65,7 +65,8 @@ export class DropReel implements ReelView {
    * Clear, then fill: the old cells fall out in a wave that starts at the
    * bottom-left cell (column → right, row → up), the empty screen waits
    * `clearMs` (+ `lag` frames: reel order, + extra `screens`: anticipation),
-   * then `targets` drop in as one stack.
+   * then `targets` drop in as one stack. `fast` (turbo / quick): every cell
+   * of the screen falls out at once and every new cell drops in at once.
    */
   startSpin(targets: string[], screens: number, onStop: () => void, fast = false, lag = 0): void {
     this.finishAll();
@@ -73,21 +74,23 @@ export class DropReel implements ReelView {
     this.onStop = onStop;
     this.gravity = this.d.gravity * (fast ? this.d.turboGravity : 1);
     const drop = this.rows * this.cell;
-    const { clearColDelay, clearRowDelay } = this.d;
-    const wave = (r: number) => this.col * clearColDelay + (this.rows - 1 - r) * clearRowDelay;
+    // turbo / quick: the whole screen falls out at once and the new one drops in at once (no wave, no stagger)
+    const colDelay = fast ? 0 : this.d.clearColDelay;
+    const rowDelay = fast ? 0 : this.d.clearRowDelay;
+    const wave = (r: number) => this.col * colDelay + (this.rows - 1 - r) * rowDelay;
     this.cells.forEach((sym, r) => {
       sym.stopWinAnimation();
       this.fall(sym, -1, r * this.cell + drop, wave(r));
     });
     // frames until the last (top-right) cell of the screen is gone
     const cols = this.cfg.grid.cols;
-    const out = (cols - 1) * clearColDelay + (this.rows - 1) * clearRowDelay + Math.sqrt((2 * drop) / this.gravity);
+    const out = (cols - 1) * colDelay + (this.rows - 1) * rowDelay + Math.sqrt((2 * drop) / this.gravity);
     const pause = (this.d.clearMs * (fast ? this.d.fastFactor : 1)) / (1000 / 60);
     const hold = Math.max(0, screens - 1) * (this.cfg.reelAreaHeight / this.cfg.spin.spinSpeed);
     const delay = out + pause + hold + lag;
     this.cells = targets.map((id, r) => {
       const sym = this.place(id, r * this.cell - drop);
-      this.fall(sym, r, r * this.cell, delay, this.stagger(r));
+      this.fall(sym, r, r * this.cell, delay, fast ? 0 : this.stagger(r));
       return sym;
     });
   }
