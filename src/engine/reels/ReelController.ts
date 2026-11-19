@@ -69,7 +69,7 @@ export class ReelController {
     const basePick = createSymbolPicker(cfg);
     const pickBlur = () => (this.blurPool ? this.blurPool[Math.floor(Math.random() * this.blurPool.length)] : basePick());
     for (let i = 0; i < this.reelCount; i++) {
-      const reel = cfg.dropTiming ? new DropReel(cfg, this.factory, pickBlur) : new Reel(cfg, this.factory, pickBlur);
+      const reel = cfg.dropTiming ? new DropReel(cfg, this.factory, pickBlur, i) : new Reel(cfg, this.factory, pickBlur);
       reel.container.x = i * this.reelWidth;
       this.reelLayer.addChild(reel.container);
       this.reels.push(reel);
@@ -114,6 +114,15 @@ export class ReelController {
     this.turbo = false;
     const { reelStartInterval, scrollScreens } = this.cfg.spin;
     const extra = this.anticipation.plan(anticipate, suppressed);
+    if (this.cfg.dropTiming) {
+      // drop mode: the whole screen clears at once, the columns fill in reel order
+      const lag = reelStartInterval / (1000 / 60);
+      this.reels.forEach((reel, i) => {
+        this.anticipation.markStarted(i);
+        reel.startSpin(result.grid[i], (scrollScreens[i] ?? 1) + extra[i], () => this.onReelStopped(), false, i * lag);
+      });
+      return;
+    }
     for (let i = 0; i < this.reelCount; i++) {
       const screens = (scrollScreens[i] ?? (i + 1)) + extra[i];
       const start = (skipBounceUp = false) => {

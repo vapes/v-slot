@@ -13,8 +13,11 @@ export interface ReelView {
   getVisibleSymbols(): SlotSymbol[];
   /** True until the column has landed on its targets (bounce no longer counts). */
   readonly isSpinning: boolean;
-  /** Land `targets` (top → bottom); `screens` = spin length (drop: 1 + extra wait), `fast` = turbo start. */
-  startSpin(targets: string[], screens: number, onStop: () => void, fast?: boolean): void;
+  /**
+   * Land `targets` (top → bottom); `screens` = spin length (drop: 1 + extra wait), `fast` = turbo start,
+   * `lag` = drop mode: frames the column waits before it fills (reel order; it clears at once).
+   */
+  startSpin(targets: string[], screens: number, onStop: () => void, fast?: boolean, lag?: number): void;
   /** Slam stop: land within `frames` frames. */
   forceStop(frames: number): void;
   /** Show `ids` instantly (or the last targets). */
