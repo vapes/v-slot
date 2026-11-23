@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Дневник давления</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,.10);
+  --sys: #2a78d6; --dia: #eb6834; --pulse: #2a78d6;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --crit: #d03b3b;
+  --btn: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+    --sys: #3987e5; --dia: #d95926; --pulse: #3987e5; --btn: #3987e5;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 22px; margin: 4px 0 14px; }
+h2 { font-size: 17px; margin: 0 0 12px; }
+h3 { font-size: 14px; margin: 18px 0 4px; color: var(--ink2); font-weight: 600; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; margin-bottom: 16px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
+.form .wide { grid-column: 1 / -1; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink2); }
+input, select, button { font: inherit; color: var(--ink); }
+input, select { padding: 9px 10px; border: 1px solid var(--axis); border-radius: 8px; background: var(--surface); width: 100%; }
+input[type=number] { font-size: 20px; font-variant-numeric: tabular-nums; }
+button { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--axis); background: var(--surface); cursor: pointer; }
+button.primary { background: var(--btn); border-color: var(--btn); color: #fff; font-weight: 600; }
+button.danger { color: var(--crit); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg button[aria-pressed=true] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.msg { font-size: 14px; min-height: 1.4em; margin-top: 8px; }
+.msg.err { color: var(--crit); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+.tile { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+.tile .k { font-size: 12px; color: var(--ink2); }
+.tile .v { font-size: 22px; font-weight: 650; }
+.tile .s { font-size: 12px; color: var(--muted); }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--ink2); margin: 2px 0 4px; flex-wrap: wrap; }
+.key { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; }
+.key.dash { border-top: 2px dashed var(--muted); height: 0; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+.empty { color: var(--muted); font-size: 14px; padding: 20px 0; }
+svg text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); font-variant-numeric: tabular-nums; }
+svg text.lab { fill: var(--ink2); font-size: 12px; }
+svg text.val { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.gl { stroke: var(--grid); stroke-width: 1; }
+.base { stroke: var(--axis); stroke-width: 1; }
+.ref { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ln.sys, .dot.sys { stroke: var(--sys); } .dot.sys { fill: var(--sys); }
+.ln.dia, .dot.dia { stroke: var(--dia); } .dot.dia { fill: var(--dia); }
+.ln.pulse, .dot.pulse { stroke: var(--pulse); } .dot.pulse { fill: var(--pulse); }
+.dot { stroke: var(--surface) !important; stroke-width: 2; }
+.wh.sys { stroke: var(--sys); stroke-width: 2; } .wh.dia { stroke: var(--dia); stroke-width: 2; }
+.cross { stroke: var(--ink2); stroke-width: 1; }
+.good { fill: var(--good); background: var(--good); } .warn { fill: var(--warn); background: var(--warn); }
+.serious { fill: var(--serious); background: var(--serious); } .crit { fill: var(--crit); background: var(--crit); }
+#tip { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.15); display: none; z-index: 10; white-space: nowrap; }
+#tip .t { color: var(--ink2); margin-bottom: 4px; }
+#tip b { font-variant-numeric: tabular-nums; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink2); font-weight: 600; font-size: 13px; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.badge { white-space: nowrap; font-size: 13px; }
+.badge i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+.act button { padding: 3px 8px; font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); }
+.printonly { display: none; }
+@media print {
+  :root { color-scheme: light; --page: #fff; --surface: #fff; --ink: #000; --ink2: #333; --muted: #666;
+    --grid: #ddd; --axis: #bbb; --border: #ccc; --sys: #2a78d6; --dia: #eb6834; --pulse: #2a78d6; }
+  .noprint { display: none !important; }
+  .printonly { display: block; }
+  main { max-width: none; padding: 0; }
+  .card { border: none; padding: 0 0 8px; break-inside: avoid; }
+  .chartwrap { break-inside: avoid; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Дневник артериального давления</h1>
+
+  <section class="card noprint" id="entry">
+    <h2 id="formTitle">Новое измерение</h2>
+    <form class="form" id="form" autocomplete="off">
+      <label>Дата и время<input type="datetime-local" id="f-t" required></label>
+      <label>Верхнее (САД)<input type="number" id="f-sys" inputmode="numeric" min="50" max="300" placeholder="120" required></label>
+      <label>Нижнее (ДАД)<input type="number" id="f-dia" inputmode="numeric" min="30" max="200" placeholder="80" required></label>
+      <label>Пульс<input type="number" id="f-pulse" inputmode="numeric" min="30" max="250" placeholder="70"></label>
+      <label>Рука<select id="f-arm"><option value="">—</option><option value="Л">левая</option><option value="П">правая</option></select></label>
+      <label class="wide">Заметка (лекарства, самочувствие)<input type="text" id="f-note" maxlength="200" placeholder="напр.: после лозартана, головная боль"></label>
+      <div class="row wide">
+        <button type="submit" class="primary" id="saveBtn">Сохранить</button>
+        <button type="button" id="cancelEdit" hidden>Отмена</button>
+      </div>
+    </form>
+    <div class="msg" id="msg" role="status"></div>
+  </section>
+
+  <section class="card" id="report">
+    <div class="printonly" id="printHead"></div>
+    <div class="row noprint" style="justify-content:space-between">
+      <div class="row seg" id="periods" role="group" aria-label="Период">
+        <button data-d="7">7 дней</button><button data-d="14">14 дней</button>
+        <button data-d="30">30 дней</button><button data-d="90">90 дней</button><button data-d="0">Всё время</button>
+      </div>
+      <button id="printBtn">🖨 Отчёт для врача / PDF</button>
+    </div>
+    <div class="tiles" id="tiles"></div>
+
+    <div class="chartwrap">
+      <h3>Давление по времени</h3>
+      <div class="legend"><span><i class="key" style="background:var(--sys)"></i>Систолическое (верхнее)</span><span><i class="key" style="background:var(--dia)"></i>Диастолическое (нижнее)</span><span><i class="key dash"></i>Порог для домашних измерений 135/85</span></div>
+      <div class="chart" id="cBP"></div>
+    </div>
+    <div class="chartwrap">
+      <h3>Пульс, уд/мин</h3>
+      <div class="chart" id="cPulse"></div>
+    </div>
+    <div class="chartwrap">
+      <h3>Среднее по времени суток (точка — среднее, линия — ±1 стандартное отклонение)</h3>
+      <div class="legend"><span><i class="key" style="background:var(--sys)"></i>САД</span><span><i class="key" style="background:var(--dia)"></i>ДАД</span></div>
+      <div class="chart" id="cParts"></div>
+    </div>
+    <div class="chartwrap">
+      <h3>Среднее по руке</h3>
+      <div class="chart" id="cArms"></div>
+    </div>
+    <div class="chartwrap">
+      <h3>Распределение измерений по категориям (ESH 2023)</h3>
+      <div class="chart" id="cCats"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Записи <span class="hint" id="countHint"></span></h2>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Дата и время</th><th>САД/ДАД</th><th>Пульс</th><th>Рука</th><th>Категория</th><th>Заметка</th><th class="noprint"></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </section>
+
+  <section class="card noprint">
+    <h2>Данные</h2>
+    <label style="max-width:360px">Имя пациента (для отчёта)<input type="text" id="patient" maxlength="80"></label>
+    <div class="row" style="margin-top:12px">
+      <button id="expCsv">Скачать CSV (Excel)</button>
+      <button id="expJson">Резервная копия (JSON)</button>
+      <button id="impBtn">Восстановить из копии</button>
+      <input type="file" id="impFile" accept=".json,application/json" hidden>
+      <button id="clearAll" class="danger">Удалить все данные</button>
+    </div>
+    <p class="hint">Данные хранятся только в этом браузере на этом устройстве (localStorage) и никуда не отправляются.
+      Очистка данных браузера их удалит — периодически делайте резервную копию.</p>
+    <p class="hint">Как мерить: сидя, после 5 минут покоя, рука на уровне сердца; 2 измерения с интервалом 1–2 минуты утром (до лекарств) и вечером, 7 дней перед визитом к врачу.
+      Категории — ориентир, не диагноз.</p>
+  </section>
+</main>
+<div id="tip"></div>
+
+<script>
+'use strict';
+const KEY = 'bp-diary-v1', NAME_KEY = 'bp-diary-patient', PERIOD_KEY = 'bp-diary-period';
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+
+let data = load();
+let period = +(localStorage.getItem(PERIOD_KEY) ?? 30);
+let editId = null;
+
+function load() {
+  try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch { return []; }
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+const localStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const toDate = t => new Date(t);
+const fmtDT = t => toDate(t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const fmtD = d => d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+// ---------- classification (ESH 2023, office thresholds; the higher category wins) ----------
+const CATS = [
+  { name: 'Оптимальное', range: '<120 / <80', cls: 'good' },
+  { name: 'Нормальное', range: '120–129 / 80–84', cls: 'good' },
+  { name: 'Высокое нормальное', range: '130–139 / 85–89', cls: 'warn' },
+  { name: 'АГ 1 степени', range: '140–159 / 90–99', cls: 'serious' },
+  { name: 'АГ 2 степени', range: '160–179 / 100–109', cls: 'crit' },
+  { name: 'АГ 3 степени', range: '≥180 / ≥110', cls: 'crit' },
+];
+function category(s, d) {
+  const lv = [[180, 110, 5], [160, 100, 4], [140, 90, 3], [130, 85, 2], [120, 80, 1]];
+  for (const [S, D, l] of lv) if (s >= S || d >= D) return l;
+  return 0;
+}
+const PARTS = ['Утро (4–12 ч)', 'День (12–18 ч)', 'Вечер (18–4 ч)'];
+function partOfDay(t) { const h = toDate(t).getHours(); return h >= 4 && h < 12 ? 0 : h >= 12 && h < 18 ? 1 : 2; }
+
+// ---------- stats ----------
+function st(arr) {
+  const a = arr.filter(v => v != null && !isNaN(v));
+  if (!a.length) return null;
+  const mean = a.reduce((x, y) => x + y, 0) / a.length;
+  const sd = a.length > 1 ? Math.sqrt(a.reduce((x, y) => x + (y - mean) ** 2, 0) / (a.length - 1)) : 0;
+  return { n: a.length, mean, sd, min: Math.min(...a), max: Math.max(...a) };
+}
+const r0 = v => Math.round(v);
+
+function periodRows() {
+  const rows = [...data].sort((a, b) => a.t.localeCompare(b.t));
+  if (!period) return rows;
+  const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - period + 1);
+  return rows.filter(r => toDate(r.t) >= start);
+}
+
+// ---------- form ----------
+function resetForm() {
+  editId = null;
+  $('form').reset();
+  $('f-t').value = localStr(new Date());
+  $('formTitle').textContent = 'Новое измерение';
+  $('saveBtn').textContent = 'Сохранить';
+  $('cancelEdit').hidden = true;
+}
+function showMsg(text, err) { const m = $('msg'); m.textContent = text; m.className = 'msg' + (err ? ' err' : ''); }
+
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const t = $('f-t').value, sys = +$('f-sys').value, dia = +$('f-dia').value;
+  const pulse = $('f-pulse').value ? +$('f-pulse').value : null;
+  if (!t || !sys || !dia) return showMsg('Заполните дату, верхнее и нижнее давление.', true);
+  if (sys <= dia) return showMsg('Верхнее давление должно быть больше нижнего — проверьте, не перепутаны ли значения.', true);
+  const rec = { id: editId || (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+    t, sys, dia, pulse, arm: $('f-arm').value, note: $('f-note').value.trim() };
+  if (editId) data = data.map(r => r.id === editId ? rec : r); else data.push(rec);
+  save();
+  const lastArm = rec.arm;
+  resetForm();
+  $('f-arm').value = lastArm;
+  let note = `Сохранено: ${sys}/${dia}` + (pulse ? `, пульс ${pulse}` : '') + ` — «${CATS[category(sys, dia)].name}».`;
+  if (sys >= 180 || dia >= 120) note += ' Очень высокое давление: при плохом самочувствии (боль в груди, сильная головная боль, нарушение речи или зрения) звоните 103/112.';
+  showMsg(note, sys >= 180 || dia >= 120);
+  render();
+});
+$('cancelEdit').onclick = () => { resetForm(); showMsg(''); };
+
+function startEdit(id) {
+  const r = data.find(x => x.id === id); if (!r) return;
+  editId = id;
+  $('f-t').value = r.t; $('f-sys').value = r.sys; $('f-dia').value = r.dia;
+  $('f-pulse').value = r.pulse ?? ''; $('f-arm').value = r.arm || ''; $('f-note').value = r.note || '';
+  $('formTitle').textContent = 'Редактирование записи';
+  $('saveBtn').textContent = 'Сохранить изменения';
+  $('cancelEdit').hidden = false;
+  $('entry').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ---------- svg helpers ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs = {}) { const e = el('text', { x, y, ...attrs }, parent); e.textContent = s; return e; }
+function empty(box, s = 'Нет данных за выбранный период') { box.innerHTML = ''; const d = document.createElement('div'); d.className = 'empty'; d.textContent = s; box.appendChild(d); }
+function niceRange(lo, hi) {
+  lo -= 5; hi += 5;
+  const step = [5, 10, 20, 25, 50].find(s => (hi - lo) / s <= 7) || 50;
+  return [Math.floor(lo / step) * step, Math.ceil(hi / step) * step, step];
+}
+
+// tooltip
+const tip = $('tip');
+function showTip(ev, title, lines) {
+  tip.innerHTML = '';
+  const h = document.createElement('div'); h.className = 't'; h.textContent = title; tip.appendChild(h);
+  for (const [color, val, label] of lines) {
+    const row = document.createElement('div');
+    if (color) { const k = document.createElement('i'); k.className = 'key'; k.style.background = color; row.appendChild(k); }
+    const b = document.createElement('b'); b.textContent = val; row.appendChild(b);
+    row.appendChild(document.createTextNode(' ' + label));
+    tip.appendChild(row);
+  }
+  tip.style.display = 'block';
+  const w = tip.offsetWidth, h2 = tip.offsetHeight;
+  let x = ev.clientX + 14, y = ev.clientY - h2 - 10;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - 14;
+  if (y < 8) y = ev.clientY + 16;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+const hideTip = () => { tip.style.display = 'none'; };
+
+// ---------- time-series chart ----------
+function lineChart(box, rows, series, refs, H) {
+  box.innerHTML = '';
+  if (!rows.length) return empty(box);
+  const W = Math.max(300, box.clientWidth || 600), m = { l: 36, r: 40, t: 10, b: 26 };
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }, box);
+  const xs = rows.map(r => toDate(r.t).getTime());
+  let x0 = xs[0], x1 = xs[xs.length - 1];
+  if (x1 - x0 < 6 * 3600e3) { x0 -= 12 * 3600e3; x1 += 12 * 3600e3; }
+  const vals = rows.flatMap(r => series.map(s => r[s.key])).filter(v => v != null).concat(refs.map(r => r.v));
+  const [y0, y1, step] = niceRange(Math.min(...vals), Math.max(...vals));
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+  const Y = v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+
+  for (let v = y0; v <= y1; v += step) {
+    el('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v), class: v === y0 ? 'base' : 'gl' }, svg);
+    txt(svg, m.l - 6, Y(v) + 4, v, { 'text-anchor': 'end' });
+  }
+  const nt = Math.max(2, Math.min(8, Math.floor((W - m.l - m.r) / 80)));
+  const short = x1 - x0 < 2 * 86400e3;
+  for (let i = 0; i < nt; i++) {
+    const tv = x0 + (x1 - x0) * i / (nt - 1), d = new Date(tv);
+    const s = short ? `${pad(d.getDate())}.${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}` : `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`;
+    txt(svg, X(tv), H - 8, s, { 'text-anchor': i === 0 ? 'start' : i === nt - 1 ? 'end' : 'middle' });
+  }
+  for (const r of refs) {
+    el('line', { x1: m.l, x2: W - m.r, y1: Y(r.v), y2: Y(r.v), class: 'ref' }, svg);
+  }
+  for (const s of series) {
+    const pts = rows.map((r, i) => [xs[i], r[s.key]]).filter(p => p[1] != null);
+    if (!pts.length) continue;
+    el('path', { d: pts.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(''), class: 'ln ' + s.cls }, svg);
+    if (pts.length <= 120) for (const p of pts) el('circle', { cx: X(p[0]), cy: Y(p[1]), r: 4, class: 'dot ' + s.cls }, svg);
+    const last = pts[pts.length - 1];
+    if (s.short) txt(svg, X(last[0]) + 8, Y(last[1]) + 4, s.short, { class: 'lab' });
+  }
+  // hover
+  const cross = el('line', { y1: m.t, y2: H - m.b, class: 'cross', visibility: 'hidden' }, svg);
+  const hit = el('rect', { x: m.l, y: 0, width: W - m.l - m.r, height: H, fill: 'transparent' }, svg);
+  const move = ev => {
+    const bb = svg.getBoundingClientRect(), px = (ev.clientX - bb.left) * W / bb.width;
+    let best = 0, bd = Infinity;
+    xs.forEach((x, i) => { const d = Math.abs(X(x) - px); if (d < bd) { bd = d; best = i; } });
+    const r = rows[best];
+    cross.setAttribute('x1', X(xs[best])); cross.setAttribute('x2', X(xs[best])); cross.setAttribute('visibility', 'visible');
+    const lines = series.filter(s => r[s.key] != null).map(s => [getComputedStyle(document.documentElement).getPropertyValue(s.color), r[s.key], s.label]);
+    if (r.note) lines.push(['', '', r.note]);
+    showTip(ev, fmtDT(r.t), lines);
+  };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); hideTip(); });
+}
+
+// ---------- dot plot: mean ± SD per group ----------
+function dotPlot(box, groups) {
+  box.innerHTML = '';
+  groups = groups.filter(g => g.sys);
+  if (!groups.length) return empty(box, box.id === 'cArms' ? 'Укажите руку при вводе, чтобы сравнить левую и правую' : undefined);
+  const W = Math.max(300, box.clientWidth || 600), rowH = 44, m = { l: 112, r: 16, t: 6, b: 24 };
+  const H = m.t + m.b + rowH * groups.length;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }, box);
+  const lo = Math.min(...groups.map(g => g.dia.mean - g.dia.sd), 85), hi = Math.max(...groups.map(g => g.sys.mean + g.sys.sd), 135);
+  const [x0, x1, step] = niceRange(lo, hi);
+  const X = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+  for (let v = x0; v <= x1; v += step) {
+    el('line', { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, class: 'gl' }, svg);
+    txt(svg, X(v), H - 6, v, { 'text-anchor': 'middle' });
+  }
+  for (const v of [85, 135]) el('line', { x1: X(v), x2: X(v), y1: m.t, y2: H - m.b, class: 'ref' }, svg);
+  groups.forEach((g, i) => {
+    const cy = m.t + rowH * i + rowH / 2;
+    txt(svg, 0, cy - 2, g.label, { class: 'lab' });
+    txt(svg, 0, cy + 13, `n = ${g.sys.n}`);
+    for (const [k, cls, dy] of [['sys', 'sys', -6], ['dia', 'dia', 6]]) {
+      const s = g[k];
+      el('line', { x1: X(s.mean - s.sd), x2: X(s.mean + s.sd), y1: cy + dy, y2: cy + dy, class: 'wh ' + cls }, svg);
+      el('circle', { cx: X(s.mean), cy: cy + dy, r: 5, class: 'dot ' + cls }, svg);
+      txt(svg, X(s.mean), cy + dy + (dy < 0 ? -9 : 18), r0(s.mean), { class: 'val', 'text-anchor': 'middle' });
+    }
+    const hit = el('rect', { x: 0, y: cy - rowH / 2, width: W, height: rowH, fill: 'transparent' }, svg);
+    const css = getComputedStyle(document.documentElement);
+    const mv = ev => showTip(ev, `${g.label}, измерений: ${g.sys.n}`, [
+      [css.getPropertyValue('--sys'), `${r0(g.sys.mean)} ± ${r0(g.sys.sd)}`, 'САД'],
+      [css.getPropertyValue('--dia'), `${r0(g.dia.mean)} ± ${r0(g.dia.sd)}`, 'ДАД'],
+      ...(g.pulse ? [['', r0(g.pulse.mean), 'пульс']] : [])]);
+    hit.addEventListener('pointermove', mv); hit.addEventListener('pointerdown', mv);
+    hit.addEventListener('pointerleave', hideTip);
+  });
+}
+
+// ---------- category bars ----------
+function catBars(box, rows) {
+  box.innerHTML = '';
+  if (!rows.length) return empty(box);
+  const counts = CATS.map(() => 0);
+  rows.forEach(r => counts[category(r.sys, r.dia)]++);
+  const W = Math.max(300, box.clientWidth || 600), rowH = 36, m = { l: 150, r: 72 };
+  const H = rowH * CATS.length;
+  const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H }, box);
+  const max = Math.max(...counts), bw = W - m.l - m.r;
+  CATS.forEach((c, i) => {
+    const y = i * rowH;
+    txt(svg, 0, y + 15, c.name, { class: 'lab' });
+    txt(svg, 0, y + 29, c.range);
+    el('line', { x1: m.l, x2: m.l, y1: y + 2, y2: y + rowH - 2, class: 'base' }, svg);
+    const w = max ? counts[i] / max * bw : 0;
+    if (w > 0) {
+      const h = 14, yy = y + (rowH - h) / 2, rr = Math.min(4, w);
+      el('path', { d: `M${m.l},${yy}H${m.l + w - rr}Q${m.l + w},${yy} ${m.l + w},${yy + rr}V${yy + h - rr}Q${m.l + w},${yy + h} ${m.l + w - rr},${yy + h}H${m.l}Z`, class: c.cls }, svg);
+    }
+    const pct = Math.round(counts[i] / rows.length * 100);
+    txt(svg, m.l + w + 6, y + 22, `${counts[i]} (${pct}%)`, { class: counts[i] ? 'val' : '' });
+  });
+}
+
+// ---------- tiles ----------
+function tiles(rows) {
+  const box = $('tiles'); box.innerHTML = '';
+  if (!rows.length) return;
+  const S = st(rows.map(r => r.sys)), D = st(rows.map(r => r.dia)), P = st(rows.map(r => r.pulse));
+  const PP = st(rows.map(r => r.sys - r.dia));
+  const high = rows.filter(r => r.sys >= 135 || r.dia >= 85).length;
+  const days = new Set(rows.map(r => r.t.slice(0, 10))).size;
+  const mAvg = st(rows.filter(r => partOfDay(r.t) === 0).map(r => r.sys)), mD = st(rows.filter(r => partOfDay(r.t) === 0).map(r => r.dia));
+  const eAvg = st(rows.filter(r => partOfDay(r.t) === 2).map(r => r.sys)), eD = st(rows.filter(r => partOfDay(r.t) === 2).map(r => r.dia));
+  const items = [
+    ['Среднее давление', `${r0(S.mean)}/${r0(D.mean)}`, `±${r0(S.sd)}/${r0(D.sd)} мм рт. ст.`],
+    ['Измерений', rows.length, `за ${days} ${plural(days, 'день', 'дня', 'дней')}`],
+    ['Выше 135/85', `${Math.round(high / rows.length * 100)}%`, `${high} из ${rows.length}`],
+    ['Максимум', `${S.max}/${rows.find(r => r.sys === S.max).dia}`, 'по верхнему'],
+    ['Минимум', `${S.min}/${rows.find(r => r.sys === S.min).dia}`, 'по верхнему'],
+    ['Утро / вечер', `${mAvg ? r0(mAvg.mean) + '/' + r0(mD.mean) : '—'} · ${eAvg ? r0(eAvg.mean) + '/' + r0(eD.mean) : '—'}`, 'средние'],
+    ['Пульс', P ? r0(P.mean) : '—', P ? `${P.min}–${P.max} уд/мин` : 'не указан'],
+    ['Пульсовое давление', r0(PP.mean), 'САД − ДАД, среднее'],
+  ];
+  for (const [k, v, s] of items) {
+    const t = document.createElement('div'); t.className = 'tile';
+    for (const [cls, val] of [['k', k], ['v', v], ['s', s]]) { const d = document.createElement('div'); d.className = cls; d.textContent = val; t.appendChild(d); }
+    box.appendChild(t);
+  }
+}
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
+}
+
+// ---------- table ----------
+function table(rows) {
+  const tb = $('tbody'); tb.innerHTML = '';
+  $('countHint').textContent = `(${rows.length} за период, всего ${data.length})`;
+  for (const r of [...rows].reverse()) {
+    const tr = document.createElement('tr');
+    const c = CATS[category(r.sys, r.dia)];
+    const cell = (text, cls) => { const td = document.createElement('td'); if (cls) td.className = cls; td.textContent = text; tr.appendChild(td); return td; };
+    cell(fmtDT(r.t)); cell(`${r.sys}/${r.dia}`, 'num'); cell(r.pulse ?? '—', 'num');
+    cell(r.arm === 'Л' ? 'лев.' : r.arm === 'П' ? 'прав.' : '—');
+    const ct = cell(''); const b = document.createElement('span'); b.className = 'badge';
+    const dot = document.createElement('i'); dot.className = c.cls; b.appendChild(dot); b.appendChild(document.createTextNode(c.name)); ct.appendChild(b);
+    cell(r.note || '');
+    const act = cell('', 'act noprint');
+    const eb = document.createElement('button'); eb.textContent = '✎'; eb.title = 'Изменить'; eb.onclick = () => startEdit(r.id);
+    const db = document.createElement('button'); db.textContent = '✕'; db.title = 'Удалить'; db.className = 'danger';
+    db.onclick = () => { if (confirm(`Удалить запись ${fmtDT(r.t)} — ${r.sys}/${r.dia}?`)) { data = data.filter(x => x.id !== r.id); save(); render(); } };
+    act.append(eb, ' ', db);
+    tb.appendChild(tr);
+  }
+}
+
+// ---------- render ----------
+function render() {
+  document.querySelectorAll('#periods button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.d === period));
+  const rows = periodRows();
+  tiles(rows);
+  lineChart($('cBP'), rows, [
+    { key: 'sys', cls: 'sys', color: '--sys', label: 'САД', short: 'САД' },
+    { key: 'dia', cls: 'dia', color: '--dia', label: 'ДАД', short: 'ДАД' }],
+    [{ v: 135, label: '135' }, { v: 85, label: '85' }], 280);
+  lineChart($('cPulse'), rows.filter(r => r.pulse != null), [{ key: 'pulse', cls: 'pulse', color: '--pulse', label: 'уд/мин' }], [], 160);
+  const grp = (label, rs) => ({ label, sys: st(rs.map(r => r.sys)), dia: st(rs.map(r => r.dia)), pulse: st(rs.map(r => r.pulse)) });
+  dotPlot($('cParts'), PARTS.map((p, i) => grp(p, rows.filter(r => partOfDay(r.t) === i))));
+  dotPlot($('cArms'), [grp('Левая', rows.filter(r => r.arm === 'Л')), grp('Правая', rows.filter(r => r.arm === 'П'))]);
+  catBars($('cCats'), rows);
+  table(rows);
+  const name = localStorage.getItem(NAME_KEY) || '';
+  const range = rows.length ? `${fmtD(toDate(rows[0].t))} — ${fmtD(toDate(rows[rows.length - 1].t))}` : '';
+  $('printHead').textContent = `${name ? 'Пациент: ' + name + '. ' : ''}Период: ${range}. Отчёт сформирован ${fmtD(new Date())}.`;
+}
+
+document.querySelectorAll('#periods button').forEach(b => b.onclick = () => {
+  period = +b.dataset.d; localStorage.setItem(PERIOD_KEY, period); render();
+});
+$('printBtn').onclick = () => print();
+$('patient').value = localStorage.getItem(NAME_KEY) || '';
+$('patient').oninput = e => { localStorage.setItem(NAME_KEY, e.target.value); render(); };
+
+// ---------- import / export ----------
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const stamp = () => localStr(new Date()).slice(0, 10);
+$('expCsv').onclick = () => {
+  const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+  const lines = ['Дата;Время;САД;ДАД;Пульс;Рука;Категория;Заметка'];
+  for (const r of [...data].sort((a, b) => a.t.localeCompare(b.t))) {
+    const [d, t] = r.t.split('T');
+    lines.push([d.split('-').reverse().join('.'), t, r.sys, r.dia, r.pulse ?? '', r.arm, CATS[category(r.sys, r.dia)].name, q(r.note)].join(';'));
+  }
+  download(`давление-${stamp()}.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+};
+$('expJson').onclick = () => download(`давление-копия-${stamp()}.json`, JSON.stringify({ app: 'bp-diary', version: 1, records: data }, null, 1), 'application/json');
+$('impBtn').onclick = () => $('impFile').click();
+$('impFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const j = JSON.parse(await f.text());
+    const recs = (Array.isArray(j) ? j : j.records || []).filter(r => r && r.t && +r.sys && +r.dia);
+    const byId = new Map(data.map(r => [r.id, r]));
+    let added = 0;
+    for (const r of recs) { if (!byId.has(r.id)) added++; byId.set(r.id, { ...r, sys: +r.sys, dia: +r.dia, pulse: r.pulse == null || r.pulse === '' ? null : +r.pulse }); }
+    data = [...byId.values()]; save(); render();
+    showMsg(`Восстановлено: ${recs.length} записей (новых: ${added}).`);
+  } catch { showMsg('Не удалось прочитать файл резервной копии.', true); }
+};
+$('clearAll').onclick = () => {
+  if (data.length && confirm('Удалить ВСЕ записи? Сначала сохраните резервную копию.') && confirm('Точно удалить все данные без возможности восстановления?')) {
+    data = []; save(); render();
+  }
+};
+
+let rt;
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+addEventListener('beforeprint', render);
+resetForm();
+render();
+</script>
+</body>
+</html>
